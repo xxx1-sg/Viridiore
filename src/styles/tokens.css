@@ -1,0 +1,152 @@
+/* ============================================================
+   晓山青 Viridiore — 设计令牌
+   色彩语言：苔藓绿（moss）× 破晓琥珀（dawn）
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* —— 苔藓绿阶 —— */
+  --moss-50:  #f1f6f1;
+  --moss-100: #ddeade;
+  --moss-200: #bdd6c2;
+  --moss-300: #92b89c;
+  --moss-400: #649776;
+  --moss-500: #447a59;
+  --moss-600: #326046;
+  --moss-700: #274d39;
+  --moss-800: #1c3a2b;
+  --moss-900: #12241a;
+
+  /* —— 破晓琥珀 —— */
+  --dawn-100: #fbeedd;
+  --dawn-200: #f6dcb8;
+  --dawn-300: #eec187;
+  --dawn-400: #e5a457;
+  --dawn-500: #d98a38;
+  --dawn-600: #b96f26;
+
+  /* —— 语义色 —— */
+  --danger: #c04b40;
+  --danger-soft: #f7e2df;
+  --warn: #c07a1e;
+  --warn-soft: #faeeda;
+  --ok: #3d7a56;
+  --ok-soft: #e2efe6;
+  --info: #3a7089;
+  --info-soft: #e0edf2;
+
+  /* —— 表面 / 文字 —— */
+  --bg: #f5f2ea;
+  --bg-deep: #ebe5d8;
+  --surface: #fffdf8;
+  --surface-2: #f8f5ee;
+  --surface-glass: rgba(255, 253, 248, 0.72);
+  --ink: #16261d;
+  --ink-2: #4c6156;
+  --ink-3: #84968a;
+  --line: rgba(22, 38, 29, 0.10);
+  --line-strong: rgba(22, 38, 29, 0.18);
+
+  /* —— 品牌渐变 —— */
+  --grad-hero: linear-gradient(165deg, #12241a 0%, #1f4130 42%, #3f6b4c 74%, #c78d4e 100%);
+  --grad-dawn: linear-gradient(135deg, #f2c98a 0%, #e5a457 45%, #d1713a 100%);
+  --grad-moss: linear-gradient(140deg, var(--moss-500), var(--moss-700));
+  --grad-text: linear-gradient(100deg, var(--moss-600), var(--dawn-500));
+
+  /* —— 阴影 —— */
+  --shadow-xs: 0 1px 2px rgba(22, 38, 29, 0.06);
+  --shadow-sm: 0 2px 8px rgba(22, 38, 29, 0.07);
+  --shadow-md: 0 8px 24px -8px rgba(22, 38, 29, 0.18), 0 2px 6px rgba(22, 38, 29, 0.05);
+  --shadow-lg: 0 24px 48px -20px rgba(18, 36, 26, 0.32), 0 4px 12px rgba(18, 36, 26, 0.06);
+  --shadow-glow: 0 0 0 1px rgba(229, 164, 87, 0.28), 0 12px 32px -12px rgba(217, 138, 56, 0.45);
+
+  /* —— 圆角 / 间距 —— */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 30px;
+  --r-full: 999px;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* —— 字体 —— */
+  --font-sans: "PingFang SC", "HarmonyOS Sans SC", "Hiragino Sans GB",
+    "Microsoft YaHei UI", "Microsoft YaHei", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Songti SC", "Source Han Serif SC", "Noto Serif SC", "STSong", Georgia, serif;
+  --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+
+  /* —— 尺寸 —— */
+  --nav-h: 60px;
+  --tabbar-h: 60px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --page-max: 1180px;
+
+  /* —— 动效 —— */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 140ms;
+  --dur: 260ms;
+  --dur-slow: 520ms;
+}
+
+/* ============================================================
+   深色模式 —— 夜色山脊
+   ============================================================ */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #0c1411;
+  --bg-deep: #080f0c;
+  --surface: #131f19;
+  --surface-2: #182a20;
+  --surface-glass: rgba(19, 31, 25, 0.72);
+  --ink: #eaf1ea;
+  --ink-2: #a9bdaf;
+  --ink-3: #74897b;
+  --line: rgba(234, 241, 234, 0.10);
+  --line-strong: rgba(234, 241, 234, 0.2);
+
+  --moss-50: #16261d;
+  --moss-100: #1c3327;
+  --moss-200: #274535;
+  --moss-300: #4b7a5f;
+  --moss-400: #6ea383;
+  --moss-500: #8dbf9e;
+  --moss-600: #a9d2b6;
+
+  --dawn-100: #2b2117;
+  --dawn-200: #3d2e1d;
+  --dawn-300: #b58a52;
+  --dawn-400: #e0a765;
+  --dawn-500: #f0bb7f;
+  --dawn-600: #f7d0a1;
+
+  --danger: #e1796d;
+  --danger-soft: #35201d;
+  --warn: #e0a964;
+  --warn-soft: #33261a;
+  --ok: #78b892;
+  --ok-soft: #16291f;
+  --info: #7fb2c8;
+  --info-soft: #152a33;
+
+  --grad-hero: linear-gradient(165deg, #060d09 0%, #10231a 40%, #1c3b2c 72%, #6b4a28 100%);
+  --grad-text: linear-gradient(100deg, var(--moss-400), var(--dawn-400));
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 10px 28px -10px rgba(0, 0, 0, 0.7), 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 28px 56px -24px rgba(0, 0, 0, 0.85), 0 6px 16px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 0 1px rgba(240, 187, 127, 0.24), 0 14px 36px -16px rgba(240, 187, 127, 0.4);
+}

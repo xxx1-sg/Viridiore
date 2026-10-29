@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>晓山青 Viridiore · 不问天气好不好，只回答值不值得去</title>
+<meta name="description" content="晓山青把「明早哪座山、几点出发、多大几率看到云海」算成一个百分比。离线可用，Windows / 网页双端。" />
+<meta name="theme-color" content="#0a1710" />
+<link rel="icon" href="assets/icon.png" />
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="晓山青 Viridiore" />
+<meta property="og:description" content="不问天气好不好，只回答值不值得去。" />
+<meta property="og:image" content="assets/desktop-home.png" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ============ 顶栏 ============ -->
+<header class="nav" id="nav">
+  <div class="nav__inner">
+    <a class="brand" href="#top">
+      <span class="brand__mark">
+        <svg viewBox="0 0 40 40" aria-hidden="true">
+          <defs>
+            <linearGradient id="bm" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#5c946e" />
+              <stop offset="1" stop-color="#132a1c" />
+            </linearGradient>
+            <linearGradient id="bs" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#ffe9b8" />
+              <stop offset="1" stop-color="#e9a95e" />
+            </linearGradient>
+          </defs>
+          <rect width="40" height="40" rx="11" fill="url(#bm)" />
+          <circle cx="26.6" cy="12.6" r="4.6" fill="url(#bs)" />
+          <path d="M1.2 32.8 12 20.9l5.2 6.4L23 19.4l6 8.4 4.4-5.1 5.4 10.1v7.2H1.2Z" fill="#0e2016" />
+          <path d="M12.6 21.6 17.2 27l5.9-7.4" fill="none" stroke="#7fb894" stroke-opacity=".55" stroke-width="1.1" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <span class="brand__text">
+        <span class="brand__name">晓山青</span>
+        <span class="brand__sub">VIRIDIORE</span>
+      </span>
+    </a>
+
+    <nav class="nav__links">
+      <a href="#how">怎么算的</a>
+      <a href="#ability">能力</a>
+      <a href="#look">界面</a>
+      <a href="#download">下载</a>
+    </nav>
+
+    <a class="nav__cta" href="#download">下载</a>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ============ 首屏 ============ -->
+<section class="hero">
+  <div class="hero__scene" aria-hidden="true">
+    <div class="hero__sun"></div>
+    <div class="hero__glow"></div>
+    <svg class="hero__ridge hero__ridge--far" viewBox="0 0 1440 420" preserveAspectRatio="none">
+      <path d="M0 322 80 296 160 272 240 288 320 258 400 244 480 272 560 262 640 232 720 214 800 238 880 226 960 206 1040 236 1120 252 1200 238 1280 264 1360 280 1440 292V420H0Z" />
+    </svg>
+    <svg class="hero__ridge hero__ridge--mid" viewBox="0 0 1440 420" preserveAspectRatio="none">
+      <path d="M0 354 80 338 160 318 240 332 320 310 400 320 480 348 560 340 640 314 720 292 800 310 880 302 960 288 1040 310 1120 328 1200 318 1280 340 1360 348 1440 354V420H0Z" />
+    </svg>
+    <svg class="hero__ridge hero__ridge--near" viewBox="0 0 1440 420" preserveAspectRatio="none">
+      <path d="M0 394 80 384 160 374 240 382 320 368 400 380 480 396 560 390 640 378 720 364 800 376 880 370 960 360 1040 378 1120 390 1200 384 1280 396 1360 400 1440 402V420H0Z" />
+    </svg>
+    <div class="hero__mist"></div>
+  </div>
+
+  <div class="hero__inner">
+    <p class="eyebrow"><span class="dot"></span>户外决策工具 · 深圳</p>
+    <h1 class="hero__title">不问天气好不好<br /><em>只回答值不值得去</em></h1>
+    <p class="hero__lede">
+      明早哪座山、几点出发、多大几率看到云海——算成一个百分比。算不出来，就直说。
+    </p>
+    <div class="hero__actions">
+      <a class="btn btn--primary" href="#download">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16" /></svg>
+        下载 Windows 版
+      </a>
+      <a class="btn btn--ghost" href="app/index.html" target="_blank" rel="noopener">
+        直接在浏览器里打开
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" /></svg>
+      </a>
+    </div>
+    <p class="hero__meta">v2.1.0 &nbsp;·&nbsp; Windows 10 / 11 64 位 &nbsp;·&nbsp; 82 MB &nbsp;·&nbsp; 无需注册账号</p>
+  </div>
+
+  <div class="hero__shot reveal">
+    <div class="shot-frame">
+      <img src="assets/desktop-home.png" alt="晓山青首页：显示明早云海概率 26% 与判断依据" width="1280" height="900" />
+    </div>
+    <p class="shot-cap">首页只做一件事：告诉你今天值不值得上山。</p>
+  </div>
+</section>
+
+<!-- ============ 主张：概率 ============ -->
+<section class="claim" id="how">
+  <div class="wrap claim__grid">
+    <div class="claim__left">
+      <p class="sec-label">核心主张</p>
+      <h2 class="claim__title">给概率，<br />不给评分</h2>
+      <div class="claim__stat">
+        <div class="stat">
+          <span class="stat__num">72<small>%</small></span>
+          <span class="stat__cap">有人会信</span>
+        </div>
+        <div class="stat stat--dim">
+          <span class="stat__num">100<small>分</small></span>
+          <span class="stat__cap">没人会信</span>
+        </div>
+      </div>
+    </div>
+    <div class="claim__right">
+      <p class="claim__lead">
+        天气 App 告诉你「云量 30%」。这个数字对登山的人没有意义——你要知道的是云在不在你脚下。
+      </p>
+      <p class="claim__body">
+        所以晓山青只输出一个能被证伪的数字：<strong>明早 6:12，梧桐山东麓，云海概率 72%</strong>。
+        下面永远跟着一行「基准率 16% · 置信度中」，以及每一项证据的加减值。你可以反驳它，
+        下次上山回来说一句「看到了」或「白跑一趟」，它会把误差记住。
+      </p>
+      <p class="claim__body claim__body--dim">
+        100 分制是自说自话。百分比能被检验——第二天上山，看到或没看到，答案就写在那儿。
+        这也是为什么模型里留着「我的反馈样本」：样本越多，它越不敢乱说。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 三个物理因子 ============ -->
+<section class="factors">
+  <div class="wrap">
+    <p class="sec-label center">云海不是心情，是物理</p>
+    <h2 class="sec-title center">云得在你脚下，才叫云海</h2>
+    <p class="sec-sub center">
+      模型不算「今天天气多好看」，只算三件事：云底多高、湿度够不够、层结稳不稳。
+    </p>
+
+    <div class="factor-grid">
+      <article class="factor-card reveal">
+        <span class="factor-card__idx">01</span>
+        <h3>云底高度</h3>
+        <p class="factor-card__formula">LCL ≈ 125 m/℃ × (T − T<sub>d</sub>)</p>
+        <p>
+          由气温与露点差反解抬升凝结高度，再叠加云层厚度估出云顶。
+          云顶低于山顶——你站在云上面；高于山顶——你在云里面，什么都看不见。
+        </p>
+      </article>
+
+      <article class="factor-card reveal" style="--d:.08s">
+        <span class="factor-card__idx">02</span>
+        <h3>露点差</h3>
+        <p class="factor-card__formula">T − T<sub>d</sub> ≤ 2 ℃</p>
+        <p>
+          差得越小，空气越接近饱和。大于 6 ℃ 基本不会有成片的云，
+          2 ℃ 以内是云海最容易成形的那一档。
+        </p>
+      </article>
+
+      <article class="factor-card reveal" style="--d:.16s">
+        <span class="factor-card__idx">03</span>
+        <h3>逆温稳定性</h3>
+        <p class="factor-card__formula">夜间辐射降温 + 弱风</p>
+        <p>
+          晴夜地面散热快，冷空气沉在谷底，暖空气盖在上面——这层盖子把云压住。
+          风力超过 4 级，盖子就被搅散了。
+        </p>
+      </article>
+    </div>
+
+    <p class="factor-note">
+      逆温这一项是<strong>估算</strong>：真正的判据是 850 hPa 的温湿探空资料，免费天气接口拿不到。
+      我们用昼夜温差、夜间云量、风力做代理指标，并在界面上标明「置信度」——
+      数据不够好时，它会主动告诉你这个概率别太当真。
+    </p>
+  </div>
+</section>
+
+<!-- ============ 三个能力 ============ -->
+<section class="ability" id="ability">
+  <div class="wrap">
+    <p class="sec-label center">做减法之后剩下的</p>
+    <h2 class="sec-title center">三个功能，每个都能用</h2>
+    <p class="sec-sub center">不铺十宫格。三个页面，做到底。</p>
+
+    <div class="ability-grid">
+      <article class="ability-card reveal">
+        <div class="ability-card__icon">
+          <svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" /><circle cx="12" cy="12" r="3.4" /></svg>
+        </div>
+        <h3>追光</h3>
+        <p class="ability-card__sub">把七天的窗口排给你看</p>
+        <p>
+          云海、日出、星空三种模式，各自一套权重。给出最佳日期、精度到分钟的时刻窗口、
+          该去哪个坡向、山顶多少度、穿什么。
+        </p>
+      </article>
+
+      <article class="ability-card reveal" style="--d:.08s">
+        <div class="ability-card__icon">
+          <svg viewBox="0 0 24 24"><path d="M3 17.5 8.5 9l3.6 5.2L15 10l6 8.5" /><circle cx="8" cy="6" r="1.6" /></svg>
+        </div>
+        <h3>轨迹</h3>
+        <p class="ability-card__sub">山上没信号也照常记</p>
+        <p>
+          距离、爬升、配速全在本地算（Web Worker），地图是自己画的，不依赖任何在线瓦片。
+          断网、飞行模式、山沟里，一样能记录。
+        </p>
+      </article>
+
+      <article class="ability-card reveal" style="--d:.16s">
+        <div class="ability-card__icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.4" /><path d="M3 15.2 8 10l3.4 4 3-3.4L21 15" /><circle cx="8.4" cy="9" r="1.3" /></svg>
+        </div>
+        <h3>光之卡片</h3>
+        <p class="ability-card__sub">一次上山，一张能发的图</p>
+        <p>
+          时间、坐标、海拔、当时天气，加上一句写实的叙事，渲染成 1080×1350 的卡片。
+          事前还能生成「预测卡」，回来看命中没有。
+        </p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 界面展示 ============ -->
+<section class="look" id="look">
+  <div class="wrap">
+    <p class="sec-label center">界面</p>
+    <h2 class="sec-title center">信息密度换掉了热闹</h2>
+    <p class="sec-sub center">深森林绿与晨曦琥珀，深色浅色都做了。</p>
+
+    <div class="look-grid">
+      <figure class="look-item reveal" data-full="assets/desktop-chase.png">
+        <img src="assets/desktop-chase.png" alt="追光页：七天窗口与概率环" loading="lazy" />
+        <figcaption><b>追光</b>七天窗口，每天一个概率。点开能看到每一项证据的加减。</figcaption>
+      </figure>
+      <figure class="look-item reveal" style="--d:.08s" data-full="assets/desktop-weather.png">
+        <img src="assets/desktop-weather.png" alt="天气页" loading="lazy" />
+        <figcaption><b>天气</b>24 小时与 7 天，气象预警直接并进顶部横幅。</figcaption>
+      </figure>
+      <figure class="look-item reveal" style="--d:.16s" data-full="assets/desktop-trail.png">
+        <img src="assets/desktop-trail.png" alt="轨迹页" loading="lazy" />
+        <figcaption><b>轨迹</b>自绘地图与高程剖面，可导出 GPX。</figcaption>
+      </figure>
+    </div>
+
+    <div class="look-mobile">
+      <figure class="phone reveal" data-full="assets/mobile-home.png"><img src="assets/mobile-home.png" alt="手机端首页" loading="lazy" /></figure>
+      <figure class="phone reveal" style="--d:.08s" data-full="assets/mobile-chase.png"><img src="assets/mobile-chase.png" alt="手机端追光页" loading="lazy" /></figure>
+      <figure class="phone reveal" style="--d:.16s" data-full="assets/mobile-trail.png"><img src="assets/mobile-trail.png" alt="手机端轨迹页" loading="lazy" /></figure>
+    </div>
+    <p class="look-note">手机端同一套代码，浏览器打开即可用，也可以「添加到主屏幕」当 App 使。</p>
+  </div>
+</section>
+
+<!-- ============ 下载 ============ -->
+<section class="download" id="download">
+  <div class="wrap">
+    <p class="sec-label center light">下载</p>
+    <h2 class="sec-title center light">选一个装到你机器上</h2>
+    <p class="sec-sub center light">
+      全部离线运行。天气数据需要你自己填一个和风天气的 Key（免费额度每天 1000 次），
+      不填也能用——内置演示数据，12 个页面都能打开。
+    </p>
+
+    <div class="dl-grid">
+      <article class="dl-card dl-card--main">
+        <div class="dl-card__top">
+          <span class="dl-card__os">
+            <svg viewBox="0 0 24 24"><path d="M3 5.6 10.4 4.6v6.6H3ZM11.6 4.4 21 3v8.2h-9.4ZM3 12.6h7.4v6.8L3 18.4ZM11.6 12.6H21V21l-9.4-1.3Z" /></svg>
+            Windows
+          </span>
+          <span class="tag tag--rec">推荐</span>
+        </div>
+        <h3>安装版</h3>
+        <p>标准安装向导，可选安装目录，自动创建桌面与开始菜单快捷方式。适合长期使用。</p>
+        <ul class="dl-card__list">
+          <li>Windows 10 / 11 · 64 位</li>
+          <li>82 MB · 安装后约 250 MB</li>
+          <li>卸载走系统「应用和功能」</li>
+        </ul>
+        <a class="btn btn--primary btn--block" href="download/XiaoShanQing-2.1.0-Setup-x64.exe" download>
+          下载安装包
+          <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16" /></svg>
+        </a>
+        <p class="dl-card__hash">XiaoShanQing-2.1.0-Setup-x64.exe</p>
+      </article>
+
+      <article class="dl-card">
+        <div class="dl-card__top">
+          <span class="dl-card__os">
+            <svg viewBox="0 0 24 24"><path d="M3 5.6 10.4 4.6v6.6H3ZM11.6 4.4 21 3v8.2h-9.4ZM3 12.6h7.4v6.8L3 18.4ZM11.6 12.6H21V21l-9.4-1.3Z" /></svg>
+            Windows
+          </span>
+          <span class="tag">免安装</span>
+        </div>
+        <h3>绿色版</h3>
+        <p>单文件，双击即用，不写注册表。丢进 U 盘换台电脑也能跑。</p>
+        <ul class="dl-card__list">
+          <li>Windows 10 / 11 · 64 位</li>
+          <li>82 MB · 首次启动解压约 3 秒</li>
+          <li>删掉文件即卸载干净</li>
+        </ul>
+        <a class="btn btn--ghost btn--block" href="download/XiaoShanQing-2.1.0-Portable-x64.exe" download>
+          下载绿色版
+          <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16" /></svg>
+        </a>
+        <p class="dl-card__hash">XiaoShanQing-2.1.0-Portable-x64.exe</p>
+      </article>
+
+      <article class="dl-card">
+        <div class="dl-card__top">
+          <span class="dl-card__os">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M3.4 9h17.2M3.4 15h17.2M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z" /></svg>
+            浏览器
+          </span>
+          <span class="tag">免下载</span>
+        </div>
+        <h3>网页版</h3>
+        <p>不装任何东西，直接开。手机浏览器打开后可以「添加到主屏幕」，用起来和 App 一样，断网也能开。</p>
+        <ul class="dl-card__list">
+          <li>Chrome / Edge / Safari 最新版</li>
+          <li>数据存在你自己的浏览器里</li>
+          <li>定位需要 HTTPS（本页已满足）</li>
+        </ul>
+        <a class="btn btn--ghost btn--block" href="app/index.html" target="_blank" rel="noopener">
+          立即打开
+          <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" /></svg>
+        </a>
+        <p class="dl-card__hash">无需安装 · 打开即用</p>
+      </article>
+    </div>
+
+    <div class="dl-mobile">
+      <h3>手机端</h3>
+      <p>
+        安卓与 iOS 的原生工程已经建好并同步完毕，但<strong>没有预编译的安装包</strong>——
+        编译需要 Android Studio 与 Xcode（macOS）。如果你要自己出包，仓库里有完整步骤。
+      </p>
+      <p>
+        不想折腾的话，直接用手机浏览器打开网页版，添加到主屏幕，功能是一致的。
+      </p>
+      <a class="btn btn--ghost btn--sm" href="app/index.html" target="_blank" rel="noopener">手机浏览器打开</a>
+    </div>
+
+    <p class="dl-warn">
+      <strong>关于「Windows 已保护你的电脑」</strong>：安装包没有做代码签名（个人开发者证书一年几千元），
+      SmartScreen 会拦一次。点「更多信息 → 仍要运行」即可。程序不联网上传任何数据，全部计算在本机。
+    </p>
+  </div>
+</section>
+
+<!-- ============ 诚实声明 ============ -->
+<section class="honest">
+  <div class="wrap honest__grid">
+    <div>
+      <p class="sec-label">已知局限</p>
+      <h2 class="sec-title">这些事它做不到</h2>
+      <p class="sec-sub" style="margin-left:0;text-align:left">
+        一个预测工具最该做的是交代边界。下面几条都写在 README 里，也写在设置页里。
+      </p>
+    </div>
+    <ul class="honest__list">
+      <li>
+        <span class="honest__mark">01</span>
+        <div>
+          <b>逆温是估算，不是实测</b>
+          <p>850 hPa 温湿需要探空资料，免费接口没有。用代理指标替代，界面会标出置信度。</p>
+        </div>
+      </li>
+      <li>
+        <span class="honest__mark">02</span>
+        <div>
+          <b>没有做过历史回测</b>
+          <p>基准率来自华南云海的季节经验，不是标定过的统计模型。样本量还不够。</p>
+        </div>
+      </li>
+      <li>
+        <span class="honest__mark">03</span>
+        <div>
+          <b>地形只到山峰级别</b>
+          <p>没有做坡向与山谷的精细建模，所以「哪个坡向」给的是经验建议，不是计算结论。</p>
+        </div>
+      </li>
+      <li>
+        <span class="honest__mark">04</span>
+        <div>
+          <b>不会替你求救</b>
+          <p>之前版本的 SOS 功能已下架。没有真实短信网关与卫星通道的求救按钮，比没有更危险。</p>
+        </div>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 尾屏 ============ -->
+<section class="closing">
+  <div class="closing__scene" aria-hidden="true">
+    <div class="closing__sun"></div>
+    <svg viewBox="0 0 1440 300" preserveAspectRatio="none">
+      <path d="M0 250 55 232 110 206 165 196 220 214 275 228 330 208 385 178 440 190 495 214 550 226 605 204 660 176 715 158 770 172 825 196 880 214 935 196 990 168 1045 148 1100 164 1155 188 1210 206 1265 190 1320 168 1375 182 1440 198 V300 H0 Z" />
+    </svg>
+  </div>
+  <div class="wrap closing__inner">
+    <h2>下一次窗口，<br />它帮你盯着。</h2>
+    <p>今早云量 68%，白跑一趟——三天后有个更好的窗口，别急着放弃。</p>
+    <a class="btn btn--dawn" href="#download">下载晓山青</a>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__inner">
+    <div class="foot__brand">
+      <span class="foot__name">晓山青</span>
+      <span class="foot__sub">VIRIDIORE · v2.1.0</span>
+    </div>
+    <nav class="foot__links">
+      <a href="#how">模型</a>
+      <a href="#ability">能力</a>
+      <a href="#download">下载</a>
+      <a href="app/index.html">网页版</a>
+    </nav>
+    <p class="foot__note">
+      天气数据来自和风天气（需自备 Key），未配置时使用内置演示数据并明确标注。
+      <br />所有轨迹与偏好只存在本机浏览器，不上传。
+    </p>
+  </div>
+</footer>
+
+<!-- 大图预览 -->
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lightbox__close" type="button" aria-label="关闭">
+    <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
+  </button>
+  <img id="lightboxImg" alt="" />
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

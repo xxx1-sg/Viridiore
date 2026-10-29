@@ -1,0 +1,89 @@
+{
+  "name": "mossy-dawn",
+  "productName": "晓山青",
+  "version": "2.1.0",
+  "description": "晓山青 Viridiore — 户外智能出行伴侣",
+  "author": "Mossy Dawn",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "node scripts/generate-icons.mjs && vite build && node scripts/generate-sw.mjs",
+    "icons": "node scripts/generate-icons.mjs",
+    "sw": "node scripts/generate-sw.mjs",
+    "preview": "vite preview --port 4173",
+    "desktop:dev": "node scripts/desktop-dev.mjs",
+    "desktop:build": "npm run build && electron-builder --win --x64",
+    "desktop:pack": "npm run build && electron-builder --win --dir",
+    "mobile:sync": "npm run build && npx cap sync",
+    "mobile:android": "npm run build && npx cap sync android && npx cap open android",
+    "mobile:ios": "npm run build && npx cap sync ios && npx cap open ios"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "vite": "^6.0.7"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/ios": "^6.2.0"
+  },
+  "build": {
+    "appId": "com.mossydawn.viridiore",
+    "productName": "XiaoShanQing",
+    "copyright": "Copyright © 2026 Mossy Dawn",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "desktop/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "afterPack": "scripts/after-pack.cjs",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false,
+      "artifactName": "XiaoShanQing-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "XiaoShanQing-${version}-Portable-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "晓山青",
+      "artifactName": "XiaoShanQing-${version}-Setup-${arch}.${ext}",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "installerLanguages": [
+        "zh_CN"
+      ],
+      "language": "2052"
+    }
+  }
+}

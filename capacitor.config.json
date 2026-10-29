@@ -1,0 +1,23 @@
+{
+  "appId": "com.mossydawn.viridiore",
+  "appName": "晓山青",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#0c1411"
+  },
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#0c1411"
+  },
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "backgroundColor": "#0c1411",
+      "showSpinner": false
+    }
+  }
+}

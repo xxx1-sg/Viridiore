@@ -1,0 +1,26 @@
+node_modules/
+dist/
+release/
+.env
+.env.local
+*.log
+.DS_Store
+android/.gradle/
+android/app/build/
+android/local.properties
+ios/App/Pods/
+ios/App/build/
+.vite/
+coverage/
+
+# 本地开发 / 截图产物
+shots/
+.cachebin/
+.npmcache/
+*.tsbuildinfo
+
+# 官网里的安装包副本（体积大，由 release/ 提供）
+site/download/*.exe
+
+# 运行期产生的日志目录
+NVIDIA Corporation/

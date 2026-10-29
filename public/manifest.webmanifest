@@ -1,0 +1,42 @@
+{
+  "name": "晓山青 · 户外智能出行伴侣",
+  "short_name": "晓山青",
+  "description": "天气、追光、轨迹、SOS、路书、AI 助手，一个为华南户外爱好者做的出行伴侣。",
+  "id": "com.mossydawn.viridiore",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#0c1411",
+  "theme_color": "#12241a",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "categories": ["travel", "health", "utilities", "navigation"],
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "天气", "url": "./index.html#/weather", "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "追光", "url": "./index.html#/chase", "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "轨迹", "url": "./index.html#/trail", "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "SOS 求救", "url": "./index.html#/sos", "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
