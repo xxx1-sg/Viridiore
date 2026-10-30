@@ -40,8 +40,9 @@ export default {
         <div class="settings-group">
           <div class="settings-group__title">和风天气 · 可选增强</div>
           <p class="field__hint" style="margin:-6px 0 14px">
-            预报本身已经走 Open-Meteo，打开就是真实数据。这里填 Key 只为了两件 Open-Meteo 没有的东西：
-            中国气象局的气象预警，以及国内 AQI 标准的空气质量。不填不影响追光与天气。
+            预报本身已经走 Open-Meteo，打开就是真实数据。这里填 Key 只为了两件 Open-Meteo 给不了的东西：
+            <strong>中国气象局的气象预警</strong>，以及<strong>环境监测总站的实测 AQI</strong>。
+            不填的话空气质量是 CAMS 模式估算值，通常比监测站实测偏高，尤其 SO₂ 和 NO₂。
           </p>
           <label class="field" style="margin-bottom:14px">
             <span class="field__label">API Key</span>

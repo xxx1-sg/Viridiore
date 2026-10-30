@@ -19,6 +19,7 @@
  */
 
 import { sunTimes, moonPhase, moonPhaseName, moonIllumination } from './sun.js';
+import { computeAqi } from './aqi.js';
 
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 const AIR_URL = 'https://air-quality-api.open-meteo.com/v1/air-quality';
@@ -64,6 +65,33 @@ const DAILY = [
   'wind_speed_10m_max',
   'wind_direction_10m_dominant',
   'uv_index_max'
+];
+
+/**
+ * 实况块。**这是"现在"唯一正确的来源。**
+ *
+ * 早先版本从 hourly 里挑最近的一个整点当作"现在"，于是 09:40 显示的其实是
+ * 09:00 的预报值——温度差 1℃、湿度差 7%、体感差 2℃，和手机自带天气一比
+ * 处处对不上，用户会直接判定数据是编的。
+ *
+ * current 的 interval 是 900 秒（15 分钟插值），才是真正贴着观测时次的实况。
+ */
+const CURRENT = [
+  'temperature_2m',
+  'relative_humidity_2m',
+  'dew_point_2m',
+  'apparent_temperature',
+  'is_day',
+  'precipitation',
+  'weather_code',
+  'cloud_cover',
+  'cloud_cover_low',
+  'pressure_msl',
+  'surface_pressure',
+  'wind_speed_10m',
+  'wind_direction_10m',
+  'wind_gusts_10m',
+  'visibility'
 ];
 
 export class MeteoError extends Error {
@@ -255,6 +283,7 @@ export async function fetchOpenMeteo(lat, lon, placeName = '当前位置') {
     getJson(FORECAST_URL, {
       latitude: Number(lat).toFixed(4),
       longitude: Number(lon).toFixed(4),
+      current: CURRENT.join(','),
       hourly: HOURLY.join(','),
       daily: DAILY.join(','),
       timezone: TIMEZONE,
@@ -265,9 +294,10 @@ export async function fetchOpenMeteo(lat, lon, placeName = '当前位置') {
     getJson(AIR_URL, {
       latitude: Number(lat).toFixed(4),
       longitude: Number(lon).toFixed(4),
-      hourly: 'pm2_5,pm10,european_aqi',
+      // 六项污染物：用来按国标算 AQI，而不是拿欧洲 EAQI 冒充
+      current: 'pm2_5,pm10,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone',
       timezone: TIMEZONE,
-      forecast_days: 2
+      forecast_days: 1
     }).catch(() => null) // 空气质量是补充项，失败不影响主流程
   ]);
 
@@ -309,32 +339,55 @@ export async function fetchOpenMeteo(lat, lon, placeName = '当前位置') {
 
   const at = (arr, i) => (Number.isFinite(arr?.[i]) ? arr[i] : NaN);
 
-  /* ---- 当前时刻：取最近的一个整点 ---- */
+  /* ---- 当前时刻 ---- */
+  // nowIdx 只用来定位逐小时列表的起点与观测窗口，不再代表"现在"。
+  // "现在"一律取自 current 块（15 分钟插值），否则会和手机自带的天气对不上。
   let nowIdx = times.findIndex((t) => t && t >= new Date(now.getTime() - 30 * 60e3));
   if (nowIdx < 0) nowIdx = 0;
 
-  const nowIsNight = (() => {
-    const sr = parseLocal(d.sunrise?.[0]);
-    const ss = parseLocal(d.sunset?.[0]);
-    if (!sr || !ss) return now.getHours() < 6 || now.getHours() > 19;
-    return now < sr || now > ss;
-  })();
+  const cur = forecast.current || {};
+
+  /** 优先取 current 实况，接口偶尔不返回时退回最近整点 */
+  const live = (key, fallback, digits = 0) => {
+    const v = Number(cur[key]);
+    if (Number.isFinite(v)) return round(v, digits);
+    const f = Number(fallback);
+    return Number.isFinite(f) ? round(f, digits) : fallback;
+  };
+
+  // is_day 比"早 6 点晚 19 点"准，冬夏日出时间差一个多小时
+  const isDayNow = Number(cur.is_day) === 1;
+
+  const pNow = Number(cur.pressure_msl);
+  // 严格 3 小时变压：拿两个整点值相减，不用 09:30 去减 06:00
+  const pHourly = at(series.pressure, nowIdx);
+  const p3hAgo = nowIdx >= 3 ? at(series.pressure, nowIdx - 3) : NaN;
+  const pDelta = Number.isFinite(pHourly) && Number.isFinite(p3hAgo) ? round(pHourly - p3hAgo, 1) : null;
 
   const nowBlock = {
-    temp: round(at(series.temp, nowIdx)),
-    feels: round(at(series.feels, nowIdx)),
+    temp: live('temperature_2m', at(series.temp, nowIdx)),
+    feels: live('apparent_temperature', at(series.feels, nowIdx)),
     text: '',
-    code: qwCode(at(series.code, nowIdx), nowIsNight),
-    humidity: round(at(series.rh, nowIdx)),
-    windDir: windDirText(at(series.windDir, nowIdx)),
-    windScale: beaufort(at(series.wind, nowIdx)),
-    windSpeed: String(round(at(series.wind, nowIdx), 1)),
-    pressure: String(round(at(series.pressure, nowIdx))),
-    vis: String(round(at(series.vis, nowIdx) / 1000, 1)), // API 单位是米
-    cloud: String(round(at(series.cloud, nowIdx))),
-    dew: String(round(at(series.dew, nowIdx), 1)),
-    precip: String(round(at(series.precip, nowIdx), 1)),
-    gust: String(round(at(series.gust, nowIdx), 1))
+    code: qwCode(live('weather_code', at(series.code, nowIdx)), !isDayNow),
+    humidity: live('relative_humidity_2m', at(series.rh, nowIdx)),
+    windDir: windDirText(live('wind_direction_10m', at(series.windDir, nowIdx))),
+    windSpeed: String(live('wind_speed_10m', at(series.wind, nowIdx), 1)),
+    windScale: beaufort(live('wind_speed_10m', at(series.wind, nowIdx), 1)),
+    /** 海平面气压。本站气压受海拔影响，同一城市不同海拔没法比，所以主显海平面 */
+    pressure: String(live('pressure_msl', at(series.pressure, nowIdx))),
+    /** 本站气压，留给数据说明区对照 */
+    pressureStation: Number.isFinite(Number(cur.surface_pressure)) ? String(round(cur.surface_pressure)) : null,
+    /** 3 小时变压，negative = 下降 */
+    pressureDelta: pDelta,
+    vis: String(round(live('visibility', at(series.vis, nowIdx)) / 1000, 1)),
+    visMeters: live('visibility', at(series.vis, nowIdx)),
+    cloud: String(live('cloud_cover', at(series.cloud, nowIdx))),
+    dew: String(live('dew_point_2m', at(series.dew, nowIdx), 1)),
+    precip: String(live('precipitation', at(series.precip, nowIdx), 1)),
+    gust: String(live('wind_gusts_10m', at(series.gust, nowIdx), 1)),
+    isDay: isDayNow,
+    /** 实况时次，用于界面上标"实况 09:30" */
+    observedAt: parseLocal(cur.time) || now
   };
 
   /* ---- 未来 24 小时 ---- */
@@ -343,13 +396,19 @@ export async function fetchOpenMeteo(lat, lon, placeName = '当前位置') {
     const t = times[i];
     if (!t) continue;
     const isNight = t.getHours() < 6 || t.getHours() >= 19;
+    // 第一格标「现在」，用实况覆盖整点预报，否则这一格会比实际高一两度
+    const isNow = hourly.length === 0;
     hourly.push({
       time: t,
-      temp: round(at(series.temp, i)),
-      code: qwCode(at(series.code, i), isNight),
+      temp: isNow ? nowBlock.temp : round(at(series.temp, i)),
+      code: isNow ? nowBlock.code : qwCode(at(series.code, i), isNight),
       pop: round(at(series.pop, i)),
-      windScale: Number(beaufort(at(series.wind, i))) || 0,
-      humidity: round(at(series.rh, i))
+      windScale: isNow ? Number(nowBlock.windScale) || 0 : Number(beaufort(at(series.wind, i))) || 0,
+      windSpeed: round(at(series.wind, i), 1),
+      windDir: windDirText(at(series.windDir, i)),
+      humidity: round(at(series.rh, i)),
+      uv: round(at(series.uv, i), 1),
+      precip: round(at(series.precip, i), 1)
     });
   }
 
@@ -407,9 +466,12 @@ export async function fetchOpenMeteo(lat, lon, placeName = '当前位置') {
     };
 
     const windowCloud = avg(pick(series.cloud, obsIdx));
-    const windowPop = avg(pick(series.pop, obsIdx));
     const windowVis = avg(pick(series.vis, obsIdx));
-    const windowUv = avg(pick(series.uv, obsIdx));
+
+    // 逐日 UV 与降水概率必须取全天极值。
+    // 用日出窗口平均会得到 UV = 0（那时太阳还没升起来），是错的。
+    const uvMax = Number(d.uv_index_max?.[di]);
+    const popMax = Number(d.precipitation_probability_max?.[di]);
 
     // 日最高/最低：daily 接口偶尔缺测，用逐小时极值兜底，避免界面出现 NaN
     const dayTemps = pick(series.temp, dayIdx).filter(Number.isFinite);
@@ -431,12 +493,12 @@ export async function fetchOpenMeteo(lat, lon, placeName = '当前位置') {
       textDay: '',
       codeNight: qwCode(d.weather_code?.[di], true),
       textNight: '',
-      pop: round(windowPop),
+      pop: Number.isFinite(popMax) ? round(popMax) : round(avg(pick(series.pop, dayIdx))),
       precip: String(round(d.precipitation_sum?.[di], 1)),
       humidity: soundings.rh2m,
       windDir: windDirText(d.wind_direction_10m_dominant?.[di]),
       windScale: beaufort(d.wind_speed_10m_max?.[di]),
-      uv: round(windowUv, 1),
+      uv: Number.isFinite(uvMax) ? round(uvMax, 1) : round(avg(pick(series.uv, dayIdx)), 1),
       cloud: round(windowCloud),
       vis: round(windowVis / 1000, 1),
       sunrise: hhmm(sunrise),
@@ -446,23 +508,20 @@ export async function fetchOpenMeteo(lat, lon, placeName = '当前位置') {
     });
   });
 
-  /* ---- 空气质量 ---- */
+  /* ---- 空气质量：按中国国标自算，不用欧洲 EAQI ---- */
   let airBlock = null;
-  if (air?.hourly?.time?.length) {
-    const aTimes = air.hourly.time.map(parseLocal);
-    let ai = aTimes.findIndex((t) => t && t >= new Date(now.getTime() - 60 * 60e3));
-    if (ai < 0) ai = 0;
-    const aqi = Number(air.hourly.european_aqi?.[ai]);
-    if (Number.isFinite(aqi)) {
-      airBlock = {
-        aqi: round(aqi),
-        category: aqi <= 20 ? '优' : aqi <= 40 ? '良' : aqi <= 60 ? '中等' : aqi <= 80 ? '差' : aqi <= 100 ? '很差' : '极差',
-        level: String(aqi <= 20 ? 1 : aqi <= 40 ? 2 : aqi <= 60 ? 3 : aqi <= 80 ? 4 : 5),
-        primary: 'PM2.5',
-        pm2p5: String(round(air.hourly.pm2_5?.[ai], 1)),
-        pm10: String(round(air.hourly.pm10?.[ai], 1)),
-        standard: 'EAQI'
-      };
+  const ac = air?.current;
+  if (ac) {
+    const computed = computeAqi({
+      pm25: Number(ac.pm2_5),
+      pm10: Number(ac.pm10),
+      so2: Number(ac.sulphur_dioxide),
+      no2: Number(ac.nitrogen_dioxide),
+      co: Number(ac.carbon_monoxide),
+      o3: Number(ac.ozone)
+    });
+    if (computed) {
+      airBlock = { ...computed, observedAt: parseLocal(ac.time) || now };
     }
   }
 

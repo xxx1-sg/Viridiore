@@ -49,10 +49,16 @@ function normalizeQWeather(lat, lon, placeName, parts) {
       windScale: String(now.windScale ?? '--'),
       windSpeed: String(now.windSpeed ?? '--'),
       pressure: String(now.pressure ?? '--'),
+      pressureStation: null,
+      pressureDelta: null,
       vis: String(now.vis ?? '--'),
+      visMeters: Number.isFinite(Number(now.vis)) ? Number(now.vis) * 1000 : NaN,
       cloud: String(now.cloud ?? '--'),
       dew: String(now.dew ?? '--'),
-      precip: String(now.precip ?? '0.0')
+      precip: String(now.precip ?? '0.0'),
+      gust: '--',
+      isDay: true,
+      observedAt: new Date(now.obsTime || Date.now())
     },
     hourly: (hourly?.hourly || []).slice(0, 24).map((h) => ({
       time: new Date(h.fxTime),
@@ -94,9 +100,13 @@ function normalizeQWeather(lat, lon, placeName, parts) {
           category: air.now?.category || '--',
           level: String(air.now?.level || '1'),
           primary: air.now?.primary || '--',
-          pm2p5: String(air.now?.pm2p5 ?? '--'),
-          pm10: String(air.now?.pm10 ?? '--'),
-          standard: 'CN MEE'
+          tone: 'good',
+          standard: 'CN MEE',
+          // 和风只给 PM2.5 / PM10 两项，其余留空，页面会照实显示两项而不是编造
+          pollutants: [
+            { key: 'pm25', name: 'PM2.5', unit: 'μg/m³', value: round(air.now?.pm2p5), iaqi: null },
+            { key: 'pm10', name: 'PM10', unit: 'μg/m³', value: round(air.now?.pm10), iaqi: null }
+          ].filter((p) => Number.isFinite(p.value))
         }
       : null,
     warnings: (warnings?.warning || []).map((w) => ({
@@ -155,16 +165,19 @@ async function enrichFromQWeather(bundle, lat, lon) {
     bundle.warningProvider = '和风天气';
   }
 
-  // Open-Meteo 的空气质量是欧洲标准，有和风时优先用国内的
+  // 有和风时用国内生态环境部的 AQI，比 Open-Meteo 自算的更接近官方发布值
   if (air.status === 'fulfilled' && air.value?.now?.aqi) {
     bundle.air = {
       aqi: round(air.value.now.aqi),
       category: air.value.now.category || '--',
       level: String(air.value.now.level || '1'),
       primary: air.value.now.primary || '--',
-      pm2p5: String(air.value.now.pm2p5 ?? '--'),
-      pm10: String(air.value.now.pm10 ?? '--'),
-      standard: 'CN MEE'
+      tone: 'good',
+      standard: 'CN MEE',
+      pollutants: [
+        { key: 'pm25', name: 'PM2.5', unit: 'μg/m³', value: round(air.value.now.pm2p5), iaqi: null },
+        { key: 'pm10', name: 'PM10', unit: 'μg/m³', value: round(air.value.now.pm10), iaqi: null }
+      ].filter((p) => Number.isFinite(p.value))
     };
   }
 

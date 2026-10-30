@@ -93,6 +93,24 @@ app.whenReady().then(async () => {
       const image = await win.webContents.capturePage();
       fs.writeFileSync(path.join(OUT, `${vp.name}-${route}.png`), image.toPNG());
       console.log(`[shot] ${vp.name}-${route}`);
+
+      // 再截一张首屏以下的：很多布局问题（卡片压字、区块贴太紧）只在滚动后才看得到
+      const scrollInfo = await win.webContents.executeJavaScript(`
+        (() => {
+          const de = document.documentElement;
+          de.style.scrollBehavior = 'auto';
+          const max = de.scrollHeight - window.innerHeight;
+          window.scrollTo(0, Math.min(max, 1100));
+          return { max };
+        })()
+      `);
+      if (scrollInfo.max > 30) {
+        await sleep(450);
+        const image2 = await win.webContents.capturePage();
+        fs.writeFileSync(path.join(OUT, `${vp.name}-${route}-b.png`), image2.toPNG());
+        await win.webContents.executeJavaScript('window.scrollTo(0, 0)');
+        console.log(`[shot] ${vp.name}-${route}-b`);
+      }
     }
   }
 
