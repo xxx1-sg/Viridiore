@@ -24,3 +24,6 @@ site/download/*.exe
 
 # 运行期产生的日志目录
 NVIDIA Corporation/
+
+# 临时脚本产物
+.tmp/
