@@ -87,18 +87,22 @@ npm run preview    # 预览构建产物
 
 和风天气是**可选项**，只补两样 Open-Meteo 没有的东西：中国气象局的气象预警、国内 AQI 口径的空气质量。想开的话：
 
+**Key 和 Host 要一起填，只填 Key 用不了。**
+
+2024 年之后注册的和风账号都会分配一个**专属 API Host**（形如 `https://abcdefg.re.qweatherapi.com`），旧公共域名 `devapi.qweather.com` 对新账号一律返回 `403 Invalid Host`。Host 在控制台「项目管理 → 打开项目」页顶部，复制过来时不用管有没有 `https://`，程序会自己补。
+
 **方式 A：App 内填写（推荐）**
-进入「设置 → 和风天气」，粘贴 Key 与 Host，点「测试连接」。只保存在本机 `localStorage`，优先级最高。
+进入「设置 → 和风天气」，粘贴 Key 与 Host，点「测试连接」。两个值只保存在本机 `localStorage`，优先级最高，换机器才需要重填。
 
 **方式 B：构建时注入**
 
 ```bash
 cp .env.example .env
-# 编辑 .env，填入 VITE_QWEATHER_KEY / VITE_QWEATHER_HOST
+# 编辑 .env，填入 VITE_QWEATHER_KEY 与 VITE_QWEATHER_HOST
 npm run build
 ```
 
-> **安全提醒**：前端打包产物里的 Key 一定会被扒出来。`.env` 已在 `.gitignore` 中，但真正上线前请到和风控制台设置**域名白名单**并开启**用量告警**，或者把请求转发到你自己的服务端。
+> **安全提醒**：前端打包产物里的 Key 一定会被扒出来，**装到别人机器上的安装包尤其如此**——拿到 exe 的人解包就能看到。`.env` 已在 `.gitignore` 中，但真要分发，请到和风控制台设置**域名白名单**并开启**用量告警**，或者把请求转发到你自己的服务端。公开发布的安装包建议不内置 Key，让使用者自己填。
 
 不填 Key 不影响追光和天气——追光的逆温判据本来就依赖 Open-Meteo 的气压层数据，和风给不了。
 
@@ -185,7 +189,7 @@ src/
 │  ├─ weather.js            天气加载、缓存、多源编排
 │  ├─ openmeteo.js          Open-Meteo 客户端（主源，含气压层）
 │  ├─ aqi.js                中国 AQI 算法（HJ 633-2012 分段插值）
-│  ├─ qweather.js           和风天气 API（可选增强）
+│  ├─ qweather.js           和风天气 API（可选增强，需专属 Host）
 │  ├─ sun.js                日出日落方位角、月相（NOAA）
 │  ├─ geo.js                定位、方位、电池
 │  ├─ tracker.js            GPS 记录器（Worker 客户端）

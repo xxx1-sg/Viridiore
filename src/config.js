@@ -8,8 +8,8 @@ const env = import.meta.env || {};
 const DEFAULTS = {
   qweather: {
     key: env.VITE_QWEATHER_KEY || '',
-    host: env.VITE_QWEATHER_HOST || 'https://devapi.qweather.com',
-    geoHost: env.VITE_QWEATHER_GEOHOST || 'https://geoapi.qweather.com'
+    host: env.VITE_QWEATHER_HOST || '',
+    geoHost: env.VITE_QWEATHER_GEOHOST || ''
   },
   app: {
     version: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.1.0',
@@ -67,9 +67,14 @@ export const config = {
     localStorage.removeItem(SETTINGS_KEY);
     current = deepMerge(DEFAULTS, {});
   },
+  /**
+   * 和风是否可用：Key 和 API Host 缺一不可。
+   * 2024 年后注册的账号必须用专属 Host，只填 Key 连不上——
+   * 与其让它去撞 403 再把错误吞掉，不如在这里就判成「未配置」。
+   */
   hasQWeather() {
-    const key = current.qweather.key;
-    return !!key && !/^YOUR_/.test(key);
+    const { key, host } = current.qweather;
+    return !!key && !/^YOUR_/.test(key) && !!host;
   },
   /**
    * 主数据源说明。

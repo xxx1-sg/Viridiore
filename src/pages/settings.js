@@ -27,7 +27,13 @@ export default {
 
   template() {
     const cfg = config.all;
-    const src = config.hasQWeather() ? 'Open-Meteo + 和风天气（预警 / 空气质量）' : 'Open-Meteo（免费，无需 Key）';
+    const hasKey = !!config.get('qweather.key');
+    const hasHost = !!config.get('qweather.host');
+    const src = config.hasQWeather()
+      ? 'Open-Meteo + 和风天气（预警 / 空气质量）'
+      : hasKey && !hasHost
+        ? 'Open-Meteo（和风已填 Key，还差 API Host）'
+        : 'Open-Meteo（免费，无需 Key）';
     return `
       <div class="page-head">
         <div>
@@ -55,7 +61,7 @@ export default {
             <input class="input" id="qwHost" type="text" placeholder="https://xxxxxxxx.re.qweatherapi.com" value="${escapeHtml(
               cfg.qweather.host || ''
             )}" />
-            <span class="field__hint">免费版必须填控制台分配的专属 Host；不确定可先保持 devapi.qweather.com。</span>
+            <span class="field__hint">2024 年后注册的账号必须填专属 Host，否则接口返回 403 Invalid Host。<br />在控制台「项目管理 → 打开项目」里复制，形如 https://abcdefg.re.qweatherapi.com，结尾不要带斜杠。</span>
           </label>
           <div class="row" style="gap:8px">
             <button class="btn btn--sm btn--primary" type="button" data-action="test-weather">${icon(
@@ -159,7 +165,7 @@ export default {
       config.set({
         qweather: {
           key: $('#qwKey').value.trim(),
-          host: $('#qwHost').value.trim() || 'https://devapi.qweather.com'
+          host: $('#qwHost').value.trim()
         }
       });
       bus.emit('config:change', config.all);
@@ -197,8 +203,12 @@ export default {
       switch (action.dataset.action) {
         case 'test-weather': {
           saveConfig();
-          if (!config.hasQWeather()) {
+          if (!config.get('qweather.key')) {
             toastWarn('请先填写 API Key');
+            return;
+          }
+          if (!config.get('qweather.host')) {
+            toastWarn('还差 API Host：控制台「项目管理 → 打开项目」里复制专属域名填进来');
             return;
           }
           const btn = action;
