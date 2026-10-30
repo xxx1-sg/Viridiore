@@ -71,9 +71,13 @@ export const config = {
     const key = current.qweather.key;
     return !!key && !/^YOUR_/.test(key);
   },
-  /** 供"数据来源"标识使用 */
+  /**
+   * 主数据源说明。
+   * v2.2 起追光与天气默认走 Open-Meteo（免费、无需注册、提供气压层），
+   * 和风 Key 变成可选增强项，不再是"能不能用"的开关。
+   */
   weatherSource() {
-    return this.hasQWeather() ? '和风天气' : '演示数据';
+    return this.hasQWeather() ? 'Open-Meteo + 和风天气' : 'Open-Meteo';
   }
 };
 

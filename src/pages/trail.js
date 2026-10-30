@@ -3,7 +3,7 @@ import { icon } from '../core/icons.js';
 import { CanvasMap } from '../components/mapview.js';
 import { TrailTracker } from '../services/tracker.js';
 import { trailRepo, bus } from '../core/store.js';
-import { formatDate, formatDistance, formatDuration, humanDuration, relTime } from '../core/format.js';
+import { formatDate, formatTime, formatDistance, formatDuration, humanDuration, relTime } from '../core/format.js';
 import { download, toGPX } from '../services/exporter.js';
 import { buildNarrative, compareWithPrevious } from '../services/narrative.js';
 import { renderCard, downloadCard, shareCard } from '../services/sharecard.js';
@@ -99,7 +99,7 @@ export default {
             <h2 class="section__title">历史记录</h2>
             <p class="section__desc">存在本机 IndexedDB，不上传云端</p>
           </div>
-          <button class="btn btn--sm btn--ghost" type="button" data-action="demo">载入示例</button>
+          <button class="btn btn--sm btn--ghost" type="button" data-action="demo" title="生成一段示例轨迹，仅用于体验卡片生成，不是你真实走过的路">载入示例轨迹</button>
         </div>
         <div class="stack" id="trailHistory">
           <div class="loading-inline"><span class="spinner"></span>读取中…</div>
@@ -361,7 +361,9 @@ export default {
       const canvas = renderCard({
         narrative,
         mode: 'hike',
-        sourceLabel: appState.weather?.source === 'live' ? '实时天气' : '演示天气'
+        sourceLabel: appState.weather?.providerName
+          ? `${appState.weather.providerName} · ${formatTime(appState.weather.updatedAt)}`
+          : '未取到天气'
       });
 
       const filename = `晓山青-${trail.startedAt ? formatDate(trail.startedAt) : '轨迹'}.png`;

@@ -110,7 +110,7 @@ export default {
           <div class="kv"><span class="kv__k">日出 / 日落</span><span class="kv__v" id="wxSun">--</span></div>
           <div class="kv"><span class="kv__k">月相</span><span class="kv__v" id="wxMoon">--</span></div>
           <p class="field__hint" style="margin-top:10px">
-            未配置和风天气 Key 时使用本地演示数据；配置后自动切换真实预报。
+            预报来自 Open-Meteo（ECMWF / GFS 数值模式），免费且无需注册；填入和风天气 Key 后，会额外补上中国气象预警与国内空气质量标准。
           </p>
         </div>
       </section>
@@ -125,7 +125,7 @@ export default {
       const { now, hourly, daily, air, indices, sun, moon } = wx;
 
       $('#wxCityName').textContent = wx.place.name;
-      $('#wxSource').textContent = wx.source === 'live' ? '和风天气' : '演示数据';
+      $('#wxSource').textContent = wx.providerName || '实时数据';
       $('#wxTemp').textContent = now.temp;
       $('#wxCond').textContent = `${now.text}`;
 
@@ -165,7 +165,7 @@ export default {
         )
         .join('');
 
-      $('#wxUpdated').textContent = `${formatTime(wx.updatedAt)} 更新 · ${wx.source === 'live' ? '真实预报' : '演示数据'}`;
+      $('#wxUpdated').textContent = `${formatTime(wx.updatedAt)} 更新 · ${wx.providerName || '实时预报'}`;
 
       /* 逐小时 */
       const hourlyHost = $('#wxHourly');
@@ -209,10 +209,14 @@ export default {
           .join('');
       }
 
-      /* AQI */
+      /* AQI —— 注意口径：没配和风 Key 时只有欧洲 EAQI，数值不能和国内 AQI 直接比 */
       if (air) {
+        const isEu = air.standard === 'EAQI';
         $('#wxAirBadge').className = `badge ${aqiTone(air.aqi)}`;
-        $('#wxAirBadge').textContent = `AQI ${air.aqi} ${air.category}`;
+        $('#wxAirBadge').textContent = isEu ? `EAQI ${air.aqi}` : `AQI ${air.aqi} ${air.category}`;
+        $('#wxAirBadge').title = isEu
+          ? `欧洲空气质量指数 ${air.aqi}（${air.category}）。口径比国内 AQI 严，同一片空气两套标准会差一个等级，不能直接对比。`
+          : `中国生态环境部 AQI ${air.aqi}（${air.category}）`;
       }
 
       /* 生活指数 */
@@ -234,7 +238,7 @@ export default {
       }
 
       /* 说明 */
-      $('#wxProvider').textContent = wx.source === 'live' ? '和风天气 QWeather' : '本地演示算法';
+      $('#wxProvider').textContent = wx.providerName === '和风天气' ? '和风天气 QWeather' : 'Open-Meteo（ECMWF / GFS）';
       $('#wxTime').textContent = formatTime(wx.updatedAt);
       $('#wxSun').textContent = sun?.sunrise
         ? `${formatTime(sun.sunrise)} / ${formatTime(sun.sunset)}`

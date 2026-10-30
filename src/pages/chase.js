@@ -205,7 +205,7 @@ export default {
         .join('');
 
       $('#chaseWindowDesc').textContent = `${MODES[mode].name} · 基准率 ${best.baseRate}% · ${
-        wx.source === 'demo' ? '演示数据' : '实时预报'
+        wx.providerName || '实时预报'
       }`;
 
       /* 证据链 */
@@ -300,7 +300,7 @@ export default {
         narrative,
         mode,
         probability: best.probability,
-        sourceLabel: wx.source === 'demo' ? '演示数据预测' : '实时预报'
+        sourceLabel: `${wx.providerName || '实时预报'} · ${formatTime(wx.updatedAt)} 更新`
       });
 
       openModal({

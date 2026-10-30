@@ -31,10 +31,12 @@ const tabItemHtml = (item) => `<button class="tabbar__item" type="button" data-n
   </button>`;
 
 function dataSourceLabel() {
-  const src = appState.weather?.source;
-  if (src === 'live') return { text: '实时数据', tone: 'live' };
-  if (src === 'demo') return { text: '演示数据', tone: 'demo' };
-  return { text: navigator.onLine ? '在线' : '离线', tone: 'idle' };
+  const wx = appState.weather;
+  if (wx?.source === 'live') {
+    return { text: wx.providerName || '实时数据', tone: 'live' };
+  }
+  if (!navigator.onLine) return { text: '离线', tone: 'idle' };
+  return { text: appState.weatherStatus === 'error' ? '取数失败' : '未连接', tone: 'idle' };
 }
 
 export function mountShell(root) {
@@ -96,7 +98,7 @@ export function mountShell(root) {
     themeBtn.title = `主题：${themeManager.label()}`;
   }
 
-  /* 数据来源徽标：演示数据必须显式标注，不能让用户误以为是真实预报 */
+  /* 数据来源徽标：显示真实提供方，取数失败就直说，不伪装成有数据 */
   function syncNet() {
     const { text, tone } = dataSourceLabel();
     netPill.textContent = text;
@@ -106,6 +108,7 @@ export function mountShell(root) {
   window.addEventListener('online', syncNet);
   window.addEventListener('offline', syncNet);
   bus.on('weather:change', syncNet);
+  bus.on('weather:status', syncNet);
 
   const onScroll = () => topbar.classList.toggle('is-stuck', window.scrollY > 4);
   window.addEventListener('scroll', onScroll, { passive: true });
@@ -137,11 +140,12 @@ export async function maybeShowIntro() {
       '只做三件事：\n' +
       '· 追光 —— 告诉你明早几点、去哪座山、多大几率看到云海\n' +
       '· 轨迹 —— 记录走过的路，回来生成一张可保存的卡片\n' +
-      '· 天气 —— 实时与七日预报，含气象预警\n\n' +
-      '现在是演示数据。到「设置」填入和风天气的 Key，就会切换成真实预报。',
-    confirmText: '填 Key',
+      '· 天气 —— 实时与七日预报\n\n' +
+      '打开就是真实预报，不用注册、不用填 Key。追光的概率由 850 hPa 层结数据实算，' +
+      '每个加减项都能点开看原始数值。',
+    confirmText: '知道了',
     cancelText: '先看看',
     iconName: 'sparkles'
   });
-  if (go) navigate('settings');
+  if (go) navigate('home');
 }

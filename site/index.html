@@ -81,7 +81,7 @@
       明早哪座山、几点出发、多大几率看到云海——算成一个百分比。算不出来，就直说。
     </p>
     <div class="hero__actions">
-      <a class="btn btn--primary" href="#download">
+      <a class="btn btn--primary" href="download/XiaoShanQing-2.2.0-Setup-x64.exe" download>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16" /></svg>
         下载 Windows 版
       </a>
@@ -90,7 +90,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" /></svg>
       </a>
     </div>
-    <p class="hero__meta">v2.1.0 &nbsp;·&nbsp; Windows 10 / 11 64 位 &nbsp;·&nbsp; 82 MB &nbsp;·&nbsp; 无需注册账号</p>
+    <p class="hero__meta">v2.2.0 &nbsp;·&nbsp; Windows 10 / 11 64 位 &nbsp;·&nbsp; 82 MB &nbsp;·&nbsp; 无需注册账号</p>
+    <p class="hero__alt">
+      点了没反应或下到一半断了？<a href="https://github.com/xxx1-sg/Viridiore/releases/download/v2.2.0/XiaoShanQing-2.2.0-Setup-x64.exe" rel="noopener">换 GitHub 源</a>，那边支持断点续传。
+    </p>
   </div>
 
   <div class="hero__shot reveal">
@@ -268,8 +271,8 @@
     <p class="sec-label center light">下载</p>
     <h2 class="sec-title center light">选一个装到你机器上</h2>
     <p class="sec-sub center light">
-      全部离线运行。天气数据需要你自己填一个和风天气的 Key（免费额度每天 1000 次），
-      不填也能用——内置演示数据，12 个页面都能打开。
+      装完就能看真实预报：不用注册、不用填 Key、不用登录。追光的概率由 925 / 850 hPa 的实测层结算出来，
+      每一项加减都能展开看到原始数值——算不出来的时候，它会直说算不出来。
     </p>
 
     <div class="dl-grid">
@@ -288,11 +291,14 @@
           <li>82 MB · 安装后约 250 MB</li>
           <li>卸载走系统「应用和功能」</li>
         </ul>
-        <a class="btn btn--primary btn--block" href="download/XiaoShanQing-2.1.0-Setup-x64.exe" download>
+        <a class="btn btn--primary btn--block" href="download/XiaoShanQing-2.2.0-Setup-x64.exe" download>
           下载安装包
           <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16" /></svg>
         </a>
-        <p class="dl-card__hash">XiaoShanQing-2.1.0-Setup-x64.exe</p>
+        <p class="dl-card__hash">XiaoShanQing-2.2.0-Setup-x64.exe</p>
+        <a class="dl-card__alt" href="https://github.com/xxx1-sg/Viridiore/releases/download/v2.2.0/XiaoShanQing-2.2.0-Setup-x64.exe" rel="noopener">
+          下不动？换 GitHub 源（支持断点续传）
+        </a>
       </article>
 
       <article class="dl-card">
@@ -310,11 +316,14 @@
           <li>82 MB · 首次启动解压约 3 秒</li>
           <li>删掉文件即卸载干净</li>
         </ul>
-        <a class="btn btn--ghost btn--block" href="download/XiaoShanQing-2.1.0-Portable-x64.exe" download>
+        <a class="btn btn--ghost btn--block" href="download/XiaoShanQing-2.2.0-Portable-x64.exe" download>
           下载绿色版
           <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16" /></svg>
         </a>
-        <p class="dl-card__hash">XiaoShanQing-2.1.0-Portable-x64.exe</p>
+        <p class="dl-card__hash">XiaoShanQing-2.2.0-Portable-x64.exe</p>
+        <a class="dl-card__alt" href="https://github.com/xxx1-sg/Viridiore/releases/download/v2.2.0/XiaoShanQing-2.2.0-Portable-x64.exe" rel="noopener">
+          下不动？换 GitHub 源（支持断点续传）
+        </a>
       </article>
 
       <article class="dl-card">
@@ -351,6 +360,12 @@
       </p>
       <a class="btn btn--ghost btn--sm" href="app/index.html" target="_blank" rel="noopener">手机浏览器打开</a>
     </div>
+
+    <p class="dl-warn">
+      <strong>下到一半卡住、或者进度条半天不动</strong>：这两个包都是 82 MB，本站出口带宽有限，
+      视网络大概要 3～5 分钟，而且<strong>不支持断点续传</strong>——断了只能从头再来。
+      遇到这种情况别反复重试，直接点卡片下面的「换 GitHub 源」，那边支持续传，浏览器能接着下。
+    </p>
 
     <p class="dl-warn">
       <strong>关于「Windows 已保护你的电脑」</strong>：安装包没有做代码签名（个人开发者证书一年几千元），
@@ -423,7 +438,7 @@
   <div class="wrap foot__inner">
     <div class="foot__brand">
       <span class="foot__name">晓山青</span>
-      <span class="foot__sub">VIRIDIORE · v2.1.0</span>
+      <span class="foot__sub">VIRIDIORE · v2.2.0</span>
     </div>
     <nav class="foot__links">
       <a href="#how">模型</a>
@@ -432,7 +447,8 @@
       <a href="app/index.html">网页版</a>
     </nav>
     <p class="foot__note">
-      天气数据来自和风天气（需自备 Key），未配置时使用内置演示数据并明确标注。
+      天气数据来自 Open-Meteo（ECMWF / GFS 数值模式），免费、无需 Key；填一个和风天气 Key 可另补气象预警与国内 AQI。
+      没有演示数据——取数失败就显示失败，不拿编造的天气充数。
       <br />所有轨迹与偏好只存在本机浏览器，不上传。
     </p>
   </div>

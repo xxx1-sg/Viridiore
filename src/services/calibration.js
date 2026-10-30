@@ -23,7 +23,7 @@ async function ensure() {
 }
 
 /** 记录一次反馈（同一天同一模式只保留最新一条） */
-export async function recordFeedback({ mountainId, mode, date, predicted, observed, source = 'demo' }) {
+export async function recordFeedback({ mountainId, mode, date, predicted, observed, source = 'live' }) {
   const record = {
     id: `${mountainId}_${mode}_${date}`,
     mountainId,

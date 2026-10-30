@@ -362,6 +362,26 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   color: rgba(235, 244, 236, 0.42);
 }
 
+/* hero 备用下载源提示 */
+.hero__alt {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(235, 244, 236, 0.34);
+}
+
+.hero__alt a {
+  color: rgba(232, 184, 113, 0.92);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(232, 184, 113, 0.35);
+  padding-bottom: 1px;
+}
+
+.hero__alt a:hover {
+  color: #f2c98a;
+  border-bottom-color: rgba(242, 201, 138, 0.7);
+}
+
 .hero__shot {
   position: relative;
   z-index: 3;
@@ -844,6 +864,25 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   color: rgba(235, 244, 236, 0.28);
   text-align: center;
   word-break: break-all;
+}
+
+/* 备用下载源：官网带宽有限，大文件走 GitHub 更稳 */
+.dl-card__alt {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  color: rgba(235, 244, 236, 0.42);
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(235, 244, 236, 0.18);
+  padding-bottom: 1px;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.dl-card__alt:hover {
+  color: #e8b871;
+  border-bottom-color: rgba(232, 184, 113, 0.5);
 }
 
 .dl-mobile {

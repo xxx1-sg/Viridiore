@@ -1,5 +1,5 @@
 /**
- * 追光：把 7 日预报折算成"能不能看到"的概率
+ * 追光：把真实预报折算成"能不能看到"的概率
  *
  * 三个刻意的设计选择：
  *
@@ -11,31 +11,27 @@
  *    云海在华南是季节性现象（11—3 月为主），不问月份的模型都是耍流氓。
  *    先验取该月历史基准率，再用当日物理证据在 log-odds 上做加减。
  *
- * 3. 每一项加减都有物理含义，可被反驳。
- *    核心判据是"云层在你脚下吗"——用抬升凝结高度算云底，加厚度得云顶，
- *    再和山顶海拔比。这套东西比"湿度 85% 就给高分"靠谱，也解释得清。
+ * 3. 每一项加减都能追到某个真实观测量。
+ *    v2.2 起不再有"代理指标"：云底由 API 给的真实露点算 LCL，
+ *    逆温由 925 / 850 hPa 的实际温度直减率判定，层厚由低云量与
+ *    850 hPa 湿度给出。任何一个数字被质疑，都能指着原始数据复核。
  *
- * 已知局限（写在这里而不是藏起来）：
- *   · 850 hPa 湿度、风速垂直切变需要探空资料，免费 API 拿不到，
- *     逆温强度只能用昼夜温差 + 夜间云量 + 风力做代理估算；
- *   · 山谷实际地形起伏未建模，用固定基准海拔近似；
- *   · 先验是经验值，不是本地气候统计年鉴，所以必须靠用户反馈校准。
+ * 仍然存在的局限（写在 README 与本文件，不藏）：
+ *   · 山谷具体地形未建模，云底是相对测站的一阶估计，几百米量级误差；
+ *   · 先验是经验基准率，不是本地气候统计年鉴，要靠用户反馈校准；
+ *   · 高空变量来自数值模式同化场，不是本地探空实测。
  */
 import {
   dewSpread,
-  cloudBaseAltitude,
+  lclFromDewPoint,
+  inversionProfile,
   inversionIndex,
-  estimatePop,
-  windScaleNum,
   clamp01,
   clamp,
   sigmoid,
   logit
 } from './atmos.js';
 import { sunTimes, sunriseAzimuth, facingSlopeLabel } from './sun.js';
-
-const VALLEY_ELEVATION = 25; // 深圳/惠州山脚基准海拔（m）
-const STATION_ELEVATION = 30; // 天气数据测站海拔（m）
 
 /**
  * 月度基准率（先验）
@@ -76,32 +72,65 @@ export const MODES = {
 /* ---------------- 云层几何 ---------------- */
 
 /**
- * 由夜间温湿推算云层位置
- * 云底 = 测站海拔 + LCL；云顶 = 云底 + 厚度（厚度随水汽增长）
+ * 由真实层结数据推算云层位置
+ *
+ * 云底 = 测站海拔 + LCL，LCL 用 API 直接给出的露点算：
+ *   露点越接近气温，空气越接近饱和，云底越低。
+ * 云顶 = 云底 + 厚度，厚度由低云量与 850 hPa 湿度共同决定：
+ *   低云量高说明云是成片的层状云，850 湿度高说明水汽供给充足，
+ *   两者都指向更厚、更像"海"的云层。
+ *
+ * 注意 cloudLow 是低云覆盖率，它回答"有没有云"；
+ * LCL 回答"云在哪"。云海需要两个条件同时成立：有云，且云在你脚下。
  */
 export function cloudGeometry(day) {
-  const nightTemp = Number(day.min ?? day.tempNight ?? 18);
-  const rh = Number(day.humidity ?? 70);
-  const spread = dewSpread(nightTemp, rh);
-  const base = cloudBaseAltitude(nightTemp, rh, STATION_ELEVATION);
-  const moist = clamp01((rh - 68) / 30);
-  const thickness = 220 + 620 * moist;
+  const s = day.soundings || {};
+  const station = Number(s.stationElevation) || 25;
+
+  const t2m = Number.isFinite(Number(s.t2m)) ? Number(s.t2m) : Number(day.min ?? day.tempNight ?? 18);
+  const td = Number.isFinite(Number(s.td2m))
+    ? Number(s.td2m)
+    : t2m - dewSpread(t2m, Number(day.humidity ?? 70));
+
+  const lcl = lclFromDewPoint(t2m, td);
+  const base = station + (lcl ?? 0);
+  const spread = Math.max(0, t2m - td);
+
+  const cloudLow = Number.isFinite(Number(s.cloudLow)) ? Number(s.cloudLow) : Number(day.cloud ?? 50);
+  const rh850 = Number.isFinite(Number(s.rh850)) ? Number(s.rh850) : 70;
+
+  const thickness = 160 + 780 * (0.6 * clamp01(cloudLow / 100) + 0.4 * clamp01((rh850 - 50) / 50));
+  const top = base + thickness;
+
   return {
-    nightTemp,
-    rh,
+    nightTemp: t2m,
+    dewPoint: td,
     spread,
+    lcl,
     base,
     thickness,
-    top: base + thickness,
-    moist,
-    dewPoint: nightTemp - spread
+    top,
+    cloudLow,
+    rh850,
+    /**
+     * 低云覆盖率 > 25% 才算"成片低云"。
+     * 12% 的散云不叫云海——天空通透，云块零散，看不到"海"。
+     */
+    hasLayer: cloudLow > 25,
+    /** 有低云且云底在 3000 m 以下，才可能是肉眼可见的云海 */
+    believable: cloudLow > 25 && base < 3200
   };
 }
 
 /* ---------------- 单日评估 ---------------- */
 
+const num = (v, d = NaN) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : d;
+};
+
 /**
- * @param {object} day 日预报
+ * @param {object} day 日预报（含 soundings 真实层结）
  * @param {string} mode cloudsea | sunrise | stars
  * @param {object} ctx { mountain, source, dayIndex, moonIllum, calibration, cloudseaProb }
  */
@@ -110,14 +139,29 @@ export function assessDay(day, mode = 'cloudsea', ctx = {}) {
   const mountain = ctx.mountain || { elevation: 600, name: '山顶', lat: 22.58, lon: 114.2 };
   const elevation = Number(mountain.elevation) || 600;
 
+  const s = day.soundings || {};
   const geo = cloudGeometry(day);
-  const cloud = Number(day.cloud ?? 50);
-  const precip = Number(day.precip) || 0;
-  const pop = Number.isFinite(Number(day.pop)) ? Number(day.pop) : estimatePop(day);
-  const vis = Number(day.vis ?? 12);
-  const wind = windScaleNum(day.windScale);
-  const dtr = Math.max(0, Number(day.max ?? 0) - Number(day.min ?? 0));
-  const inversion = inversionIndex({ dtr, cloudNight: cloud, windScale: wind });
+
+  const cloud = num(day.cloud, 50);
+  const cloudLow = geo.cloudLow;
+  const cloudMid = num(s.cloudMid, cloud);
+  const precip = num(day.precip, 0);
+  const pop = num(day.pop, 0);
+  const vis = num(day.vis, 12);
+  const wind = num(day.windScale, 3);
+  const ws850 = num(s.ws850, NaN);
+
+  // 真实层结：拿不到高空数据时才退回代理估算，并在 factor 里说明
+  const inv = inversionProfile({
+    t2m: s.t2m,
+    z2m: s.stationElevation,
+    t925: s.t925,
+    z925: s.z925,
+    t850: s.t850,
+    z850: s.z850
+  });
+
+  const hasSounding = inv.available;
 
   const factors = [];
   const add = (key, label, value, delta, detail) => {
@@ -125,43 +169,121 @@ export function assessDay(day, mode = 'cloudsea', ctx = {}) {
     factors.push({ key, label, value, delta, detail, tone: delta > 0 ? 'pro' : 'con' });
   };
 
-  let cloudseaProb = ctx.cloudseaProb;
+  const cloudseaProb = ctx.cloudseaProb;
 
   if (mode === 'cloudsea') {
     // 云层相对山顶的位置——决定性判据
     const margin = elevation - geo.top;
     const above = clamp01(margin / 200); // 高出云顶越多越好
-    const inCloud = clamp01((geo.top - elevation) / 350); // 云顶压过山顶 = 雾里
-    const hasLayer = clamp01((geo.top - VALLEY_ELEVATION) / 300); // 山谷里确实有云
+    const inCloud = clamp01((geo.top - elevation) / 350); // 云顶压过山顶 = 在雾里
 
     add(
       'cloudbase',
       '云层位置',
-      `云顶约 ${Math.round(geo.top)} m`,
-      2.3 * above * hasLayer - 2.0 * inCloud,
-      margin >= 0
-        ? `云顶在山顶以下约 ${Math.round(margin)} m，你站的位置在云上`
-        : `云顶高出山顶约 ${Math.round(-margin)} m，很可能身在雾中`
+      geo.hasLayer ? `云顶约 ${Math.round(geo.top)} m` : '无低云',
+      // 没有低云时，"云顶在山顶以下"是个假命题：压根没有云层，
+      // 不能因为算出来的理论云顶低就加分。
+      geo.hasLayer ? 2.4 * above - 2.2 * inCloud : -1.3,
+      !geo.hasLayer
+        ? `低云 ${Math.round(cloudLow)}%，天空没有成片低云；露点 ${geo.dewPoint.toFixed(1)} ℃ 算出的云底 ${Math.round(geo.base)} m 只是理论值`
+        : margin >= 0
+          ? `云底 ${Math.round(geo.base)} m、云顶约 ${Math.round(geo.top)} m，山顶在你脚下 ${Math.round(margin)} m`
+          : `云顶高出山顶约 ${Math.round(-margin)} m，很可能身在雾中`
     );
-    add('clouddepth', '云层厚度', `${Math.round(geo.thickness)} m`, 0.8 * (hasLayer - 0.4), hasLayer > 0.6 ? '云层有足够厚度，能成"海"' : '云层太薄，形不成规模');
-    add('moisture', '近地水汽', `${Math.round(geo.rh)}%`, 1.1 * clamp01((geo.rh - 78) / 18), `露点 ${geo.dewPoint.toFixed(1)} ℃，温度露点差 ${geo.spread.toFixed(1)} ℃`);
-    add('inversion', '逆温估算', `${Math.round(inversion * 100)}%`, 1.1 * (inversion - 0.35), '由昼夜温差、夜间云量、风力合成，非探空实测');
-    add('wind', '风力', `${wind} 级`, -0.35 * Math.max(0, wind - 3), wind >= 4 ? '风偏大，逆温层容易被搅散' : '风力温和，有利于层结稳定');
-    add('precip', '降水', `${precip} mm`, -1.5 * clamp01(precip / 8) - 0.6 * clamp01((pop - 55) / 45), precip > 0 ? '当天有降水，云层结构不稳定' : '无明显降水');
-    add('elevation', '海拔', `${elevation} m`, 0.5 * clamp01((elevation - 400) / 800), elevation >= 850 ? '海拔够高，更容易穿出云层' : '海拔偏低，云顶经常与山顶齐平');
-    add('vis', '能见度', `${vis} km`, 0.25 * clamp01((vis - 8) / 15) - 0.3 * clamp01((6 - vis) / 6), vis < 5 ? '能见度低，可能是就地起雾而非云海' : '能见度正常');
+
+    add(
+      'cloudlow',
+      '低云覆盖',
+      `${Math.round(cloudLow)}%`,
+      1.6 * (clamp01((cloudLow - 30) / 45) - 0.28),
+      cloudLow < 20
+        ? '低云太少且零散，天空通透，形不成"海"'
+        : cloudLow < 45
+          ? '低云零散，能否连片完全看运气'
+          : cloudLow > 70
+            ? '低云成片覆盖，具备成海的基本条件'
+            : '低云达到成片量级'
+    );
+
+    add(
+      'inversion',
+      hasSounding ? '逆温（实算）' : '逆温（估算）',
+      hasSounding ? `${inv.label}` : `${Math.round(inversionIndex({ dtr: Math.max(0, num(day.max, 0) - num(day.min, 0)), cloudNight: num(s.nightCloud, cloud), windScale: wind }) * 100)}%`,
+      hasSounding ? 2.0 * (inv.index - 0.35) : 0.9 * (inversionIndex({ dtr: Math.max(0, num(day.max, 0) - num(day.min, 0)), cloudNight: num(s.nightCloud, cloud), windScale: wind }) - 0.35),
+      hasSounding ? inv.note : '缺少高空层结数据，用夜间温差与风力的代理指标估计'
+    );
+
+    if (Number.isFinite(num(s.rh850))) {
+      add(
+        'moisture850',
+        '850 hPa 水汽',
+        `${Math.round(s.rh850)}%`,
+        1.1 * clamp01((s.rh850 - 62) / 28),
+        s.rh850 > 85 ? '约 1500 m 高度接近饱和，云层有充足水汽供给' : s.rh850 < 55 ? '中低层偏干，云层难以维持' : '水汽条件中等'
+      );
+    }
+
+    add(
+      'wind',
+      '风力',
+      `${Math.round(wind)} 级${Number.isFinite(ws850) ? ` · 850hPa ${ws850.toFixed(0)} m/s` : ''}`,
+      -0.35 * Math.max(0, wind - 3) - (Number.isFinite(ws850) ? 0.3 * clamp01((ws850 - 8) / 10) : 0),
+      wind >= 4 ? '地面风偏大，逆温层容易被搅散' : Number.isFinite(ws850) && ws850 > 12 ? '高空风速大，层状云会被撕开' : '风力温和，有利于层结稳定'
+    );
+
+    add(
+      'precip',
+      '降水',
+      `${precip} mm`,
+      -1.5 * clamp01(precip / 8) - 0.6 * clamp01((pop - 55) / 45),
+      precip > 0 ? '当天有降水，云层结构不稳定' : '无明显降水'
+    );
+
+    add(
+      'elevation',
+      '海拔',
+      `${elevation} m`,
+      0.5 * clamp01((elevation - 400) / 800),
+      elevation >= 850 ? '海拔够高，更容易穿出云层' : '海拔偏低，云顶经常与山顶齐平'
+    );
+
+    add(
+      'vis',
+      '能见度',
+      `${vis} km`,
+      0.25 * clamp01((vis - 8) / 15) - 0.3 * clamp01((6 - vis) / 6),
+      vis < 5 ? '能见度低，可能是就地起雾而非云海' : '能见度正常'
+    );
   }
 
   if (mode === 'sunrise') {
     const inCloud = clamp01((geo.top - elevation) / 300);
-    const overcast = clamp01((cloud - 58) / 40);
-    const niceCloud = 1 - clamp01(Math.abs(cloud - 38) / 42); // 20—55% 云量出霞最好
+    const lowBlock = clamp01((cloudLow - 55) / 45); // 低云挡东方地平线
+    // 出霞靠中高云：没有云只剩一个白点，云太厚则整片挡死
+    const niceCloud = 1 - clamp01(Math.abs(cloudMid - 40) / 42);
 
-    add('cloudcover', '总云量', `${cloud}%`, -1.3 * overcast + 0.75 * niceCloud - 0.15, cloud > 85 ? '云层过厚，太阳大概率被挡' : cloud < 12 ? '天空太干净，缺少出霞的层次' : '云量适中，霞光层次好');
+    add(
+      'cloudmid',
+      '中云量',
+      `${Math.round(cloudMid)}%`,
+      0.85 * niceCloud - 1.1 * clamp01((cloudMid - 70) / 30) - 0.2,
+      cloudMid > 85 ? '中云过厚，太阳大概率被挡' : cloudMid < 12 ? '天空太干净，缺少出霞的层次' : '中云量适中，霞光层次好'
+    );
+    add('cloudlow', '低云遮挡', `${Math.round(cloudLow)}%`, -1.3 * lowBlock, cloudLow > 70 ? '低云压住东方地平线，日出可能被挡在云下' : '低云不构成遮挡');
     add('cloudtop', '是否在云上', `${Math.round(geo.top)} m`, -1.1 * inCloud, inCloud > 0.5 ? '云顶高过山顶，可能在雾里等天亮' : '山顶在云层之上，视野通透');
-    add('precip', '降水', `${precip} mm / ${Math.round(pop)}%`, -1.5 * clamp01(precip / 6) - 0.7 * clamp01((pop - 40) / 60), precip > 0 ? '有降水，日出段可能被雨云遮挡' : '无降水干扰');
+    add(
+      'precip',
+      '降水',
+      `${precip} mm / ${Math.round(pop)}%`,
+      -1.5 * clamp01(precip / 6) - 0.7 * clamp01((pop - 40) / 60),
+      precip > 0 ? '有降水，日出段可能被雨云遮挡' : '无降水干扰'
+    );
     add('vis', '能见度', `${vis} km`, 0.6 * clamp01((vis - 8) / 15) - 0.4 * clamp01((7 - vis) / 7), vis < 6 ? '能见度差，远景发灰' : '能见度可支撑远景');
-    add('wind', '风力', `${wind} 级`, -0.4 * clamp01((wind - 4) / 4), wind >= 6 ? '山顶风大，注意保暖与站稳' : '风力可接受');
+    add('wind', '风力', `${Math.round(wind)} 级`, -0.4 * clamp01((wind - 4) / 4), wind >= 6 ? '山顶风大，注意保暖与站稳' : '风力可接受');
+
+    if (hasSounding) {
+      add('inversion', '逆温（实算）', inv.label, 0.5 * (inv.index - 0.4), inv.note);
+    }
 
     // 云海之上的日出是加分项：光线在云面上扩散，观感完全不同
     if (Number.isFinite(cloudseaProb) && cloudseaProb >= 55) {
@@ -170,16 +292,19 @@ export function assessDay(day, mode = 'cloudsea', ctx = {}) {
   }
 
   if (mode === 'stars') {
-    add('cloud', '总云量', `${cloud}%`, -2.0 * clamp01((cloud - 10) / 55), cloud > 60 ? '云量偏多，银河基本看不到' : '天空较为通透');
+    // 高云薄但会糊掉银河，低云则直接挡死，权重分开
+    const highBlock = clamp01((num(s.cloudHigh, cloud) - 25) / 50);
+    add('cloud', '总云量', `${cloud}%`, -1.7 * clamp01((cloud - 10) / 55) - 0.5 * highBlock, cloud > 60 ? '云量偏多，银河基本看不到' : '天空较为通透');
+    add('cloudlow', '低云雾', `${Math.round(cloudLow)}%`, -0.9 * clamp01((cloudLow - 20) / 40), cloudLow > 60 ? '低云或雾压顶，星点被完全遮挡' : '低层无遮挡');
     add('precip', '降水', `${precip} mm`, -1.6 * clamp01(precip / 5) - 0.5 * clamp01((pop - 30) / 70), precip > 0 ? '有降水，不适合观星' : '无降水');
-    add('humidity', '水汽', `${Math.round(geo.rh)}%`, -0.9 * clamp01((geo.rh - 68) / 26), geo.rh > 85 ? '水汽重，星光被散射变暗' : '空气干爽，星点清晰');
+    add('humidity', '水汽', `${Math.round(num(s.rh850, geo.rh850))}%`, -0.9 * clamp01((num(s.rh850, geo.rh850) - 65) / 30), num(s.rh850, geo.rh850) > 85 ? '中低层水汽重，星光被散射变暗' : '空气干爽，星点清晰');
     const moon = clamp01(ctx.moonIllum ?? 0);
     add('moon', '月光干扰', `${Math.round(moon * 100)}%`, -0.6 * moon, moon > 0.6 ? '接近满月，暗弱天体被压制' : '月光干扰小');
     add('vis', '能见度', `${vis} km`, 0.5 * clamp01((vis - 12) / 16), vis < 10 ? '能见度一般，地平附近星点稀少' : '通透度好');
-    add('wind', '风力', `${wind} 级`, -0.3 * clamp01((wind - 3) / 4), wind >= 5 ? '风大，长曝光会抖' : '风力平稳');
+    add('wind', '风力', `${Math.round(wind)} 级`, -0.3 * clamp01((wind - 3) / 4), wind >= 5 ? '风大，长曝光会抖' : '风力平稳');
   }
 
-  const delta = factors.reduce((s, f) => s + f.delta, 0);
+  const delta = factors.reduce((sum, f) => sum + f.delta, 0);
   const month = (day.dateObj instanceof Date ? day.dateObj : new Date()).getMonth();
   const prior = M.prior[month] ?? 0.15;
   const calibOffset = Number(ctx.calibration?.offset) || 0;
@@ -197,9 +322,11 @@ export function assessDay(day, mode = 'cloudsea', ctx = {}) {
     factors: sorted,
     pros: sorted.filter((f) => f.tone === 'pro').slice(0, 3),
     cons: sorted.filter((f) => f.tone === 'con').slice(0, 3),
-    confidence: confidenceOf(ctx),
+    confidence: confidenceOf({ ...ctx, hasSounding }),
     calibration: ctx.calibration || { offset: 0, n: 0 },
     geometry: geo,
+    inversion: inv,
+    sounding: s,
     verdict: verdictOf(prob),
     mode
   };
@@ -224,20 +351,20 @@ export function verdictOf(prob) {
 }
 
 /**
- * 置信度：预报时效越远越不确定；演示数据一律低置信
+ * 置信度：预报时效越远越不确定；缺高空层结时再降一档
  */
 export function confidenceOf(ctx = {}) {
   const lag = Number(ctx.dayIndex) || 0;
-  let score = 0.88 - lag * 0.065;
-  if (ctx.source === 'demo') score = Math.min(score, 0.4);
+  let score = 0.82 - lag * 0.07;
+  if (ctx.hasSounding === false) score -= 0.14; // 没有 850 hPa 数据，逆温只能估
   const n = Number(ctx.calibration?.n) || 0;
   score += Math.min(0.1, n * 0.012);
   score = clamp(score, 0.15, 0.95);
 
   const label = score >= 0.72 ? '高' : score >= 0.5 ? '中' : '低';
   const hint =
-    ctx.source === 'demo'
-      ? '当前是演示数据，概率只用于展示模型行为'
+    ctx.hasSounding === false
+      ? '缺少高空层结数据，逆温为估算值'
       : lag >= 4
         ? '预报时效较远，临出发前一天请再看一次'
         : n < 3

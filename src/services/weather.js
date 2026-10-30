@@ -1,10 +1,18 @@
 /**
- * 天气服务：优先和风天气，未配置/失败时回退演示数据
- * 返回统一的内部数据结构，页面层不关心数据来源
+ * 天气服务
+ *
+ * 数据源策略（v2.2 起）：
+ *   1. 主源 Open-Meteo：免费、无需注册、提供 850 / 925 hPa 气压层数据。
+ *      追光的逆温判据依赖它，所以这是默认源，装完就能看真实预报。
+ *   2. 补充源和风天气（可选）：只在用户自己填了 Key 时启用，
+ *      用来补中国气象预警与本地空气质量——Open-Meteo 不提供这两项。
+ *   3. 没有第三层。**不再有演示数据回退**：
+ *      预测工具拿假数据算概率，等于没有预测。取数失败就如实报错，
+ *      页面显示"重试"，而不是拿一份编造的天气糊弄过去。
  */
 import { config } from '../config.js';
 import { qweather } from './qweather.js';
-import { buildDemoWeather } from './demo.js';
+import { fetchOpenMeteo } from './openmeteo.js';
 import { cacheRepo } from '../core/store.js';
 import { sunTimes, moonPhase, moonPhaseName, moonIllumination } from './sun.js';
 import { estimatePop } from './atmos.js';
@@ -18,13 +26,17 @@ const round = (v, d = 0) => {
   return Number(n.toFixed(d));
 };
 
-function normalize(lat, lon, placeName, parts) {
+/* ---------------- 和风：归一化（仅作为备选源） ---------------- */
+
+function normalizeQWeather(lat, lon, placeName, parts) {
   const { now, hourly, daily, air, warnings, indices } = parts;
   const sun = sunTimes(new Date(), lat, lon);
   const phase = moonPhase();
 
   return {
     source: 'live',
+    provider: 'qweather',
+    providerName: '和风天气',
     updatedAt: Date.now(),
     place: { name: placeName, lat, lon },
     now: {
@@ -73,6 +85,8 @@ function normalize(lat, lon, placeName, parts) {
       sunrise: d.sunrise,
       sunset: d.sunset,
       moonPhase: d.moonPhase
+      // 注意：和风不提供气压层数据，soundings 缺失，
+      // 追光会自动降级为代理估算并在界面标注。
     })),
     air: air
       ? {
@@ -81,7 +95,8 @@ function normalize(lat, lon, placeName, parts) {
           level: String(air.now?.level || '1'),
           primary: air.now?.primary || '--',
           pm2p5: String(air.now?.pm2p5 ?? '--'),
-          pm10: String(air.now?.pm10 ?? '--')
+          pm10: String(air.now?.pm10 ?? '--'),
+          standard: 'CN MEE'
         }
       : null,
     warnings: (warnings?.warning || []).map((w) => ({
@@ -114,8 +129,52 @@ function normalize(lat, lon, placeName, parts) {
   };
 }
 
+/* ---------------- 和风：可用时补充预警与空气质量 ---------------- */
+
+async function enrichFromQWeather(bundle, lat, lon) {
+  if (!config.hasQWeather() || !bundle) return bundle;
+
+  const [warnings, air] = await Promise.allSettled([qweather.warnings(lon, lat), qweather.air(lon, lat)]);
+
+  if (warnings.status === 'fulfilled' && warnings.value?.warning?.length) {
+    bundle.warnings = warnings.value.warning.map((w) => ({
+      id: w.id,
+      title: w.title,
+      type: w.type,
+      typeName: w.typeName,
+      level: w.level,
+      severity: w.severity,
+      severityColor: w.severityColor,
+      pubTime: w.pubTime,
+      startTime: w.startTime,
+      endTime: w.endTime,
+      sender: w.sender,
+      text: w.text,
+      provider: 'qweather'
+    }));
+    bundle.warningProvider = '和风天气';
+  }
+
+  // Open-Meteo 的空气质量是欧洲标准，有和风时优先用国内的
+  if (air.status === 'fulfilled' && air.value?.now?.aqi) {
+    bundle.air = {
+      aqi: round(air.value.now.aqi),
+      category: air.value.now.category || '--',
+      level: String(air.value.now.level || '1'),
+      primary: air.value.now.primary || '--',
+      pm2p5: String(air.value.now.pm2p5 ?? '--'),
+      pm10: String(air.value.now.pm10 ?? '--'),
+      standard: 'CN MEE'
+    };
+  }
+
+  return bundle;
+}
+
+/* ---------------- 主入口 ---------------- */
+
 /**
- * 获取天气数据
+ * 获取真实天气数据
  * @param {{lat:number, lon:number, name?:string, force?:boolean}} options
  */
 export async function loadWeather({ lat, lon, name = '当前位置', force = false } = {}) {
@@ -123,10 +182,22 @@ export async function loadWeather({ lat, lon, name = '当前位置', force = fal
 
   if (!force) {
     const cached = await cacheRepo.get(key);
-    if (cached) return cached;
+    if (cached && cached.source === 'live') return cached;
   }
 
-  if (config.hasQWeather()) {
+  let bundle = null;
+  let error = null;
+
+  // 1. 主源：Open-Meteo（含气压层，追光依赖）
+  try {
+    bundle = await fetchOpenMeteo(lat, lon, name);
+  } catch (err) {
+    error = err;
+    console.warn('[weather] Open-Meteo 取数失败', err?.message || err);
+  }
+
+  // 2. 主源失败时，如果用户配了和风，用和风兜底（无气压层，追光降级）
+  if (!bundle && config.hasQWeather()) {
     try {
       const [now, hourly, daily, air, warnings, indices] = await Promise.allSettled([
         qweather.now(lon, lat),
@@ -138,7 +209,7 @@ export async function loadWeather({ lat, lon, name = '当前位置', force = fal
       ]);
 
       if (now.status === 'fulfilled') {
-        const bundle = normalize(lat, lon, name, {
+        bundle = normalizeQWeather(lat, lon, name, {
           now: now.value.now,
           hourly: hourly.status === 'fulfilled' ? hourly.value : null,
           daily: daily.status === 'fulfilled' ? daily.value : null,
@@ -146,21 +217,39 @@ export async function loadWeather({ lat, lon, name = '当前位置', force = fal
           warnings: warnings.status === 'fulfilled' ? warnings.value : null,
           indices: indices.status === 'fulfilled' ? indices.value : null
         });
-        await cacheRepo.set(key, bundle, TTL);
-        return bundle;
       }
-      console.warn('[weather] 实时数据获取失败，回退演示数据', now.reason);
     } catch (err) {
-      console.warn('[weather] 请求异常，回退演示数据', err);
+      console.warn('[weather] 和风兜底也失败', err?.message || err);
     }
   }
 
-  const demo = buildDemoWeather(lat, lon, name);
-  await cacheRepo.set(key, demo, 180);
-  return demo;
+  if (!bundle) {
+    // 如实报错，不编造数据
+    const message =
+      error?.code === 'TIMEOUT'
+        ? '天气服务响应超时，请检查网络后重试'
+        : error?.code === 'NETWORK'
+          ? '连不上天气服务，请检查网络或代理设置'
+          : error?.message || '天气数据获取失败';
+    throw new Error(message);
+  }
+
+  // 3. 和风补充预警 / 空气质量（可选，失败不影响主流程）
+  bundle = await enrichFromQWeather(bundle, lat, lon);
+
+  // 4. 补全文字描述（Open-Meteo 只给代码）
+  bundle.now.text = bundle.now.text || weatherText(bundle.now.code);
+  bundle.daily = bundle.daily.map((d) => ({
+    ...d,
+    textDay: d.textDay || weatherText(d.codeDay),
+    textNight: d.textNight || weatherText(d.codeNight)
+  }));
+
+  await cacheRepo.set(key, bundle, TTL);
+  return bundle;
 }
 
-/** 城市搜索：优先 GeoAPI，失败时用内置城市表 */
+/** 城市搜索：优先和风 GeoAPI，未配置时用内置城市表（见 data/mountains.js） */
 export async function searchCity(keyword) {
   const kw = keyword.trim();
   if (!kw) return [];

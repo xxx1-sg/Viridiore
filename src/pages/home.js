@@ -175,6 +175,18 @@ export default {
         return;
       }
       if (e.target.closest('[data-action="mountain"]')) openMountainSheet();
+      if (e.target.closest('[data-action="retry-weather"]')) {
+        $('#verdictSentence').textContent = '正在重新获取…';
+        ensureWeather(true)
+          .then((wx) => {
+            renderHero(wx);
+            renderVerdict(wx);
+          })
+          .catch((err) => {
+            $('#verdictSentence').innerHTML = `${escapeHtml(err.message || '仍然连不上')}。<br /><button class="btn btn--sm btn--ghost" type="button" data-action="retry-weather" style="margin-top:10px">再试一次</button>`;
+            toastWarn(err.message || '天气获取失败');
+          });
+      }
     });
 
     /* ---------------- 日期 ---------------- */
@@ -224,9 +236,9 @@ export default {
         )
         .join('');
 
-      $('#verdictFoot').textContent = `基准率 ${target.baseRate}% · 置信度 ${target.confidence.label}${
-        wx.source === 'demo' ? ' · 演示数据' : ''
-      }`;
+      $('#verdictFoot').textContent = `基准率 ${target.baseRate}% · 置信度 ${target.confidence.label} · ${
+        wx.providerName || '实时预报'
+      } ${formatTime(wx.updatedAt)} 更新`;
 
       /* 三个模式横排 */
       const otherModes = MODE_ORDER.map((key) => {
@@ -269,8 +281,8 @@ export default {
       $('#heroTemp').textContent = wx.now.temp;
       $('#heroCond').textContent = `体感 ${wx.now.feels}°`;
       const badge = $('#heroSource');
-      badge.textContent = wx.source === 'live' ? '实时数据' : '演示数据';
-      badge.style.opacity = wx.source === 'live' ? '1' : '0.85';
+      badge.textContent = `${wx.providerName || '实时数据'} · ${formatTime(wx.updatedAt)}`;
+      badge.style.opacity = '1';
     };
 
     /* ---------------- 问一句 ---------------- */
@@ -417,7 +429,13 @@ export default {
       renderHero(wx);
       renderVerdict(wx);
     } catch (err) {
-      $('#verdictSentence').textContent = '天气数据获取失败，稍后重试。';
+      // 取不到真实数据就直说，并给一个能点的重试入口。
+      // 这里绝不塞一份编造的天气进来充数。
+      $('#verdictNum').textContent = '--';
+      $('#verdictGrade').textContent = '取数失败';
+      $('#verdictKicker').innerHTML = `${icon('info', 13)} 没有数据`;
+      $('#verdictSentence').innerHTML = `${escapeHtml(err.message || '天气服务连不上')}。<br /><button class="btn btn--sm btn--ghost" type="button" data-action="retry-weather" style="margin-top:10px">重试</button>`;
+      $('#verdictFacts').innerHTML = '';
       toastWarn(err.message || '天气获取失败');
     }
 

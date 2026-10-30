@@ -1,10 +1,10 @@
 /* 晓山青 Service Worker — 自动生成，请勿手改 */
-const VERSION = 'f49da37a7a';
+const VERSION = 'c8bbe3a7a3';
 const STATIC_CACHE = 'mossy-static-' + VERSION;
 const RUNTIME_CACHE = 'mossy-runtime-' + VERSION;
 
 const PRECACHE = [
-  "./assets/index-DgmQS6au.js",
+  "./assets/index-C3bB2bXB.js",
   "./assets/style-GjznhsrZ.css",
   "./assets/trail.worker-BYy5JZCX.js",
   "./icons/icon-1024.png",
