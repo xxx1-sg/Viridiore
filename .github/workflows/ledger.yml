@@ -1,0 +1,82 @@
+name: forecast-ledger
+
+# 预测台账
+#
+# 两个 cron，各司其职：
+#   13:30 UTC（21:30 CST）出次日预测 —— 这个时点才有决策价值，睡觉前看，决定要不要设 4 点闹钟
+#   00:30 UTC（08:30 CST）对账前一晚，并重建 ledger.json / ledger.md
+#
+# 说明：ERA5 归档通常延迟约 5 天，所以对账会先落后几天再追上，这不是失败。
+# 台账文件一旦写入就不再修改，对账结果另存 data/verified/ —— 越晚越全，但不可回改。
+
+on:
+  schedule:
+    - cron: '30 13 * * *'
+    - cron: '30 0 * * *'
+  workflow_dispatch:
+    inputs:
+      task:
+        description: '要跑的任务'
+        type: choice
+        default: all
+        options:
+          - all
+          - collect
+          - verify
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forecast-ledger
+  cancel-in-progress: false
+
+jobs:
+  ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 判断本次要做什么
+        id: plan
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TASK="${{ github.event.inputs.task }}"
+          elif [ "${{ github.event.schedule }}" = "30 13 * * *" ]; then
+            TASK="collect"
+          else
+            TASK="verify"
+          fi
+          echo "task=$TASK" >> "$GITHUB_OUTPUT"
+          echo "本次任务：$TASK"
+
+      # 采集与对账都不依赖 node_modules：脚本直接 import src/services 下的纯函数
+      - name: 采集（写预测）
+        if: steps.plan.outputs.task == 'all' || steps.plan.outputs.task == 'collect'
+        run: node scripts/forecast/collect.mjs
+
+      - name: 对账（写实况判定）
+        if: steps.plan.outputs.task == 'all' || steps.plan.outputs.task == 'verify'
+        run: node scripts/forecast/verify.mjs
+
+      - name: 汇总（重建 ledger）
+        if: steps.plan.outputs.task == 'all' || steps.plan.outputs.task == 'verify'
+        run: node scripts/forecast/report.mjs
+
+      - name: 提交
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --staged --quiet; then
+            echo "本次没有新记录（可能已记过账，或再分析数据还没到位）"
+            exit 0
+          fi
+          git commit -m "chore(ledger): $(TZ=Asia/Shanghai date +%F) 记账"
+          git push
