@@ -45,8 +45,15 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Build installers
-        run: npm run desktop:build
+      - name: Build web assets
+        run: npm run build
+
+      # CI 环境下 electron-builder 默认会尝试自行发布（要求 GH_TOKEN）。
+      # 这里只负责打包，发布交给下面的 action-gh-release。
+      - name: Package installers
+        run: npx electron-builder --win --x64 --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
       - name: List artifacts
         shell: pwsh
