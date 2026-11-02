@@ -6,6 +6,7 @@ import { trailRepo, bus } from '../core/store.js';
 import { formatDate, formatTime, formatDistance, formatDuration, humanDuration, relTime } from '../core/format.js';
 import { download, toGPX } from '../services/exporter.js';
 import { buildNarrative, compareWithPrevious } from '../services/narrative.js';
+import { mountainRemembers } from '../services/companion.js';
 import { renderCard, downloadCard, shareCard } from '../services/sharecard.js';
 import { confirmDialog, formDialog, openModal } from '../core/modal.js';
 import { toastOk, toastError, toastWarn } from '../core/toast.js';
@@ -267,6 +268,7 @@ export default {
       }
     };
 
+    /* ---------- 保存 ---------- */
     const stopRecord = async () => {
       const result = await tracker.stop();
       const stats = result?.stats;
@@ -291,7 +293,10 @@ export default {
         return;
       }
 
-      await trailRepo.save({
+      // 先取保存前的历史，再 save —— 这样"第 N 次"基于真实的历史计数
+      const before = await trailRepo.list();
+
+      const saved = await trailRepo.save({
         name: name.name,
         note: name.note,
         points: result.points,
@@ -302,6 +307,10 @@ export default {
       toastOk('已保存到本机');
       tracker.discard();
       loadHistory();
+
+      // —— 山记得你：一次轻仪式，不是打卡，是"被记住" ——
+      const memory = mountainRemembers(saved, before);
+      if (memory) openMemoryModal(memory, saved);
     };
 
     /* ---------- 历史 ---------- */
@@ -341,6 +350,29 @@ export default {
           </div>`;
         })
         .join('');
+    };
+
+    /* ---------- 山记得你：保存后的一次轻仪式 ---------- */
+    const openMemoryModal = (memory, trail) => {
+      const statRow = memory.stat
+        ? `<p class="modal__desc" style="margin:0 0 4px">${escapeHtml(memory.stat)}</p>`
+        : '';
+      openModal({
+        title: memory.title,
+        body: `<p class="modal__desc" style="margin:0 0 6px">${escapeHtml(memory.text)}</p>${statRow}`,
+        actions: [
+          { label: '好', variant: 'ghost' },
+          {
+            label: '生成光之卡片',
+            variant: 'primary',
+            close: false,
+            onClick: ({ close }) => {
+              close();
+              openCard(trail);
+            }
+          }
+        ]
+      });
     };
 
     /* ---------- 光之卡片 ---------- */
