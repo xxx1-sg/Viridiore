@@ -1,11 +1,12 @@
 /**
  * 天气服务
  *
- * 数据源策略（v2.2 起）：
- *   1. 主源 Open-Meteo：免费、无需注册、提供 850 / 925 hPa 气压层数据。
- *      追光的逆温判据依赖它，所以这是默认源，装完就能看真实预报。
- *   2. 补充源和风天气（可选）：只在用户自己填了 Key 时启用，
- *      用来补中国气象预警与本地空气质量——Open-Meteo 不提供这两项。
+ * 数据源策略（v2.4 起）：
+ *   1. 和风天气（可选，填了 Key 时为主源）：实况走国内站点观测（obsTime），
+ *      预报走中国区域预报，口径与手机自带天气一致；并补中国气象预警与国标 AQI。
+ *   2. Open-Meteo（默认源，也是和风的层结来源）：免费、无需注册，提供
+ *      850 / 925 hPa 气压层数据——追光的逆温判据依赖它。和风没有气压层，
+ *      所以即便和风做主显示，也仍从 Open-Meteo（中国气象局 GRAPES 模式）取层结。
  *   3. 没有第三层。**不再有演示数据回退**：
  *      预测工具拿假数据算概率，等于没有预测。取数失败就如实报错，
  *      页面显示"重试"，而不是拿一份编造的天气糊弄过去。
@@ -94,21 +95,8 @@ function normalizeQWeather(lat, lon, placeName, parts) {
       // 注意：和风不提供气压层数据，soundings 缺失，
       // 追光会自动降级为代理估算并在界面标注。
     })),
-    air: air
-      ? {
-          aqi: round(air.now?.aqi),
-          category: air.now?.category || '--',
-          level: String(air.now?.level || '1'),
-          primary: air.now?.primary || '--',
-          tone: 'good',
-          standard: 'CN MEE',
-          // 和风只给 PM2.5 / PM10 两项，其余留空，页面会照实显示两项而不是编造
-          pollutants: [
-            { key: 'pm25', name: 'PM2.5', unit: 'μg/m³', value: round(air.now?.pm2p5), iaqi: null },
-            { key: 'pm10', name: 'PM10', unit: 'μg/m³', value: round(air.now?.pm10), iaqi: null }
-          ].filter((p) => Number.isFinite(p.value))
-        }
-      : null,
+    // 和风兜底路径下 air 已是 normalizeAir 的结果，直接沿用
+    air: air || null,
     warnings: (warnings?.warning || []).map((w) => ({
       id: w.id,
       title: w.title,
@@ -144,47 +132,40 @@ function normalizeQWeather(lat, lon, placeName, parts) {
 async function enrichFromQWeather(bundle, lat, lon) {
   if (!config.hasQWeather() || !bundle) return bundle;
 
-  const [warnings, air] = await Promise.allSettled([qweather.warnings(lon, lat), qweather.air(lon, lat)]);
+  const [warnings, air] = await Promise.allSettled([qweather.warnings(lat, lon), qweather.air(lat, lon)]);
 
   if (warnings.status === 'fulfilled' && warnings.value?.warning?.length) {
-    bundle.warnings = warnings.value.warning.map((w) => ({
-      id: w.id,
-      title: w.title,
-      type: w.type,
-      typeName: w.typeName,
-      level: w.level,
-      severity: w.severity,
-      severityColor: w.severityColor,
-      pubTime: w.pubTime,
-      startTime: w.startTime,
-      endTime: w.endTime,
-      sender: w.sender,
-      text: w.text,
-      provider: 'qweather'
-    }));
+    bundle.warnings = warnings.value.warning;
     bundle.warningProvider = '和风天气';
   }
 
-  // 有和风时用国内生态环境部的 AQI，比 Open-Meteo 自算的更接近官方发布值
-  if (air.status === 'fulfilled' && air.value?.now?.aqi) {
-    bundle.air = {
-      aqi: round(air.value.now.aqi),
-      category: air.value.now.category || '--',
-      level: String(air.value.now.level || '1'),
-      primary: air.value.now.primary || '--',
-      tone: 'good',
-      standard: 'CN MEE',
-      pollutants: [
-        { key: 'pm25', name: 'PM2.5', unit: 'μg/m³', value: round(air.value.now.pm2p5), iaqi: null },
-        { key: 'pm10', name: 'PM10', unit: 'μg/m³', value: round(air.value.now.pm10), iaqi: null }
-      ].filter((p) => Number.isFinite(p.value))
-    };
+  // 有和风时用生态环境部国控站的实测 AQI，替换 Open-Meteo 的模式估算值
+  if (air.status === 'fulfilled' && air.value?.aqi != null) {
+    bundle.air = air.value;
   }
 
   return bundle;
 }
 
-/* ---------------- 主入口 ---------------- */
+/* ---------------- 层结合并 + 主入口 ---------------- */
+
+/**
+ * 把 Open-Meteo 的逐日高空层结并入和风 bundle。
+ * 和风没有 850 / 925 hPa 数据，追光会降级成估算；这里按日期把层结补回去，
+ * 让「实况/预报用和风、层结用中国气象局 GRAPES 模式」两全。
+ */
+function mergeSoundings(bundle, om) {
+  if (!bundle || !om) return bundle;
+  const byDate = new Map((om.daily || []).map((d) => [d.date, d.soundings]));
+  bundle.daily = (bundle.daily || []).map((d) => {
+    const s = byDate.get(d.date);
+    return s ? { ...d, soundings: s } : d;
+  });
+  if (om.elevation != null) bundle.elevation = om.elevation;
+  // 和风没给到 AQI 时，用 Open-Meteo 的 CAMS 六项浓度按国标估算兜底
+  if (!bundle.air && om.air) bundle.air = om.air;
+  return bundle;
+}
 
 /**
  * 获取真实天气数据
@@ -198,26 +179,30 @@ export async function loadWeather({ lat, lon, name = '当前位置', force = fal
     if (cached && cached.source === 'live') return cached;
   }
 
+  const hasQW = config.hasQWeather();
+  const runOm = (models) => fetchOpenMeteo(lat, lon, name, models ? { models } : undefined);
+
+  /*
+   * 和风可用时，Open-Meteo 只借两样东西：850/925 hPa 层结（追光用）和格点海拔。
+   * 此时用中国气象局 GRAPES 全球模型（cma_grapes_global），比 ECMWF 更贴中国本地。
+   */
+  const omPromise = runOm(hasQW ? 'cma_grapes_global' : null).catch((err) => {
+    console.warn('[weather] Open-Meteo 取数失败', err?.message || err);
+    return { __error: err };
+  });
+
   let bundle = null;
   let error = null;
 
-  // 1. 主源：Open-Meteo（含气压层，追光依赖）
-  try {
-    bundle = await fetchOpenMeteo(lat, lon, name);
-  } catch (err) {
-    error = err;
-    console.warn('[weather] Open-Meteo 取数失败', err?.message || err);
-  }
-
-  // 2. 主源失败时，如果用户配了和风，用和风兜底（无气压层，追光降级）
-  if (!bundle && config.hasQWeather()) {
+  // 1. 主源：和风天气（国内实况观测 + 预报），配了 Key 就优先用
+  if (hasQW) {
     try {
       const [now, hourly, daily, air, warnings, indices] = await Promise.allSettled([
         qweather.now(lon, lat),
         qweather.hourly24(lon, lat),
         qweather.daily7(lon, lat),
-        qweather.air(lon, lat),
-        qweather.warnings(lon, lat),
+        qweather.air(lat, lon),
+        qweather.warnings(lat, lon),
         qweather.indices(lon, lat)
       ]);
 
@@ -230,10 +215,39 @@ export async function loadWeather({ lat, lon, name = '当前位置', force = fal
           warnings: warnings.status === 'fulfilled' ? warnings.value : null,
           indices: indices.status === 'fulfilled' ? indices.value : null
         });
+        if (bundle.warnings.length) bundle.warningProvider = '和风天气';
+      } else {
+        error = now.reason;
+        console.warn('[weather] 和风实况取数失败', now.reason?.message || now.reason);
       }
     } catch (err) {
-      console.warn('[weather] 和风兜底也失败', err?.message || err);
+      error = err;
+      console.warn('[weather] 和风取数失败', err?.message || err);
     }
+  }
+
+  // 2. Open-Meteo：和风成功时只并入层结；和风不可用时作为主源
+  const om = await omPromise;
+  let omBundle = om && !om.__error ? om : null;
+  if (!omBundle && om?.__error) error = error || om.__error;
+
+  if (bundle) {
+    if (omBundle) bundle = mergeSoundings(bundle, omBundle);
+  } else {
+    /*
+     * 和风没取到：退回 Open-Meteo 全量数据。
+     * 若刚才用的是 GRAPES 模式（缺降水概率 / UV），此时改取默认全量模型，
+     * 免得回退后界面出现一堆空值。
+     */
+    if (hasQW && omBundle) {
+      try {
+        omBundle = await runOm(null);
+      } catch (err) {
+        console.warn('[weather] Open-Meteo 回退取数失败', err?.message || err);
+      }
+    }
+    bundle = omBundle;
+    if (bundle && hasQW) bundle = await enrichFromQWeather(bundle, lat, lon);
   }
 
   if (!bundle) {
@@ -247,10 +261,7 @@ export async function loadWeather({ lat, lon, name = '当前位置', force = fal
     throw new Error(message);
   }
 
-  // 3. 和风补充预警 / 空气质量（可选，失败不影响主流程）
-  bundle = await enrichFromQWeather(bundle, lat, lon);
-
-  // 4. 补全文字描述（Open-Meteo 只给代码）
+  // 3. 补全文字描述（Open-Meteo 只给代码，和风本身有中文文案）
   bundle.now.text = bundle.now.text || weatherText(bundle.now.code);
   bundle.daily = bundle.daily.map((d) => ({
     ...d,

@@ -82,7 +82,7 @@ export const config = {
    * 和风 Key 变成可选增强项，不再是"能不能用"的开关。
    */
   weatherSource() {
-    return this.hasQWeather() ? 'Open-Meteo + 和风天气' : 'Open-Meteo';
+    return this.hasQWeather() ? '和风天气（实况/预报） + Open-Meteo（层结）' : 'Open-Meteo';
   }
 };
 

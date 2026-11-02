@@ -1,7 +1,7 @@
 {
   "name": "mossy-dawn",
   "productName": "晓山青",
-  "version": "2.3.1",
+  "version": "2.4.1",
   "description": "晓山青 Viridiore — 户外智能出行伴侣",
   "author": "Mossy Dawn",
   "license": "MIT",
@@ -19,7 +19,11 @@
     "desktop:pack": "npm run build && electron-builder --win --dir",
     "mobile:sync": "npm run build && npx cap sync",
     "mobile:android": "npm run build && npx cap sync android && npx cap open android",
-    "mobile:ios": "npm run build && npx cap sync ios && npx cap open ios"
+    "mobile:ios": "npm run build && npx cap sync ios && npx cap open ios",
+    "ledger:collect": "node scripts/forecast/collect.mjs",
+    "ledger:verify": "node scripts/forecast/verify.mjs",
+    "ledger:report": "node scripts/forecast/report.mjs",
+    "ledger": "node scripts/forecast/collect.mjs && node scripts/forecast/verify.mjs && node scripts/forecast/report.mjs"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.2.0",
