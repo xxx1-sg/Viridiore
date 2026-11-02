@@ -7,6 +7,7 @@ import { rankDays, advice, compensation, MODES, summitTemp } from '../services/c
 import { calibrationFor } from '../services/calibration.js';
 import { parseIntent, matchRoutes, describeIntent, QUICK_INTENTS } from '../services/intent.js';
 import { annualRecap, compareWithPrevious } from '../services/narrative.js';
+import { companionLine } from '../services/companion.js';
 import { sunTimes } from '../services/sun.js';
 import { MOUNTAINS } from '../data/mountains.js';
 import { openSheet } from '../core/modal.js';
@@ -58,6 +59,7 @@ export default {
           </div>
           <h1 class="hero__title">晓山青</h1>
           <p class="hero__tagline">不问天气好不好，只回答值不值得去</p>
+          <p class="hero__companion" id="heroCompanion" hidden></p>
           <div class="hero__panel">
             <div class="hero__temp">
               <strong id="heroTemp">--</strong><span>°C</span>
@@ -275,6 +277,43 @@ export default {
       });
     };
 
+    /* ---------------- 陪伴句：此刻想对你说的一句话 ---------------- */
+    let latestTrails = [];
+    const buildWindow = (wx) => {
+      if (!wx?.daily?.length) return null;
+      const mountain = currentMountain();
+      const ranked = rankDays(wx.daily, 'cloudsea', { mountain, source: wx.source, calibration: calib });
+      const target = pickTarget(ranked.all);
+      if (!target) return null;
+      const dateObj =
+        target.day.dateObj instanceof Date ? target.day.dateObj : new Date(target.day.date);
+      const sun = sunTimes(dateObj, mountain.lat, mountain.lon);
+      return {
+        probability: target.probability,
+        index: target.index,
+        mode: 'cloudsea',
+        day: { dateObj, sunrise: sun.sunrise },
+        providerName: wx.providerName
+      };
+    };
+
+    const renderCompanion = () => {
+      const host = $('#heroCompanion');
+      if (!host) return;
+      const line = companionLine({
+        weather: appState.weather,
+        window: buildWindow(appState.weather),
+        trails: latestTrails
+      });
+      if (!line || !line.text) {
+        host.hidden = true;
+        return;
+      }
+      host.hidden = false;
+      host.textContent = line.text;
+      host.dataset.tone = line.tone;
+    };
+
     /* ---------------- 顶部天气 ---------------- */
     const renderHero = (wx) => {
       if (!wx) return;
@@ -368,6 +407,8 @@ export default {
     const renderTrails = async () => {
       const host = $('#recentTrails');
       const trails = await trailRepo.list();
+      latestTrails = trails;
+      renderCompanion();
 
       if (!trails.length) {
         host.innerHTML = `
@@ -420,6 +461,7 @@ export default {
     const offWeather = bus.on('weather:change', (wx) => {
       renderHero(wx);
       renderVerdict(wx);
+      renderCompanion();
     });
     const offTrail = bus.on('trail:change', renderTrails);
 
