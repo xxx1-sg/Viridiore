@@ -74,8 +74,10 @@ export const MODES = {
 /**
  * 由真实层结数据推算云层位置
  *
- * 云底 = 测站海拔 + LCL，LCL 用 API 直接给出的露点算：
+ * 云底 = 参考海拔 + LCL，LCL 用 API 直接给出的露点算：
  *   露点越接近气温，空气越接近饱和，云底越低。
+ *   参考海拔取 **谷底海拔与天气格点海拔中较低者**——云海是谷地抬升形成的，
+ *   云底要从谷底起算，不能从"接近山顶的格点"起算（v2.4.1 修正，见 cloudGeometry）。
  * 云顶 = 云底 + 厚度，厚度由低云量与 850 hPa 湿度共同决定：
  *   低云量高说明云是成片的层状云，850 湿度高说明水汽供给充足，
  *   两者都指向更厚、更像"海"的云层。
@@ -83,9 +85,24 @@ export const MODES = {
  * 注意 cloudLow 是低云覆盖率，它回答"有没有云"；
  * LCL 回答"云在哪"。云海需要两个条件同时成立：有云，且云在你脚下。
  */
-export function cloudGeometry(day) {
+export function cloudGeometry(day, opts = {}) {
   const s = day.soundings || {};
-  const station = Number(s.stationElevation) || 25;
+  const stationRaw = Number(s.stationElevation);
+  // 0 是合法海拔（如梅沙尖近海格点），不能写成 `|| 25` 把海平面当成 25 m
+  const station = Number.isFinite(stationRaw) ? stationRaw : 25;
+
+  /*
+   * 参考面：云海是**谷地抬升**形成的，云底应当从谷底起算，
+   * 而不是从"接近山顶的天气格点海拔"起算。
+   *
+   * 旧模型（≤ v2.4.0）直接用格点海拔：梧桐山的格点被网格抬到 798 m，
+   * 山顶才 943 m，扣掉最薄一层云（160 m）后余量恒为 -15 m，
+   * "云顶低于山顶"这条判据在任何天气下都不可能成立（见 data/ledger.md 体检表）。
+   * 修法：传入山的谷底海拔，与格点海拔取较小值作为云底起算面。
+   */
+  const valley = Number(opts.valleyElevation);
+  const hasValley = Number.isFinite(valley);
+  const reference = hasValley ? Math.min(station, valley) : station;
 
   const t2m = Number.isFinite(Number(s.t2m)) ? Number(s.t2m) : Number(day.min ?? day.tempNight ?? 18);
   const td = Number.isFinite(Number(s.td2m))
@@ -93,7 +110,7 @@ export function cloudGeometry(day) {
     : t2m - dewSpread(t2m, Number(day.humidity ?? 70));
 
   const lcl = lclFromDewPoint(t2m, td);
-  const base = station + (lcl ?? 0);
+  const base = reference + (lcl ?? 0);
   const spread = Math.max(0, t2m - td);
 
   const cloudLow = Number.isFinite(Number(s.cloudLow)) ? Number(s.cloudLow) : Number(day.cloud ?? 50);
@@ -112,6 +129,10 @@ export function cloudGeometry(day) {
     top,
     cloudLow,
     rh850,
+    /** 云底起算面：min(格点海拔, 谷底海拔) */
+    referenceElevation: reference,
+    gridElevation: station,
+    valleyElevation: hasValley ? valley : null,
     /**
      * 低云覆盖率 > 25% 才算"成片低云"。
      * 12% 的散云不叫云海——天空通透，云块零散，看不到"海"。
@@ -140,7 +161,7 @@ export function assessDay(day, mode = 'cloudsea', ctx = {}) {
   const elevation = Number(mountain.elevation) || 600;
 
   const s = day.soundings || {};
-  const geo = cloudGeometry(day);
+  const geo = cloudGeometry(day, { valleyElevation: mountain.valleyElevation });
 
   const cloud = num(day.cloud, 50);
   const cloudLow = geo.cloudLow;

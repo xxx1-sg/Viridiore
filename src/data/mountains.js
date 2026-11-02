@@ -1,6 +1,10 @@
 /**
  * 山峰数据集（用于追光推荐、AI 知识库、路书）
  * 坐标为山顶大致位置，仅用于天气查询参考。
+ *
+ * `valleyElevation`：登山口 / 谷底海拔，约等于云海抬升的起算面。
+ * 追光模型用它（与天气格点海拔取较小值）作为云底参考面，见 services/chase.js 的 cloudGeometry。
+ * 数值取主要登山口或谷地村镇海拔的近似值，属一阶估计（几十米量级误差不改判）。
  */
 
 export const MOUNTAINS = [
@@ -8,6 +12,7 @@ export const MOUNTAINS = [
     id: 'wutong',
     name: '梧桐山',
     elevation: 943,
+    valleyElevation: 60,
     lat: 22.581,
     lon: 114.219,
     area: '罗湖 / 盐田',
@@ -21,6 +26,7 @@ export const MOUNTAINS = [
     id: 'qiniang',
     name: '七娘山',
     elevation: 869,
+    valleyElevation: 30,
     lat: 22.548,
     lon: 114.561,
     area: '大鹏新区',
@@ -34,6 +40,7 @@ export const MOUNTAINS = [
     id: 'maluan',
     name: '马峦山',
     elevation: 590,
+    valleyElevation: 60,
     lat: 22.629,
     lon: 114.33,
     area: '坪山新区',
@@ -47,6 +54,7 @@ export const MOUNTAINS = [
     id: 'paiya',
     name: '排牙山',
     elevation: 707,
+    valleyElevation: 40,
     lat: 22.593,
     lon: 114.487,
     area: '大鹏新区',
@@ -60,6 +68,7 @@ export const MOUNTAINS = [
     id: 'meishajian',
     name: '梅沙尖',
     elevation: 753,
+    valleyElevation: 30,
     lat: 22.607,
     lon: 114.36,
     area: '盐田区',
@@ -73,6 +82,7 @@ export const MOUNTAINS = [
     id: 'tanglang',
     name: '塘朗山',
     elevation: 430,
+    valleyElevation: 30,
     lat: 22.586,
     lon: 113.993,
     area: '南山区',
@@ -86,6 +96,7 @@ export const MOUNTAINS = [
     id: 'fenghuang',
     name: '凤凰山',
     elevation: 376,
+    valleyElevation: 30,
     lat: 22.686,
     lon: 113.846,
     area: '宝安区',
@@ -99,6 +110,7 @@ export const MOUNTAINS = [
     id: 'yangtaishan',
     name: '阳台山',
     elevation: 587,
+    valleyElevation: 70,
     lat: 22.632,
     lon: 113.988,
     area: '龙华 / 宝安',
@@ -112,6 +124,7 @@ export const MOUNTAINS = [
     id: 'dananshan',
     name: '大南山',
     elevation: 336,
+    valleyElevation: 20,
     lat: 22.491,
     lon: 113.913,
     area: '南山区',
@@ -125,6 +138,7 @@ export const MOUNTAINS = [
     id: 'luofu',
     name: '罗浮山',
     elevation: 1296,
+    valleyElevation: 180,
     lat: 23.268,
     lon: 114.056,
     area: '惠州 · 博罗',
@@ -138,6 +152,7 @@ export const MOUNTAINS = [
     id: 'nankun',
     name: '南昆山',
     elevation: 1228,
+    valleyElevation: 350,
     lat: 23.635,
     lon: 113.86,
     area: '惠州 · 龙门',
@@ -151,6 +166,7 @@ export const MOUNTAINS = [
     id: 'yinhu',
     name: '银湖山',
     elevation: 445,
+    valleyElevation: 30,
     lat: 22.586,
     lon: 114.103,
     area: '罗湖 / 福田',
