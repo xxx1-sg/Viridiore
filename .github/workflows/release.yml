@@ -1,0 +1,71 @@
+name: release
+
+# 发布 Windows 安装包到 GitHub Release。
+#
+# 为什么在 CI 构建：electron-builder 的 NSIS 目标需要**执行**它刚编译出的安装器桩
+# 来生成卸载器（NsisTarget 里 execWine(installerPath)）。本机若处于非交互/受限桌面，
+# 这一步会被系统以 ERROR_CANCELLED(0x800704C7) 拒绝，退出码 2。GitHub 的 windows
+# runner 允许执行，因此发布放在这里做。
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag（如 v2.4.1）'
+        required: true
+        default: 'v2.4.1'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event.inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # afterPack 需要 rcedit 写图标与版本信息；CI 上没有 electron-builder 的
+      # winCodeSign 缓存，这里显式下载并通过 MOSSY_RCEDIT 指给 after-pack.cjs。
+      - name: Fetch rcedit
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri 'https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe' -OutFile 'rcedit-x64.exe'
+          "MOSSY_RCEDIT=$((Get-Location).Path)\rcedit-x64.exe" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build installers
+        run: npm run desktop:build
+
+      - name: List artifacts
+        shell: pwsh
+        run: Get-ChildItem release -Filter '*.exe' | Select-Object Name, Length | Format-Table -AutoSize
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag }}
+          name: 晓山青 ${{ github.event.inputs.tag }}
+          body: |
+            晓山青 Viridiore ${{ github.event.inputs.tag }}
+
+            - 修复云海判据参考面错误：云底改以 min(格点海拔, 谷底海拔) 起算，梧桐山不再永远判不出云海（结构性不可能 7/84 → 0/84）
+            - 新增陪伴层：每日一句 + 「山记得你」
+            - 和风天气升为天气页主显示源，接新版 AQI / 预警接口
+            - 预测台账与 CI 上线（每日记预测、ERA5 对账）
+          files: |
+            release/XiaoShanQing-*-Setup-x64.exe
+            release/XiaoShanQing-*-Portable-x64.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
