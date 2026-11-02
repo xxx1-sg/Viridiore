@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "kind": "ledger",
+  "updatedAt": "2026-11-02T05:41:47.472Z",
+  "asOf": null,
+  "basisNote": "再分析判「气象条件是否成立」，不代表有人亲眼看到；用户打卡另计。",
+  "totals": {
+    "days": 0,
+    "forecastEntries": 252,
+    "verifiedEntries": 0,
+    "primaryEntries": 0,
+    "pendingDays": 0
+  },
+  "brier": null,
+  "hitRate": null,
+  "calibration": [],
+  "byLead": [],
+  "byMode": [],
+  "byMountain": [],
+  "health": {
+    "sourceFile": "2026-11-02.json",
+    "entries": 84,
+    "withLayer": 27,
+    "marginPositive": 26,
+    "marginAbove50": 21,
+    "marginMedian": -136,
+    "marginMin": -787,
+    "marginMax": 815,
+    "structurallyImpossible": 0,
+    "impossibleMountains": [],
+    "headroom": [
+      {
+        "mountain": "大南山",
+        "elevation": 336,
+        "headroom": 163,
+        "reference": 13,
+        "grid": 13
+      },
+      {
+        "mountain": "凤凰山",
+        "elevation": 376,
+        "headroom": 186,
+        "reference": 30,
+        "grid": 31
+      },
+      {
+        "mountain": "塘朗山",
+        "elevation": 430,
+        "headroom": 240,
+        "reference": 30,
+        "grid": 76
+      },
+      {
+        "mountain": "银湖山",
+        "elevation": 445,
+        "headroom": 255,
+        "reference": 30,
+        "grid": 39
+      },
+      {
+        "mountain": "阳台山",
+        "elevation": 587,
+        "headroom": 357,
+        "reference": 70,
+        "grid": 142
+      },
+      {
+        "mountain": "马峦山",
+        "elevation": 590,
+        "headroom": 370,
+        "reference": 60,
+        "grid": 355
+      },
+      {
+        "mountain": "排牙山",
+        "elevation": 707,
+        "headroom": 507,
+        "reference": 40,
+        "grid": 175
+      },
+      {
+        "mountain": "梅沙尖",
+        "elevation": 753,
+        "headroom": 593,
+        "reference": 0,
+        "grid": 0
+      },
+      {
+        "mountain": "七娘山",
+        "elevation": 869,
+        "headroom": 679,
+        "reference": 30,
+        "grid": 111
+      },
+      {
+        "mountain": "南昆山",
+        "elevation": 1228,
+        "headroom": 718,
+        "reference": 350,
+        "grid": 477
+      },
+      {
+        "mountain": "梧桐山",
+        "elevation": 943,
+        "headroom": 723,
+        "reference": 60,
+        "grid": 798
+      },
+      {
+        "mountain": "罗浮山",
+        "elevation": 1296,
+        "headroom": 1018,
+        "reference": 118,
+        "grid": 118
+      }
+    ],
+    "referenceNote": "参考面 = min(格点海拔, 谷底海拔)，云底从此起算（v2.4.1 起）。旧账本按当前模型重算。",
+    "gridElevationMedian": 118
+  },
+  "days": [],
+  "recent": []
+}
