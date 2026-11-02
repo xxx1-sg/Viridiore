@@ -68,12 +68,22 @@ app.whenReady().then(async () => {
 
   // 跳过引导弹窗，并可按环境变量强制主题（SHOT_THEME=light|dark）
   const THEME = process.env.SHOT_THEME || '';
+  // 可选：临时注入和风 Key/Host（只写进 localStorage，不落盘到源码）
+  const QW_KEY = process.env.SHOT_QW_KEY || '';
+  const QW_HOST = process.env.SHOT_QW_HOST || '';
   await win.webContents.executeJavaScript(
     `(() => {
       const raw = JSON.parse(localStorage.getItem('mossy.prefs') || '{}');
       raw.onboarded = true;
       ${THEME ? `raw.theme = '${THEME}';` : ''}
       localStorage.setItem('mossy.prefs', JSON.stringify(raw));
+      ${
+        QW_KEY
+          ? `const cfg = JSON.parse(localStorage.getItem('mossy.config') || '{}');
+             cfg.qweather = Object.assign({}, cfg.qweather, { key: '${QW_KEY}', host: '${QW_HOST}' });
+             localStorage.setItem('mossy.config', JSON.stringify(cfg));`
+          : ''
+      }
     })()`
   );
   await win.webContents.reload();

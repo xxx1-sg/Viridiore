@@ -30,7 +30,7 @@ export default {
     const hasKey = !!config.get('qweather.key');
     const hasHost = !!config.get('qweather.host');
     const src = config.hasQWeather()
-      ? 'Open-Meteo + 和风天气（预警 / 空气质量）'
+      ? '和风天气（实况 + 预报） + Open-Meteo（高空层结）'
       : hasKey && !hasHost
         ? 'Open-Meteo（和风已填 Key，还差 API Host）'
         : 'Open-Meteo（免费，无需 Key）';
@@ -44,11 +44,11 @@ export default {
 
       <section class="section">
         <div class="settings-group">
-          <div class="settings-group__title">和风天气 · 可选增强</div>
+          <div class="settings-group__title">和风天气 · 实况数据源</div>
           <p class="field__hint" style="margin:-6px 0 14px">
-            预报本身已经走 Open-Meteo，打开就是真实数据。这里填 Key 只为了两件 Open-Meteo 给不了的东西：
-            <strong>中国气象局的气象预警</strong>，以及<strong>环境监测总站的实测 AQI</strong>。
-            不填的话空气质量是 CAMS 模式估算值，通常比监测站实测偏高，尤其 SO₂ 和 NO₂。
+            填了 Key 后，<strong>天气页的实况与预报改用和风天气</strong>（国内站点观测 + 中国区域预报），
+            与手机自带天气口径一致，比 ECMWF 模式更贴本地；追光用的高空层结仍取中国气象局 GRAPES 模式。
+            <strong>不填也能用</strong>，预报走 Open-Meteo，但「现在」是模式插值，通常比实况偏高、湿度偏低。
           </p>
           <label class="field" style="margin-bottom:14px">
             <span class="field__label">API Key</span>
@@ -215,8 +215,18 @@ export default {
           btn.disabled = true;
           btn.innerHTML = '<span class="spinner"></span> 测试中';
           try {
-            const data = await qweather.now(114.0579, 22.5431);
-            toastOk(`连接成功：深圳 ${data.now.temp}℃ ${data.now.text}`);
+            const LAT = 22.5431;
+            const LON = 114.0579;
+            const data = await qweather.now(LON, LAT);
+            const head = `连接成功：深圳 ${data.now.temp}℃ ${data.now.text}`;
+
+            // Key 能取实况，不代表能用新版空气质量接口（v7/air/now 已下线），顺手验一下
+            const air = await qweather.air(LAT, LON).catch(() => null);
+            if (air?.aqi != null) {
+              toastOk(`${head} · AQI ${air.aqi} ${air.category}`);
+            } else {
+              toastWarn(`${head}；但空气质量接口没返回数据，将沿用模式估算值`);
+            }
             ensureWeather(true).catch(() => {});
           } catch (err) {
             toastError(`连接失败：${err.message}`);

@@ -278,7 +278,7 @@ function deriveIndices({ temp, humidity, cloud, uv, precip, windScale }) {
  * @param {string} placeName
  * @returns {Promise<object>} 与和风 normalize() 同构，外加 soundings（层结数据）
  */
-export async function fetchOpenMeteo(lat, lon, placeName = '当前位置') {
+export async function fetchOpenMeteo(lat, lon, placeName = '当前位置', opts = {}) {
   const [forecast, air] = await Promise.all([
     getJson(FORECAST_URL, {
       latitude: Number(lat).toFixed(4),
@@ -289,7 +289,13 @@ export async function fetchOpenMeteo(lat, lon, placeName = '当前位置') {
       timezone: TIMEZONE,
       forecast_days: 7,
       wind_speed_unit: 'ms',
-      precipitation_unit: 'mm'
+      precipitation_unit: 'mm',
+      // 沿海城市（如深圳）默认最近格点可能落在海面，温度/湿度会被海面拉偏；
+      // 强制取陆地格点，结果更贴近城区气象站。
+      cell_selection: 'land',
+      // 可选：显式指定模式。中国气象局 GRAPES 全球模型为 cma_grapes_global，
+      // 比 ECMWF 更贴中国本地；不传则用 best_match。
+      ...(opts.models ? { models: opts.models } : {})
     }),
     getJson(AIR_URL, {
       latitude: Number(lat).toFixed(4),

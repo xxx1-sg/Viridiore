@@ -117,8 +117,8 @@ export default {
           <div class="kv"><span class="kv__k">日出 / 日落</span><span class="kv__v" id="wxSun">--</span></div>
           <div class="kv"><span class="kv__k">月相</span><span class="kv__v" id="wxMoon">--</span></div>
           <p class="field__hint" style="margin-top:10px">
-            实况取自 Open-Meteo 的 15 分钟插值场（ECMWF / GFS），不是整点预报值。
-            <strong>气压为海平面气压</strong>，比手机气压计显示的本站气压高，两者差值对应海拔高度差，不是数据错了。
+            <span id="wxDataNote">实况取自 Open-Meteo 的 15 分钟插值场（ECMWF / GFS），不是整点预报值。</span>
+            <strong>气压口径随数据源不同</strong>，海平面气压比手机气压计显示的本站气压高，两者差值对应海拔高度差，不是数据错了。
             AQI 按 HJ 633-2012 由 PM2.5、PM10、O₃、NO₂、SO₂、CO 六项浓度算得，与国内天气 App 同口径。
           </p>
         </div>
@@ -298,8 +298,13 @@ export default {
          位置不对，口径也不对，用户拿它和手机的「38 优」一对比就是两回事。 */
       const airHost = $('#wxAir');
       if (air && air.pollutants?.length) {
-        $('#wxAirScale').textContent = air.standard === 'CN MEE' ? '模式估算 · HJ 633' : '欧洲 EAQI';
-        const primaryKey = air.pollutants.reduce((a, b) => (b.iaqi > a.iaqi ? b : a), air.pollutants[0]).key;
+        const official = air.source === 'qweather';
+        $('#wxAirScale').textContent = official
+          ? '国控站实测'
+          : air.standard === 'CN MEE'
+            ? '模式估算 · HJ 633'
+            : '欧洲 EAQI';
+        const primaryKey = air.pollutants.reduce((a, b) => ((b.iaqi || 0) > (a.iaqi || 0) ? b : a), air.pollutants[0]).key;
         airHost.innerHTML = `
           <div class="air-head">
             <div class="air-score is-${air.tone}">
@@ -319,13 +324,17 @@ export default {
                 (p) => `<div class="air-item ${p.key === primaryKey && air.aqi > 50 ? 'is-primary' : ''}">
                   <span class="air-item__k">${p.name}</span>
                   <span class="air-item__v">${p.value}<i>${p.unit.replace('μg/m³', '')}</i></span>
-                  <span class="air-item__bar"><i style="width:${Math.min(100, Math.round(p.iaqi / 2))}%"></i></span>
+                  <span class="air-item__bar"><i style="width:${Math.min(100, Math.round((p.iaqi || 0) / 2))}%"></i></span>
                 </div>`
               )
               .join('')}
           </div>
           <p class="air-note">
-            浓度来自 CAMS 全球空气质量模式，国内监测站实测通常更低；AQI 按 HJ&nbsp;633-2012 由六项浓度取分指数最大值算得。
+            ${
+              official
+                ? '浓度与 AQI 来自生态环境部国控站发布值（和风天气转发），未经二次计算。'
+                : '浓度来自 CAMS 全球空气质量模式，国内监测站实测通常更低；AQI 按 HJ&nbsp;633-2012 由六项浓度取分指数最大值算得。填上和风天气 Key 可换成国控站实测值。'
+            }
           </p>`;
       } else {
         $('#wxAirScale').textContent = '暂不可用';
@@ -352,8 +361,15 @@ export default {
       }
 
       /* 说明 */
-      $('#wxProvider').textContent = wx.providerName === '和风天气' ? '和风天气 QWeather' : 'Open-Meteo（ECMWF / GFS）';
-      $('#wxObserved2').textContent = `${formatTime(obsAt)}（15 分钟插值）`;
+      const isQW = wx.providerName === '和风天气';
+      $('#wxProvider').textContent = isQW ? '和风天气 QWeather（中国）' : 'Open-Meteo（ECMWF / GFS）';
+      $('#wxObserved2').textContent = isQW ? `${formatTime(obsAt)}（实况观测）` : `${formatTime(obsAt)}（15 分钟插值）`;
+      const dataNote = $('#wxDataNote');
+      if (dataNote) {
+        dataNote.textContent = isQW
+          ? '实况取自和风天气的站点观测（obsTime），与手机自带天气同源；预报为和风的中国区域预报，追光用的高空层结来自中国气象局 GRAPES 模式。'
+          : '实况取自 Open-Meteo 的 15 分钟插值场（ECMWF / GFS），不是整点预报值。';
+      }
       // 和风给的本来就是本站气压，只有 Open-Meteo 才需要区分两种口径
       $('#wxPressureNote').textContent = now.pressureStation
         ? `海平面 ${now.pressure} · 本站 ${now.pressureStation} hPa（格点海拔 ${Math.round(wx.elevation || 0)} m）`

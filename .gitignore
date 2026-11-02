@@ -27,3 +27,7 @@ NVIDIA Corporation/
 
 # 临时脚本产物
 .tmp/
+
+# 宣传片制作工作区与成片（体积大：.video/ 含 ffmpeg 约 100 MB，不入仓）
+.video/
+晓山青_Viridiore_宣传片.mp4
