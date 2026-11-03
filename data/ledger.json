@@ -1,15 +1,15 @@
 {
   "schema": 1,
   "kind": "ledger",
-  "updatedAt": "2026-11-02T05:58:27.715Z",
+  "updatedAt": "2026-11-03T07:08:44.815Z",
   "asOf": null,
   "basisNote": "再分析判「气象条件是否成立」，不代表有人亲眼看到；用户打卡另计。",
   "totals": {
     "days": 0,
-    "forecastEntries": 252,
+    "forecastEntries": 504,
     "verifiedEntries": 0,
     "primaryEntries": 0,
-    "pendingDays": 0
+    "pendingDays": 1
   },
   "brier": null,
   "hitRate": null,
@@ -18,14 +18,14 @@
   "byMode": [],
   "byMountain": [],
   "health": {
-    "sourceFile": "2026-11-02.json",
+    "sourceFile": "2026-11-03.json",
     "entries": 84,
-    "withLayer": 27,
-    "marginPositive": 26,
-    "marginAbove50": 21,
-    "marginMedian": -136,
-    "marginMin": -787,
-    "marginMax": 815,
+    "withLayer": 44,
+    "marginPositive": 21,
+    "marginAbove50": 17,
+    "marginMedian": -243,
+    "marginMin": -740,
+    "marginMax": 729,
     "structurallyImpossible": 0,
     "impossibleMountains": [],
     "headroom": [
