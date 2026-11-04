@@ -6,6 +6,7 @@ import { themeManager } from '../core/theme.js';
 import { ensureWeather } from '../state.js';
 import { qweather } from '../services/qweather.js';
 import { feedbackStats, invalidateCalibrationCache } from '../services/calibration.js';
+import { buildExportBundle } from '../services/feedback.js';
 import { toastOk, toastError, toastWarn } from '../core/toast.js';
 import { confirmDialog } from '../core/modal.js';
 import { download } from '../services/exporter.js';
@@ -87,6 +88,14 @@ export default {
               <span class="list-row__sub" id="fbSub">读取中…</span>
             </span>
             <span class="list-row__tail" id="fbCount">--</span>
+          </button>
+          <button class="list-row" type="button" data-action="export-feedback">
+            <span class="list-row__icon">${icon('download', 18)}</span>
+            <span class="list-row__main">
+              <span class="list-row__title">导出反馈样本（匿名）</span>
+              <span class="list-row__sub">只含山、模式、日期、概率与结果；不含轨迹坐标、设备或账号</span>
+            </span>
+            <span class="list-row__tail">${icon('chevronRight', 15)}</span>
           </button>
           <button class="list-row" type="button" data-action="reset-calib">
             <span class="list-row__icon">${icon('refresh', 18)}</span>
@@ -246,6 +255,21 @@ export default {
             return;
           }
           toastOk(`共 ${rows.length} 条样本，最近一条预测 ${rows[rows.length - 1].predicted}%`);
+          break;
+        }
+        case 'export-feedback': {
+          const { rows } = await feedbackStats();
+          if (!rows.length) {
+            toastWarn('还没有反馈样本。到追光页点「看到了 / 白跑一趟」后再来导出');
+            return;
+          }
+          const bundle = buildExportBundle(rows, { appVersion: __APP_VERSION__ });
+          download(
+            `xiaoshanqing-feedback-${new Date().toISOString().slice(0, 10)}.json`,
+            JSON.stringify(bundle, null, 2),
+            'application/json'
+          );
+          toastOk(`已导出 ${bundle.samples.length} 条匿名样本`);
           break;
         }
         case 'reset-calib': {

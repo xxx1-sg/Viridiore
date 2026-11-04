@@ -219,6 +219,7 @@ src/
 │  ├─ atmos.js              大气物理量：露点、LCL、层结直减率、逆温判定
 │  ├─ chase.js              追光概率模型（核心）
 │  ├─ calibration.js        本地反馈校准
+│  ├─ feedback.js           反馈样本：匿名化 / 校验 / 汇总 / 合并
 │  ├─ companion.js          陪伴层：每日一句 + 山记得你
 │  ├─ intent.js             决策层：自然语言 → 路线
 │  ├─ narrative.js          叙事层：轨迹 → 一句话
@@ -282,6 +283,16 @@ IndexedDB `mossy-dawn`（v2）：
 
 「设置 → 导出全部数据」可以把轨迹、反馈样本和偏好导成 JSON。
 
+### 反馈样本：导出与汇总（basis: user）
+
+App 里的反馈只在本机，样本很少。为了能让真实样本汇总成规模，加了一条**离线、无账号**的通道：
+
+1. 用户在「设置 → 导出反馈样本（匿名）」导出 JSON——只含山峰 id、模式、日期、预测概率、结果、时间戳，**不含轨迹坐标、设备或账号**；
+2. 把 JSON 放进 `data/inbox/feedback/`，运行 `npm run ledger:feedback` → 校验、按 `sampleKey` 去重、合并进 `data/feedback/merged.json`；
+3. `npm run ledger:report` / `ledger:scorecard` 会把「用户打卡」单列成 **basis: user**，与 ERA5 再分析的 **basis: reanalysis** 分开统计，绝不合并成一个数字。
+
+匿名化的字段白名单写死在 `src/services/feedback.js` 的 `toAnonymousSample()` 里，多余字段一律丢弃；同一个文件导入两次也不会重复计数。
+
 ### 预测台账（仓库里的 `data/`）
 
 App 里的反馈校准只对**你自己**有效，样本永远很少。所以另有一条不进 App 数据目录的对账线：
@@ -292,7 +303,7 @@ App 里的反馈校准只对**你自己**有效，样本永远很少。所以另
 - `data/ledger.json` / `data/ledger.md`：校准曲线、Brier、按提前量和按山的拆分，外加一份「模型体检」。
 
 关键约定：真值只取再分析，**不用预报的 `past_days`**（那是同一套模式自己验自己）；
-判的是「气象条件成立」，不是「有人看到」，用户打卡今后单列 `basis: user` 分开统计。
+判的是「气象条件成立」，不是「有人看到」；用户打卡单列 `basis: user`，与再分析分开统计（见上一节）。
 
 跑了才知道的事：`data/ledger.md` 的「模型体检」当场就暴露了一个结构性偏差——梧桐山的
 天气格点海拔 798 m，而山顶只有 943 m，扣掉最小云厚 160 m 后余量是 **-15 m**，
@@ -316,11 +327,19 @@ CI 在 `.github/workflows/ledger.yml`：21:30 记预测，08:30 对账，自动�
 - **决策层只认 10 类标签**（日出/日落/云海/星空/海景/溪谷/城市/夜爬/越野跑/重装）。山峰数据集里没有停车场、门票、水源字段，所以不会假装能按这些条件筛选——问到了会直说"暂未收录"。
 - **叙事层是模板**，不是生成式。想更好看需要接大模型，但那样会引入"编造细节"的风险，暂不做。
 - **Windows 安装包没有代码签名**，首次运行会被 SmartScreen 提示"未知发布者"。要消除需要购买代码签名证书。
-- **模型未经真实样本验证**。目前概率只做过物理自洽性检查，没有用历史实况回测过；校准机制要等真实用户积累样本才生效。
+- **模型未经真实样本验证**。目前概率只做过物理自洽性检查，还没有攒够历史实况回测样本；校准机制要等真实用户积累样本才生效（回测记分牌会如实显示「样本积累中」）。
+- **用户打卡靠手动收件箱汇总**，没有自动上报。愿意贡献的用户导出 JSON、再手动 `npm run ledger:feedback` 合并；样本量取决于有多少人愿意发来，这一点没有捷径。
 
 ---
 
 ## 九、更新日志
+
+### 未发布（main 分支）
+
+- **回测记分牌**：README 顶部新增「回测记分牌」自动区块（`scripts/forecast/scorecard.mjs`），从 `data/ledger.json` 渲染 Brier / 命中率 / 按提前量拆分；无对账数据时只写「样本积累中」，台账 CI 对账后自动刷新
+- **单元测试与 CI**：新增 `test/`（atmos / chase / forecast / feedback 共 4 组 `node:test`），新增 `.github/workflows/ci.yml` 在 push / PR 跑 `npm test`
+- **反馈样本匿名导出**：设置页新增「导出反馈样本（匿名）」；新增 `src/services/feedback.js`（白名单匿名化 / 校验 / 汇总 / 幂等合并）与 `scripts/forecast/ingest-feedback.mjs`（把导出文件并入 `data/feedback/merged.json`，`npm run ledger:feedback`）；用户打卡以 `basis: user` 在台账与记分牌中单列，与 ERA5 再分析分开
+- **官网**：`site/` 通过 GitHub Pages 发布（`.github/workflows/pages.yml`），仓库补齐 LICENSE、description、topics 与界面截图
 
 ### v2.4.1
 

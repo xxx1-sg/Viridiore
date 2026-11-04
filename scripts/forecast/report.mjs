@@ -227,6 +227,13 @@ async function main() {
     }
   }
 
+  /* ---- 用户打卡（basis: user）——与再分析分列，绝不合并 ---- */
+  const userMerged = await readJson(path.join(ROOT, 'data', 'feedback', 'merged.json'));
+  const userFeedback =
+    userMerged?.samples?.length && userMerged.summary
+      ? { ...userMerged.summary, basis: 'user', note: userMerged.note }
+      : null;
+
   const payload = {
     schema: SCHEMA,
     kind: 'ledger',
@@ -246,6 +253,7 @@ async function main() {
     byLead: leadBuckets.filter((b) => b.n > 0),
     byMode: modes.filter((m) => m.n > 0),
     byMountain,
+    userFeedback,
     health,
     days,
     recent: allRows
@@ -312,6 +320,23 @@ async function main() {
     lines.push(`| ${name} | ${m.n} | ${pct(m.predicted)} | ${pct(m.observed)} | ${fixed(m.brier)} |`);
   }
   if (!payload.byMode.length) lines.push('| — | 0 | — | — | — |');
+  lines.push('');
+  lines.push('## 用户打卡（basis: user）');
+  lines.push('');
+  if (payload.userFeedback) {
+    const u = payload.userFeedback;
+    lines.push('| 指标 | 数值 |');
+    lines.push('| --- | --- |');
+    lines.push(`| 样本数 | ${u.n} |`);
+    lines.push(`| 命中率 | ${pct(u.hitRate)} |`);
+    lines.push(`| 平均预测 | ${pct(u.meanPredicted)} |`);
+    lines.push(`| Brier | ${fixed(u.brier)} |`);
+    if (u.dateRange) lines.push(`| 日期范围 | ${u.dateRange.from} ~ ${u.dateRange.to} |`);
+    lines.push('');
+    lines.push('> 用户打卡来自本机导出的匿名样本，basis=user；与上面的 ERA5 再分析分开统计，不合并。');
+  } else {
+    lines.push('暂无用户打卡样本。设置页「导出反馈样本（匿名）」→ 放进 `data/inbox/feedback/` → `npm run ledger:feedback` 合并，之后在此单列。');
+  }
   lines.push('');
 
   if (health) {

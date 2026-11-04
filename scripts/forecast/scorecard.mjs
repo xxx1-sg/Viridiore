@@ -74,6 +74,16 @@ export function renderScorecard(ledger = {}) {
     L.push('');
   }
 
+  if (ledger.userFeedback && ledger.userFeedback.n) {
+    const u = ledger.userFeedback;
+    L.push('用户打卡（basis: user，与再分析分列）：');
+    L.push('');
+    L.push('| 样本 | 命中率 | 平均预测 | Brier |');
+    L.push('| --- | --- | --- | --- |');
+    L.push(`| ${u.n} | ${pct(u.hitRate)} | ${pct(u.meanPredicted)} | ${fixed(u.brier)} |`);
+    L.push('');
+  }
+
   L.push(SCORECARD_END);
   return L.join('\n');
 }

@@ -25,6 +25,7 @@
     "ledger:verify": "node scripts/forecast/verify.mjs",
     "ledger:report": "node scripts/forecast/report.mjs",
     "ledger:scorecard": "node scripts/forecast/scorecard.mjs --write",
+    "ledger:feedback": "node scripts/forecast/ingest-feedback.mjs",
     "ledger": "node scripts/forecast/collect.mjs && node scripts/forecast/verify.mjs && node scripts/forecast/report.mjs && node scripts/forecast/scorecard.mjs --write"
   },
   "devDependencies": {
