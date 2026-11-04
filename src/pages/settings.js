@@ -43,13 +43,17 @@ export default {
         </div>
       </div>
 
+      <div class="card" style="padding:12px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start">
+        <span style="color:var(--moss-400);flex:0 0 auto;margin-top:1px">${icon('sparkles', 16)}</span>
+        <span style="font-size:13px;line-height:1.55">无需注册即可使用：预报走 Open-Meteo，打开就是真实数据。下方的和风天气只是<strong>可选增强</strong>，可以跳过。</span>
+      </div>
+
       <section class="section">
         <div class="settings-group">
-          <div class="settings-group__title">和风天气 · 实况数据源</div>
+          <div class="settings-group__title">和风天气 <span style="font-size:11px;font-weight:600;color:var(--moss-400);border:1px solid var(--moss-400);border-radius:999px;padding:1px 8px;margin-left:8px;vertical-align:middle">可选 · 可跳过</span></div>
           <p class="field__hint" style="margin:-6px 0 14px">
-            填了 Key 后，<strong>天气页的实况与预报改用和风天气</strong>（国内站点观测 + 中国区域预报），
-            与手机自带天气口径一致，比 ECMWF 模式更贴本地；追光用的高空层结仍取中国气象局 GRAPES 模式。
-            <strong>不填也能用</strong>，预报走 Open-Meteo，但「现在」是模式插值，通常比实况偏高、湿度偏低。
+            <strong>不填完全不影响使用</strong>：预报走 Open-Meteo，打开即可看真实数据；追光的高空层结也来自 Open-Meteo，和风替不了。
+            填了只是多两样——<strong>中国气象局预警</strong>和<strong>国控站官方 AQI</strong>，并让「现在」改用国内站点实况（更贴手机自带天气）。
           </p>
           <label class="field" style="margin-bottom:14px">
             <span class="field__label">API Key</span>
