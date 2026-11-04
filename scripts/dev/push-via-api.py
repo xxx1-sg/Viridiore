@@ -5,7 +5,10 @@
 背景：本机代理有时只放通 api.github.com，挡住 github.com:443，导致 `git push` 报
       `CONNECT tunnel failed, response 502`。此脚本走 REST API，能绕开这个限制。
 
-用法：
+用法（推荐把 token 放环境变量，避免进 shell 历史）：
+    GH_TOKEN=<token> python scripts/dev/push-via-api.py [分支] [-m "提交信息"]
+
+    # 兼容旧用法（token 会进 shell 历史，不推荐）：
     python scripts/dev/push-via-api.py <token> [分支] [-m "提交信息"]
 
 工作方式：
@@ -19,6 +22,7 @@
 """
 import base64
 import json
+import os
 import subprocess
 import sys
 import urllib.error
@@ -70,10 +74,12 @@ def remote_tree(token, tree_sha):
 
 def main():
     args = [a for a in sys.argv[1:]]
-    if not args:
-        print(__doc__)
-        sys.exit(1)
-    token = args.pop(0)
+    token = os.environ.get('GH_TOKEN') or os.environ.get('GITHUB_TOKEN')
+    if not token:
+        if not args:
+            print(__doc__)
+            sys.exit(1)
+        token = args.pop(0)
     message = None
     if '-m' in args:
         i = args.index('-m')

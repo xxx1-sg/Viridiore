@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag（如 v2.4.1）'
+        description: 'Release tag（如 v2.5.0）'
         required: true
-        default: 'v2.4.1'
+        default: 'v2.5.0'
 
 permissions:
   contents: write
@@ -67,10 +67,12 @@ jobs:
           body: |
             晓山青 Viridiore ${{ github.event.inputs.tag }}
 
-            - 修复云海判据参考面错误：云底改以 min(格点海拔, 谷底海拔) 起算，梧桐山不再永远判不出云海（结构性不可能 7/84 → 0/84）
-            - 新增陪伴层：每日一句 + 「山记得你」
-            - 和风天气升为天气页主显示源，接新版 AQI / 预警接口
-            - 预测台账与 CI 上线（每日记预测、ERA5 对账）
+            - 官网改由 GitHub Pages 现构建发布；补 LICENSE、仓库元数据与界面截图
+            - 新增 45 个单元测试与 CI（push / PR 自动 npm test + npm run build）
+            - README 新增「回测记分牌」，无样本时如实显示「样本积累中」
+            - 设置页新增「导出反馈样本（匿名）」，可离线汇总；用户打卡以 basis:user 单列
+            - 清理下架模块死代码（约 2,000 行），IndexedDB 升级 v3
+            - 官网文案对齐真实实现：逆温用 925 / 850 hPa 模式层结，非探空实测
           files: |
             release/XiaoShanQing-*-Setup-x64.exe
             release/XiaoShanQing-*-Portable-x64.exe

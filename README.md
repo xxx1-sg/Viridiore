@@ -4,7 +4,7 @@
 
 四端同源（浏览器 PWA / Windows / Android / iOS），离线可用。
 
-![version](https://img.shields.io/badge/version-2.4.1-5c946e) ![license](https://img.shields.io/badge/license-MIT-e9a95e) ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20PWA%20%7C%20Android%20%7C%20iOS-0a1710)
+![version](https://img.shields.io/badge/version-2.5.0-5c946e) ![license](https://img.shields.io/badge/license-MIT-e9a95e) ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20PWA%20%7C%20Android%20%7C%20iOS-0a1710)
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/xxx1-sg/Viridiore/main/docs/screenshots/cover.png" alt="晓山青 Viridiore" width="720" />
@@ -164,6 +164,8 @@ npm run desktop:build
 ### Android
 
 本机没有 Android SDK，需要在装有 Android Studio 的机器上编译：
+
+> 仓库里提交的 `android/app/src/main/assets/public` 与 `ios/App/App/public` 只是旧构建快照。打包前务必先 `npm run mobile:sync`（已包含 `npm run build`），否则会把旧网页打进原生包。
 
 ```bash
 npm run build
@@ -336,8 +338,9 @@ CI 在 `.github/workflows/ledger.yml`：21:30 记预测，08:30 对账，自动�
 
 ## 九、更新日志
 
-### 未发布（main 分支）
+### v2.5.0
 
+- **官网文案修正**：逆温说明改为「925 / 850 hPa 模式层结」口径（此前误写为「估算 / 拿不到 850 hPa」）；补 `canonical` / `og:url`；版本号升到 2.5.0
 - **清理下架模块死代码**：删除 `src/pages/experimental/`、`src/services/experimental/`、`src/data/experimental/`（11 个文件、约 2,000 行）与 `core/store.js` 里对应的路书 / 装备 / 联系人 / 气压仓库；IndexedDB 升到 v3，升级时删除这些遗留 object store
 - **回测记分牌**：README 顶部新增「回测记分牌」自动区块（`scripts/forecast/scorecard.mjs`），从 `data/ledger.json` 渲染 Brier / 命中率 / 按提前量拆分；无对账数据时只写「样本积累中」，台账 CI 对账后自动刷新
 - **单元测试与 CI**：新增 `test/`（atmos / chase / forecast / feedback 共 4 组 `node:test`），新增 `.github/workflows/ci.yml` 在 push / PR 跑 `npm test`
