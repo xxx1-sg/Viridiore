@@ -19,9 +19,8 @@ import settings from './pages/settings.js';
 
 /**
  * 只注册四个主功能 + 设置。
- * 已下架的模块（SOS / 队友 / 气压 / 装备 / 路书 / AI 对话）
- * 整目录移到了 src/pages/experimental/，不参与构建，
- * 需要时再逐个评估，不放回导航。
+ * 已下架的模块（SOS / 队友 / 气压 / 装备 / 路书 / AI 对话）代码已删除，
+ * 不再保留空壳目录，需要时从 git 历史里取回再评估。
  */
 [home, chase, trail, weather, settings].forEach(registerPage);
 

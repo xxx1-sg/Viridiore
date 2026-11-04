@@ -237,8 +237,7 @@ src/
 │  ├─ mapview.js            自绘 Canvas 地图（无外部依赖，离线可用）
 │  └─ shell.js              外壳：导航与数据来源标识
 └─ pages/
-   ├─ home.js  chase.js  trail.js  weather.js  settings.js
-   └─ experimental/         已下架模块（不参与构建，见该目录 README）
+   └─ home.js  chase.js  trail.js  weather.js  settings.js
 
 site/                       官网（纯静态，独立于应用构建）
 ├─ index.html               落地页
@@ -248,7 +247,7 @@ site/                       官网（纯静态，独立于应用构建）
 └─ download/                Windows 安装包副本（已 gitignore）
 ```
 
-规模：34 个 JS 文件约 6,800 行，CSS 约 3,100 行。运行时依赖只有 3 个 Capacitor 包；构建依赖 4 个（Vite / Electron / electron-builder / Capacitor CLI）。
+规模：37 个 JS 文件约 7,400 行，CSS 约 3,100 行。运行时依赖只有 3 个 Capacitor 包；构建依赖 4 个（Vite / Electron / electron-builder / Capacitor CLI）。
 
 ### 官网的发布方式
 
@@ -280,7 +279,7 @@ IndexedDB `mossy-dawn`（v2）：
 | `trails` | 轨迹点、统计、剖面 |
 | `feedback` | 追光反馈样本（校准用） |
 | `cache` | 天气缓存，带 TTL |
-| `roadbooks` / `gear` / `contacts` / `pressure` | 下架模块遗留，保留结构但不再写入 |
+| ~~`roadbooks` / `gear` / `contacts` / `pressure`~~ | 下架模块遗留，v2.4.2 起数据库升级到 v3 时已删除 |
 
 偏好存在 `localStorage['mossy.prefs']`，API 配置存在 `localStorage['mossy.config']`。
 
@@ -339,6 +338,7 @@ CI 在 `.github/workflows/ledger.yml`：21:30 记预测，08:30 对账，自动�
 
 ### 未发布（main 分支）
 
+- **清理下架模块死代码**：删除 `src/pages/experimental/`、`src/services/experimental/`、`src/data/experimental/`（11 个文件、约 2,000 行）与 `core/store.js` 里对应的路书 / 装备 / 联系人 / 气压仓库；IndexedDB 升到 v3，升级时删除这些遗留 object store
 - **回测记分牌**：README 顶部新增「回测记分牌」自动区块（`scripts/forecast/scorecard.mjs`），从 `data/ledger.json` 渲染 Brier / 命中率 / 按提前量拆分；无对账数据时只写「样本积累中」，台账 CI 对账后自动刷新
 - **单元测试与 CI**：新增 `test/`（atmos / chase / forecast / feedback 共 4 组 `node:test`），新增 `.github/workflows/ci.yml` 在 push / PR 跑 `npm test`
 - **反馈样本匿名导出**：设置页新增「导出反馈样本（匿名）」；新增 `src/services/feedback.js`（白名单匿名化 / 校验 / 汇总 / 幂等合并）与 `scripts/forecast/ingest-feedback.mjs`（把导出文件并入 `data/feedback/merged.json`，`npm run ledger:feedback`）；用户打卡以 `basis: user` 在台账与记分牌中单列，与 ERA5 再分析分开
@@ -402,7 +402,7 @@ CI 在 `.github/workflows/ledger.yml`：21:30 记预测，08:30 对账，自动�
 - 新增叙事层与 Canvas 光之卡片（可保存 / 系统分享）
 - 新增"没看到"的补偿提示：直接给下一个窗口，而不是道歉
 - 首页重做为"今天值不值得上山"，只保留一个核心数字
-- 移除 SOS / 队友 / 气压 / 装备 / 路书 / AI 聊天页，归档到 `experimental/`
+- 移除 SOS / 队友 / 气压 / 装备 / 路书 / AI 聊天页，归档到 `experimental/`（该目录已于 v2.4.2 彻底删除）
 - 气象预警并入天气页横幅
 - 修复和风 7 日预报 `pop` 字段恒为 0 的 bug
 - 演示数据在顶栏与设置页明确标注
