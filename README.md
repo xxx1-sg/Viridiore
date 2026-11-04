@@ -7,19 +7,19 @@
 ![version](https://img.shields.io/badge/version-2.4.1-5c946e) ![license](https://img.shields.io/badge/license-MIT-e9a95e) ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20PWA%20%7C%20Android%20%7C%20iOS-0a1710)
 
 <p align="center">
-  <img src="docs/screenshots/cover.png" alt="晓山青 Viridiore" width="720" />
+  <img src="https://raw.githubusercontent.com/xxx1-sg/Viridiore/main/docs/screenshots/cover.png" alt="晓山青 Viridiore" width="720" />
 </p>
 
 ### 界面
 
 <p align="center">
-  <img src="docs/screenshots/desktop-home.png" alt="首页 · 今天值不值得上山" width="48%" />
-  <img src="docs/screenshots/desktop-chase.png" alt="追光 · 概率与逐项证据" width="48%" />
+  <img src="https://raw.githubusercontent.com/xxx1-sg/Viridiore/main/docs/screenshots/desktop-home.png" alt="首页 · 今天值不值得上山" width="48%" />
+  <img src="https://raw.githubusercontent.com/xxx1-sg/Viridiore/main/docs/screenshots/desktop-chase.png" alt="追光 · 概率与逐项证据" width="48%" />
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/mobile-home.png" alt="移动端 · 首页" width="24%" />
-  <img src="docs/screenshots/mobile-weather.png" alt="移动端 · 天气" width="24%" />
+  <img src="https://raw.githubusercontent.com/xxx1-sg/Viridiore/main/docs/screenshots/mobile-home.png" alt="移动端 · 首页" width="24%" />
+  <img src="https://raw.githubusercontent.com/xxx1-sg/Viridiore/main/docs/screenshots/mobile-weather.png" alt="移动端 · 天气" width="24%" />
 </p>
 
 ---
