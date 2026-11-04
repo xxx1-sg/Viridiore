@@ -8,6 +8,11 @@
   "private": true,
   "type": "module",
   "main": "desktop/main.cjs",
+  "repository": { "type": "git", "url": "https://github.com/xxx1-sg/Viridiore.git" },
+  "homepage": "https://xxx1-sg.github.io/Viridiore/",
+  "bugs": { "url": "https://github.com/xxx1-sg/Viridiore/issues" },
+  "engines": { "node": ">=18" },
+  "keywords": ["cloud-sea", "hiking", "shenzhen", "weather", "pwa", "electron", "forecast"],
   "scripts": {
     "dev": "vite",
     "build": "node scripts/generate-icons.mjs && vite build && node scripts/generate-sw.mjs",

@@ -12,6 +12,9 @@
 <meta property="og:title" content="晓山青 Viridiore" />
 <meta property="og:description" content="不问天气好不好，只回答值不值得去。" />
 <meta property="og:image" content="assets/desktop-home.png" />
+<meta property="og:url" content="https://xxx1-sg.github.io/Viridiore/" />
+<meta property="og:site_name" content="晓山青 Viridiore" />
+<link rel="canonical" href="https://xxx1-sg.github.io/Viridiore/" />
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -181,9 +184,9 @@
     </div>
 
     <p class="factor-note">
-      逆温这一项是<strong>估算</strong>：真正的判据是 850 hPa 的温湿探空资料，免费天气接口拿不到。
-      我们用昼夜温差、夜间云量、风力做代理指标，并在界面上标明「置信度」——
-      数据不够好时，它会主动告诉你这个概率别太当真。
+      逆温这一项不是拍脑袋的代理分，而是用 925 hPa 与 850 hPa 的实际温度直减率算出来的：
+      低于 6.5 ℃/km 判为偏稳定，为负就是逆温。它来自<strong>数值模式同化场</strong>而不是本地探空实测，
+      所以界面同时给出「置信度」——数据不够好时，它会主动告诉你这个概率别太当真。
     </p>
   </div>
 </section>
@@ -272,7 +275,7 @@
     <p class="sec-label center light">下载</p>
     <h2 class="sec-title center light">选一个装到你机器上</h2>
     <p class="sec-sub center light">
-      装完就能看真实预报：不用注册、不用填 Key、不用登录。追光的概率由 925 / 850 hPa 的实测层结算出来，
+      装完就能看真实预报：不用注册、不用填 Key、不用登录。追光的概率由 925 / 850 hPa 的模式层结（温度直减率）算出来，
       每一项加减都能展开看到原始数值——算不出来的时候，它会直说算不出来。
     </p>
 
@@ -389,15 +392,15 @@
       <li>
         <span class="honest__mark">01</span>
         <div>
-          <b>逆温是估算，不是实测</b>
-          <p>850 hPa 温湿需要探空资料，免费接口没有。用代理指标替代，界面会标出置信度。</p>
+          <b>逆温用模式层结，不是探空实测</b>
+          <p>925 / 850 hPa 温度取自数值模式同化场，山区实际层结会偏差几度：逆温有无判得住，精确到米判不住。</p>
         </div>
       </li>
       <li>
         <span class="honest__mark">02</span>
         <div>
-          <b>没有做过历史回测</b>
-          <p>基准率来自华南云海的季节经验，不是标定过的统计模型。样本量还不够。</p>
+          <b>回测样本还不够</b>
+          <p>预测台账每天记一份、用 ERA5 再分析对账；首批真实样本到位前，校准曲线只显示「样本积累中」。</p>
         </div>
       </li>
       <li>
