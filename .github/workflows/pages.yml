@@ -1,9 +1,9 @@
 name: pages
 
-# 把 site/ 这个纯静态官网发布到 GitHub Pages。
+# 把官网发布到 GitHub Pages。
 #
-# site/ 不参与 npm run build：应用重新构建后，需要先把 dist 同步进 site/app（见 README），
-# 这里只负责把已经准备好的 site/ 原样传上去。
+# site/ 是纯静态落地页；网页版应用由源码在 CI 里现构建，再覆盖进 site/app 后一起上传，
+# 这样线上网页版永远和 main 一致，不会出现「源码加了功能、网页版还是旧构建」。
 # 首次运行会自动创建 Pages 站点（configure-pages 的 enablement: true）。
 # 访问地址：https://xxx1-sg.github.io/Viridiore/
 
@@ -12,6 +12,11 @@ on:
     branches: [main]
     paths:
       - 'site/**'
+      - 'src/**'
+      - 'index.html'
+      - 'vite.config.js'
+      - 'package.json'
+      - 'package-lock.json'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -27,11 +32,27 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Sync built app into site
+        run: |
+          rm -rf site/app
+          cp -r dist site/app
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

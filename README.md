@@ -250,19 +250,22 @@ site/                       官网（纯静态，独立于应用构建）
 
 规模：34 个 JS 文件约 6,800 行，CSS 约 3,100 行。运行时依赖只有 3 个 Capacitor 包；构建依赖 4 个（Vite / Electron / electron-builder / Capacitor CLI）。
 
-### 官网的更新方式
+### 官网的发布方式
 
-官网是纯静态目录，不参与 `npm run build`。应用重新构建后，需要手动把产物同步进去：
+官网 `site/` 是纯静态目录；**网页版应用由 GitHub Actions 在发布时现构建**：
+
+- `.github/workflows/pages.yml` 在 `main` 上改动 `site/`、`src/`、`index.html` 或 `vite.config.js` 时触发：`npm ci && npm run build`，把 `dist/` 覆盖进 `site/app`，再整体发布到 GitHub Pages。
+- 所以线上网页版始终跟 `main` 一致，不需要手动同步；仓库里提交的 `site/app` 只是本地预览用的快照。
+
+本地预览最新网页版：
 
 ```bash
 npm run build
-rm -rf site/app && cp -r dist site/app          # 同步网页版
-rm -f site/download/*.exe
-cp release/XiaoShanQing-*-Setup-x64.exe site/download/     # 同步安装包
-cp release/XiaoShanQing-*-Portable-x64.exe site/download/
+rm -rf site/app && cp -r dist site/app     # 想在本地看最新网页版时手动同步一次
+python -m http.server -d site              # 或 npx serve site
 ```
 
-本地预览用任意静态服务器即可（`python -m http.server` 或 `npx serve site`），直接双击 `site/index.html` 也能看——它没有用 ES module，`file://` 下同样正常。
+直接双击 `site/index.html` 也能看——落地页没有用 ES module，`file://` 下正常。Windows 安装包仍走 Release（`release.yml`），不放进 Pages。
 
 ---
 
