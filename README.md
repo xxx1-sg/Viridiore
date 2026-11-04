@@ -22,6 +22,23 @@
   <img src="https://raw.githubusercontent.com/xxx1-sg/Viridiore/main/docs/screenshots/mobile-weather.png" alt="移动端 · 天气" width="24%" />
 </p>
 
+<!-- SCORECARD:START -->
+## 回测记分牌
+
+> 真值 = ERA5 再分析；判的是「气象条件是否成立」，不是「有人看到」。本表由 `npm run ledger:scorecard` 从 `data/ledger.json` 自动生成。
+
+| 指标 | 数值 |
+| --- | --- |
+| 已记录预测 | 504 条 |
+| 已对账 | 0 条（0 天） |
+| 待对账 | 1 天 |
+| 命中率 | — |
+| **Brier** | **—**（越低越好，0.25 = 永远说 50%） |
+
+⏳ **样本积累中**：ERA5 归档约延迟 5 天，首批对账在预测日 +5 天左右才到位。在此之前这里只显示「待对账」，不填任何编造的数字。
+
+<!-- SCORECARD:END -->
+
 ---
 
 ## 一、这个版本只做三件事

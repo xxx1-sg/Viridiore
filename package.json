@@ -20,10 +20,12 @@
     "mobile:sync": "npm run build && npx cap sync",
     "mobile:android": "npm run build && npx cap sync android && npx cap open android",
     "mobile:ios": "npm run build && npx cap sync ios && npx cap open ios",
+    "test": "node --test",
     "ledger:collect": "node scripts/forecast/collect.mjs",
     "ledger:verify": "node scripts/forecast/verify.mjs",
     "ledger:report": "node scripts/forecast/report.mjs",
-    "ledger": "node scripts/forecast/collect.mjs && node scripts/forecast/verify.mjs && node scripts/forecast/report.mjs"
+    "ledger:scorecard": "node scripts/forecast/scorecard.mjs --write",
+    "ledger": "node scripts/forecast/collect.mjs && node scripts/forecast/verify.mjs && node scripts/forecast/report.mjs && node scripts/forecast/scorecard.mjs --write"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.2.0",
