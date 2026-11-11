@@ -1,0 +1,89 @@
+name: android-apk
+
+# 用 Capacitor 构建可侧载的 Android APK（debug 签名，直接安装）。
+# iOS 的 .ipa 需要 Apple 开发者账号 + macOS，不在本工作流范围内。
+#
+# 默认发布到 tag `v2.5.0-android`；也可手动填别的 tag，或留空只上传 Actions artifact。
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '发布到的 Release tag（留空则只上传 artifact）'
+        required: false
+        default: 'v2.5.0-android'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk-${{ github.event.inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Sync Capacitor android
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Collect artifact
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          mkdir -p out
+          cp android/app/build/outputs/apk/debug/app-debug.apk "out/XiaoShanQing-${VERSION}-android-debug.apk"
+          ls -lh out
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: XiaoShanQing-android-debug
+          path: out/*.apk
+
+      - name: Publish to Release
+        if: inputs.tag != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag }}
+          name: 晓山青 Android ${{ inputs.tag }}
+          body: |
+            晓山青 Android 安装包（debug 签名，可侧载安装）。
+
+            - 安装前在系统设置里允许「安装未知来源应用」
+            - 首次打开需联网加载一次，之后可离线使用
+            - 这是 PWA 的原生外壳，数据同样只存在本机
+            - iOS 需要 Apple 开发者账号 + macOS，暂不提供 ipa
+          files: out/*.apk
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
