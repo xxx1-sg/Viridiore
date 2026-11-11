@@ -47,6 +47,15 @@ export default {
         </div>
       </div>
 
+      <div class="mountain-strip" id="chaseMountainStrip" role="group" aria-label="选择山峰">
+        ${MOUNTAINS.map(
+          (mm) =>
+            `<button class="chip chip--sm${mm.id === m.id ? ' is-active' : ''}" type="button"
+              aria-pressed="${mm.id === m.id}" data-mountain-pick="${mm.id}"
+              title="${mm.area} · 海拔 ${mm.elevation}m">${mm.name}</button>`
+        ).join('')}
+      </div>
+
       <div class="segmented" style="margin-bottom:16px" id="chaseModes">
         ${['cloudsea', 'sunrise', 'stars']
           .map(
@@ -154,7 +163,7 @@ export default {
     let wx = null;
     let ranked = null;
     let calib = { offset: 0, n: 0 };
-    let loading = false;
+    let loadSeq = 0;
 
     const requested = new URLSearchParams(location.hash.split('?')[1] || '').get('mode');
     if (requested && MODES[requested]) {
@@ -254,19 +263,23 @@ export default {
 
     /* ---------------- 数据 ---------------- */
     const load = async (force = false) => {
-      if (loading) return;
-      loading = true;
+      // 用自增序号丢弃过期请求：连点山头/模式时只有最后一次能落地，
+      // 避免「新山的名字 + 旧山的概率」串台。
+      const seq = ++loadSeq;
       const mountain = currentMountain();
+      const reqMode = mode;
       $('#chaseWindowDesc').textContent = '正在获取山区天气…';
       try {
-        calib = await calibrationFor(mountain.id, mode);
-        wx = await loadWeather({ lat: mountain.lat, lon: mountain.lon, name: mountain.name, force });
-        ranked = rankDays(wx.daily, mode, { mountain, source: wx.source, calibration: calib });
+        const c = await calibrationFor(mountain.id, reqMode);
+        const data = await loadWeather({ lat: mountain.lat, lon: mountain.lon, name: mountain.name, force });
+        if (seq !== loadSeq) return;
+        calib = c;
+        wx = data;
+        ranked = rankDays(wx.daily, reqMode, { mountain, source: wx.source, calibration: calib });
         render();
       } catch (err) {
+        if (seq !== loadSeq) return;
         toastError(err.message || '数据加载失败');
-      } finally {
-        loading = false;
       }
     };
 
@@ -363,6 +376,18 @@ export default {
     };
 
     /* ---------------- 山峰切换 ---------------- */
+    const applyMountain = (id) => {
+      if (!id || id === appState.mountainId) return;
+      setMountain(id);
+      el.querySelectorAll('[data-mountain-pick]').forEach((b) => {
+        const on = b.dataset.mountainPick === id;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      // 缓存优先：同一座山 10 分钟内直接复用，避免连点反复联网；刷新按钮仍强制更新
+      load(false);
+    };
+
     const openMountainSheet = () => {
       const body = `<div class="list">
         ${MOUNTAINS.map(
@@ -380,14 +405,19 @@ export default {
       sheet.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-mountain]');
         if (!btn) return;
-        setMountain(btn.dataset.mountain);
         close();
-        load(true);
+        applyMountain(btn.dataset.mountain);
       });
     };
 
     /* ---------------- 事件 ---------------- */
     el.addEventListener('click', (e) => {
+      const pick = e.target.closest('[data-mountain-pick]');
+      if (pick) {
+        applyMountain(pick.dataset.mountainPick);
+        return;
+      }
+
       const modeBtn = e.target.closest('[data-mode]');
       if (modeBtn) {
         mode = modeBtn.dataset.mode;
