@@ -20,6 +20,7 @@ import {
   LEDGER_MD,
   ROOT,
   SCHEMA,
+  RULE_VERSION,
   shDate,
   readJson,
   writeJson,
@@ -56,8 +57,10 @@ async function main() {
   for (const file of verifiedFiles) {
     const v = await readJson(path.join(VERIFIED_DIR, file));
     if (!v?.entries) continue;
-    days.push({ date: v.date, entries: v.entries.length, observed: v.summary?.observed ?? 0 });
-    for (const e of v.entries) allRows.push(e);
+    // 星空在 RULE_VERSION 2 之前用日出窗口判定，口径不同，不计入当前统计
+    const ents = v.entries.filter((e) => !(e.mode === 'stars' && (e.ruleVersion ?? 1) < RULE_VERSION));
+    days.push({ date: v.date, entries: ents.length, observed: ents.filter((x) => x.observed).length });
+    for (const e of ents) allRows.push(e);
   }
 
   // 头条口径：每个（山 × 模式 × 日期）只留最晚一次预言

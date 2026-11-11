@@ -19,8 +19,12 @@ export const VERIFIED_DIR = path.join(ROOT, 'data', 'verified');
 export const LEDGER_JSON = path.join(ROOT, 'data', 'ledger.json');
 export const LEDGER_MD = path.join(ROOT, 'data', 'ledger.md');
 
-/** 判定规则的版本号。规则一改就 +1，旧的 verified 文件保持原样、不重判 */
-export const RULE_VERSION = 1;
+/**
+ * 判定规则的版本号。规则一改就 +1，旧的 verified 文件保持原样、不重判。
+ * v2：星空改用夜间窗口（20:00–次日 06:00）判定，不再复用日出窗口。
+ *     旧 stars 记录 ruleVersion=1，报告与校准时排除，避免新旧口径混算。
+ */
+export const RULE_VERSION = 2;
 
 /** 台账 schema 版本 */
 export const SCHEMA = 1;

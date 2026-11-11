@@ -1,8 +1,8 @@
 {
   "kind": "calibration",
-  "generatedAt": "2026-11-11T00:54:54.511Z",
+  "generatedAt": "2026-11-11T01:07:21.095Z",
   "basis": "reanalysis",
-  "samples": 1224,
+  "samples": 816,
   "days": 7,
   "window": {
     "from": "2026-11-03",
@@ -17,10 +17,6 @@
     "sunrise": {
       "a": 0.5,
       "b": 0
-    },
-    "stars": {
-      "a": 0,
-      "b": -0.25
     }
   },
   "detail": {
@@ -41,15 +37,6 @@
       "brierBefore": 0.23370220588235333,
       "brierAfter": 0.2266171505951625,
       "constBrier": 0.23312548058439048
-    },
-    "stars": {
-      "n": 408,
-      "baseRate": 0.4338235294117647,
-      "meanPredicted": 0.12276960784313731,
-      "auc": 0.3455743879472693,
-      "brierBefore": 0.37682573529411767,
-      "brierAfter": 0.24563667449810545,
-      "constBrier": 0.24562067474048313
     }
   },
   "note": "由 scripts/forecast/calibrate.mjs 从 data/verified 拟合；样本有限（首轮 7 天），样本变多后应重跑。"

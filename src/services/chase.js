@@ -339,16 +339,25 @@ export function assessDay(day, mode = 'cloudsea', ctx = {}) {
   }
 
   if (mode === 'stars') {
+    /*
+     * 星空必须用**夜间窗口**（20:00–次日 06:00），不能拿日出时的云量冒充。
+     * v2.6.1 起模型输入与 ERA5 对账都改用同一夜间窗口（RULE_VERSION 2）。
+     */
+    const nightCloud = num(s.nightCloud, cloud);
+    const nightLow = num(s.nightCloudLow, cloudLow);
+    const nightHigh = num(s.nightCloudHigh, s.cloudHigh, cloud);
+    const nightRh = num(s.nightRh, s.rh850, geo.rh850);
+    const nightVis = num(s.nightVis, vis);
     // 高云薄但会糊掉银河，低云则直接挡死，权重分开
-    const highBlock = clamp01((num(s.cloudHigh, cloud) - 25) / 50);
-    add('cloud', '总云量', `${cloud}%`, -1.7 * clamp01((cloud - 10) / 55) - 0.5 * highBlock, cloud > 60 ? '云量偏多，银河基本看不到' : '天空较为通透');
-    add('cloudlow', '低云雾', `${Math.round(cloudLow)}%`, -0.9 * clamp01((cloudLow - 20) / 40), cloudLow > 60 ? '低云或雾压顶，星点被完全遮挡' : '低层无遮挡');
+    const highBlock = clamp01((nightHigh - 25) / 50);
+    add('cloud', '夜间总云量', `${nightCloud}%`, -1.7 * clamp01((nightCloud - 10) / 55) - 0.5 * highBlock, nightCloud > 60 ? '夜间云量偏多，银河基本看不到' : '夜间天空较为通透');
+    add('cloudlow', '夜间低云雾', `${Math.round(nightLow)}%`, -0.9 * clamp01((nightLow - 20) / 40), nightLow > 60 ? '低云或雾压顶，星点被完全遮挡' : '低层无遮挡');
     add('precip', '降水', `${precip} mm`, -1.6 * clamp01(precip / 5) - 0.5 * clamp01((pop - 30) / 70), precip > 0 ? '有降水，不适合观星' : '无降水');
-    add('humidity', '水汽', `${Math.round(num(s.rh850, geo.rh850))}%`, -0.9 * clamp01((num(s.rh850, geo.rh850) - 65) / 30), num(s.rh850, geo.rh850) > 85 ? '中低层水汽重，星光被散射变暗' : '空气干爽，星点清晰');
+    add('humidity', '夜间水汽', `${Math.round(nightRh)}%`, -0.9 * clamp01((nightRh - 65) / 30), nightRh > 85 ? '夜间水汽重，星光被散射变暗' : '空气干爽，星点清晰');
     const moon = clamp01(ctx.moonIllum ?? 0);
     add('moon', '月光干扰', `${Math.round(moon * 100)}%`, -0.6 * moon, moon > 0.6 ? '接近满月，暗弱天体被压制' : '月光干扰小');
-    add('vis', '能见度', `${vis} km`, 0.5 * clamp01((vis - 12) / 16), vis < 10 ? '能见度一般，地平附近星点稀少' : '通透度好');
-    add('wind', '风力', `${Math.round(wind)} 级`, -0.3 * clamp01((wind - 3) / 4), wind >= 5 ? '风大，长曝光会抖' : '风力平稳');
+    add('vis', '能见度', `${nightVis} km`, 0.5 * clamp01((nightVis - 12) / 16), nightVis < 10 ? '能见度一般，地平附近星点稀少' : '通透度好');
+    add('wind', '夜间风力', `${Math.round(wind)} 级`, -0.3 * clamp01((wind - 3) / 4), wind >= 5 ? '风大，长曝光会抖' : '风力平稳');
   }
 
   const delta = factors.reduce((sum, f) => sum + f.delta, 0);

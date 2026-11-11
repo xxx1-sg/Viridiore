@@ -465,8 +465,12 @@ export async function fetchOpenMeteo(lat, lon, placeName = '当前位置', opts 
       t850: round(avg(pick(series.t850, obsIdx)), 1),
       rh850: round(avg(pick(series.rh850, obsIdx)), 0),
       ws850: round(avg(pick(series.ws850, obsIdx)), 1),
-      /** 夜间平均云量，用于判断辐射降温能不能发生 */
+      /** 夜间（20:00–次日 06:00）平均要素：云海辐射降温与星空可见性都用它 */
       nightCloud: round(avg(pick(series.cloud, nightIdx)), 0),
+      nightCloudLow: round(avg(pick(series.cloudLow, nightIdx)), 0),
+      nightCloudHigh: round(avg(pick(series.cloudHigh, nightIdx)), 0),
+      nightRh: round(avg(pick(series.rh, nightIdx)), 0),
+      nightVis: Number.isFinite(avg(pick(series.vis, nightIdx))) ? round(avg(pick(series.vis, nightIdx)) / 1000, 1) : null,
       nightWind: round(avg(pick(series.wind, nightIdx)), 1),
       stationElevation: round(stationElevation)
     };

@@ -122,21 +122,37 @@ async function fetchArchive(lat, lon, start, end) {
   return fetchJson(url.toString(), { tries: 3, timeout: 40000 });
 }
 
-/** 观测窗内的逐时平均（与 openmeteo.js 的 90 min / +30 min 窗口保持一致） */
-function windowStats(hourly, dateStr, lat, lon) {
+function ymdLocal(d) {
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/**
+ * 观测窗内的逐时平均。
+ * · 云海 / 日出：日出前 90 分钟 ~ 日出后 30 分钟；
+ * · 星空：夜间窗口 20:00–次日 06:00（与 openmeteo 的 nightIdx 口径一致）。
+ */
+function windowStats(hourly, dateStr, lat, lon, mode = 'cloudsea') {
   const times = (hourly.time || []).map(parseLocal);
   const [y, m, d] = dateStr.split('-').map(Number);
   const dayObj = new Date(y, m - 1, d, 12);
-  const sun = sunTimes(dayObj, lat, lon);
-  if (!sun?.sunrise) return null;
-
-  const from = new Date(sun.sunrise.getTime() - 90 * 60000);
-  const to = new Date(sun.sunrise.getTime() + 30 * 60000);
 
   const idx = [];
-  times.forEach((t, i) => {
-    if (t && t >= from && t <= to) idx.push(i);
-  });
+  if (mode === 'stars') {
+    times.forEach((t, i) => {
+      if (!t || ymdLocal(t) !== dateStr) return;
+      const h = t.getHours();
+      if (h >= 20 || h <= 6) idx.push(i);
+    });
+  } else {
+    const sun = sunTimes(dayObj, lat, lon);
+    if (!sun?.sunrise) return null;
+    const from = new Date(sun.sunrise.getTime() - 90 * 60000);
+    const to = new Date(sun.sunrise.getTime() + 30 * 60000);
+    times.forEach((t, i) => {
+      if (t && t >= from && t <= to) idx.push(i);
+    });
+  }
   if (!idx.length) return null;
 
   const pick = (key) => idx.map((i) => num(hourly[key]?.[i]));
@@ -273,7 +289,7 @@ async function main() {
         missing += 1;
         continue;
       }
-      const stats = windowStats(arc.hourly, date, m.lat, m.lon);
+      const stats = windowStats(arc.hourly, date, m.lat, m.lon, entry.mode);
       if (!stats) {
         missing += 1;
         continue;

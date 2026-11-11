@@ -17,7 +17,7 @@
  */
 import path from 'node:path';
 import { readdir } from 'node:fs/promises';
-import { readJson, writeJson, ROOT, log } from './lib.mjs';
+import { readJson, writeJson, ROOT, RULE_VERSION, log } from './lib.mjs';
 import { sigmoid, logit, clamp } from '../../src/services/atmos.js';
 
 const MIN_SAMPLES = 100;
@@ -76,6 +76,8 @@ async function main() {
   for (const f of files) {
     const v = await readJson(path.join(dir, f));
     for (const e of v?.entries || []) {
+      // 星空 RULE_VERSION 2 之前口径不同，排除旧记录
+      if (e.mode === 'stars' && (e.ruleVersion ?? 1) < RULE_VERSION) continue;
       all += 1;
       if (!rowsByMode.has(e.mode)) rowsByMode.set(e.mode, []);
       rowsByMode.get(e.mode).push(e);
