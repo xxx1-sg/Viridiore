@@ -178,7 +178,7 @@ npm run desktop:build
 
 ### Android
 
-本机没有 Android SDK，需要在装有 Android Studio 的机器上编译：
+不想自己编译，可直接下载预编译 APK（debug 签名，安装前允许「未知来源」即可）：见 [Release v2.5.0-android](https://github.com/xxx1-sg/Viridiore/releases/tag/v2.5.0-android)。自己出包则需要装有 Android Studio 的机器：
 
 > 仓库里提交的 `android/app/src/main/assets/public` 与 `ios/App/App/public` 只是旧构建快照。打包前务必先 `npm run mobile:sync`（已包含 `npm run build`），否则会把旧网页打进原生包。
 
@@ -355,6 +355,7 @@ CI 在 `.github/workflows/ledger.yml`：21:30 记预测，08:30 对账，自动�
 
 ### v2.5.0
 
+- **Android APK 构建上线**：新增 `.github/workflows/android-apk.yml`，在 CI 用 Capacitor 构建可侧载的 debug APK 并发布到 Release（`v2.5.0-android`）；官网手机端新增 APK 下载入口
 - **官网文案修正**：逆温说明改为「925 / 850 hPa 模式层结」口径（此前误写为「估算 / 拿不到 850 hPa」）；补 `canonical` / `og:url`；版本号升到 2.5.0
 - **清理下架模块死代码**：删除 `src/pages/experimental/`、`src/services/experimental/`、`src/data/experimental/`（11 个文件、约 2,000 行）与 `core/store.js` 里对应的路书 / 装备 / 联系人 / 气压仓库；IndexedDB 升到 v3，升级时删除这些遗留 object store
 - **回测记分牌**：README 顶部新增「回测记分牌」自动区块（`scripts/forecast/scorecard.mjs`），从 `data/ledger.json` 渲染 Brier / 命中率 / 按提前量拆分；无对账数据时只写「样本积累中」，台账 CI 对账后自动刷新
