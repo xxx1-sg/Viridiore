@@ -4,7 +4,7 @@
 
 四端同源（浏览器 PWA / Windows / Android / iOS），离线可用。
 
-![version](https://img.shields.io/badge/version-2.5.0-5c946e) ![license](https://img.shields.io/badge/license-MIT-e9a95e) ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20PWA%20%7C%20Android%20%7C%20iOS-0a1710)
+![version](https://img.shields.io/badge/version-2.6.0-5c946e) ![license](https://img.shields.io/badge/license-MIT-e9a95e) ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20PWA%20%7C%20Android%20%7C%20iOS-0a1710)
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/xxx1-sg/Viridiore/main/docs/screenshots/cover.png" alt="晓山青 Viridiore" width="720" />
@@ -76,7 +76,7 @@ v2.0 之前它想做的事情太多：SOS、队友位置、气压计、装备清
 | 海拔 | 山越高越容易穿出云层 | 对 800 m 以上的峰给小幅加成 |
 | 月度基准率 | 华南云海集中在 11—3 月 | 不问月份的模型都是耍流氓 |
 
-输出结构是 `logit(P) = logit(月度基准率) + Σ 各项证据`，最后转回概率。界面上同时展示**基准率**和**置信度**，并把每一项加减拉出来给人看——用户有权反驳。
+输出结构是 `logit(P) = logit(月度基准率) + Σ 各项证据`，最后转回概率。v2.6 起在最后再加一层**回测拟合的保序校准** p = sigmoid(a·logit(p) + b)，系数来自 1,224 条 ERA5 对账（见 `data/calibration.json` 与 `scripts/forecast/calibrate.mjs`）。界面上同时展示**基准率**和**置信度**，并把每一项加减拉出来给人看——用户有权反驳。
 
 **反馈校准**：用户每次上山后点一下「看到了 / 白跑一趟」，就是一条带标签的样本。样本用收缩估计（`n/(n+8)`）逐步修正概率，全部存在本机 IndexedDB，不上传、不需要账号。这是这个产品唯一的数据飞轮。
 
@@ -346,12 +346,18 @@ CI 在 `.github/workflows/ledger.yml`：21:30 记预测，08:30 对账，自动�
 - **决策层只认 10 类标签**（日出/日落/云海/星空/海景/溪谷/城市/夜爬/越野跑/重装）。山峰数据集里没有停车场、门票、水源字段，所以不会假装能按这些条件筛选——问到了会直说"暂未收录"。
 - **叙事层是模板**，不是生成式。想更好看需要接大模型，但那样会引入"编造细节"的风险，暂不做。
 - **Windows 安装包没有代码签名**，首次运行会被 SmartScreen 提示"未知发布者"。要消除需要购买代码签名证书。
-- **模型未经真实样本验证**。目前概率只做过物理自洽性检查，还没有攒够历史实况回测样本；校准机制要等真实用户积累样本才生效（回测记分牌会如实显示「样本积累中」）。
+- **模型已做过一轮真实回测（2026-11-03~09，1,224 条 ERA5 对账）：总体 Brier 0.235，云海有区分度但概率高估、星空首轮区分度反过来（AUC 0.35）。v2.6 已按回测做保序校准：云海 Brier 0.096→0.078、日出 0.234→0.227、星空暂退回基准率 ≈44%（约 0.246）。样本只有 7 天，仍需更多数据复核。
 - **用户打卡靠手动收件箱汇总**，没有自动上报。愿意贡献的用户导出 JSON、再手动 `npm run ledger:feedback` 合并；样本量取决于有多少人愿意发来，这一点没有捷径。
 
 ---
 
 ## 九、更新日志
+
+### v2.6.0
+
+- **概率模型回测校准**：用 `data/verified` 2026-11-03~09 的 1,224 条 ERA5 对账拟合保序校准 `p=sigmoid(a·logit(p)+b)`——云海 a=0.35/b=-1.60（Brier 0.096→0.078，优于恒定基准 0.080）、日出 a=0.50/b=0（0.234→0.227）、星空 a=0/b=-0.25（首轮 AUC 仅 0.35、方向存疑，修好因子前只输出月度基准率 ≈44%）
+- **新增 `scripts/forecast/calibrate.mjs`**：从 `data/verified` 拟合 (a,b) 并写 `data/calibration.json`，报告 AUC / Brier / 恒定基准对照；样本变多后可重跑
+- **新增测试**：`test/chase.test.js` 增补校准不变量（云海保序、星空为常数）
 
 ### v2.5.0
 

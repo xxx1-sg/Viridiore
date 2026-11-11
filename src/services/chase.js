@@ -69,6 +69,32 @@ export const MODES = {
   }
 };
 
+/* ---------------- 回测校准层（v2.6） ---------------- */
+
+/**
+ * 概率校准：p_calibrated = sigmoid(a * logit(p) + b)，a ≥ 0 保持排序（不破坏区分度）。
+ * 拟合来源：data/verified 2026-11-03 ~ 11-09，共 1,224 条 ERA5 再分析对账；
+ * 由 scripts/forecast/calibrate.mjs 拟合，结果见 data/calibration.json。
+ *
+ *   · cloudsea: a=0.35, b=-1.60 —— 因子有区分度(AUC 0.77)但概率高估，收缩后 Brier 0.096→0.078（优于恒定基准 0.080）
+ *   · sunrise : a=0.50, b=0    —— 略偏保守，轻微收缩 0.234→0.227
+ *   · stars   : a=0,    b=-0.25 —— 首轮回测 AUC 仅 0.35（方向存疑），修好因子前只输出月度基准率 ≈44%，不输出假精度
+ *
+ * 局限：样本只有 7 天。样本变多后必须重跑 calibrate.mjs 并更新此表。
+ */
+export const MODE_CALIBRATION = {
+  cloudsea: { a: 0.35, b: -1.6 },
+  sunrise: { a: 0.5, b: 0 },
+  stars: { a: 0, b: -0.25 }
+};
+
+function calibrateProbability(mode, p) {
+  const c = MODE_CALIBRATION[mode];
+  if (!c) return p;
+  const cal = c.a === 0 ? sigmoid(c.b) : sigmoid(c.a * logit(p) + c.b);
+  return clamp(cal, 0.02, 0.96);
+}
+
 /* ---------------- 云层几何 ---------------- */
 
 /**
@@ -331,6 +357,8 @@ export function assessDay(day, mode = 'cloudsea', ctx = {}) {
   const calibOffset = Number(ctx.calibration?.offset) || 0;
 
   let probability = sigmoid(logit(prior) + delta + calibOffset);
+  // 用回测拟合的保序校准把原始概率映射到更可信的刻度（见 MODE_CALIBRATION）
+  probability = calibrateProbability(mode, probability);
   probability = clamp(probability, 0.02, 0.96);
   const prob = Math.round(probability * 100);
 

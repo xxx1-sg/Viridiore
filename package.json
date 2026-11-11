@@ -1,7 +1,7 @@
 {
   "name": "mossy-dawn",
   "productName": "晓山青",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "晓山青 Viridiore — 户外智能出行伴侣",
   "author": "Mossy Dawn",
   "license": "MIT",
@@ -31,6 +31,7 @@
     "ledger:report": "node scripts/forecast/report.mjs",
     "ledger:scorecard": "node scripts/forecast/scorecard.mjs --write",
     "ledger:feedback": "node scripts/forecast/ingest-feedback.mjs",
+    "ledger:calibrate": "node scripts/forecast/calibrate.mjs --write",
     "ledger": "node scripts/forecast/collect.mjs && node scripts/forecast/verify.mjs && node scripts/forecast/report.mjs && node scripts/forecast/scorecard.mjs --write"
   },
   "devDependencies": {
