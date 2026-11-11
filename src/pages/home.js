@@ -1,6 +1,7 @@
 /** 首页：只回答一个问题——最近哪个清晨值得上山 */
 import { icon } from '../core/icons.js';
 import { appState, ensureWeather, currentMountain, setMountain } from '../state.js';
+import { loadWeather } from '../services/weather.js';
 import { bus, trailRepo } from '../core/store.js';
 import { formatDate, formatTime, formatDistance, relTime } from '../core/format.js';
 import { rankDays, advice, compensation, MODES, summitTemp } from '../services/chase.js';
@@ -24,12 +25,14 @@ const FEATURES = [
 ];
 
 /** 今天还没过日出，就看今天；否则从明天算起 */
-function pickTarget(all) {
+function pickTarget(all, mountain) {
   const now = Date.now();
+  const lat = mountain?.lat ?? 22.58;
+  const lon = mountain?.lon ?? 114.2;
   return (
     all.find((item) => {
       const d = item.day.dateObj instanceof Date ? item.day.dateObj : new Date(item.day.date);
-      const sun = sunTimes(d, 22.58, 114.2);
+      const sun = sunTimes(d, lat, lon);
       if (!sun.sunrise) return item.index > 0;
       return item.index > 0 || now < sun.sunrise.getTime() + 30 * 60000;
     }) || all[0]
@@ -78,6 +81,15 @@ export default {
           <button class="verdict__mountain" type="button" data-action="mountain" id="verdictMountain">
             ${m.name} ${icon('chevronDown', 13)}
           </button>
+        </div>
+
+        <div class="mountain-strip" id="mountainStrip" role="group" aria-label="选择山峰">
+          ${MOUNTAINS.map(
+            (mm) =>
+              `<button class="chip chip--sm${mm.id === m.id ? ' is-active' : ''}" type="button"
+                aria-pressed="${mm.id === m.id}" data-mountain-pick="${mm.id}"
+                title="${mm.area} · 海拔 ${mm.elevation}m">${mm.name}</button>`
+          ).join('')}
         </div>
 
         <div class="verdict__main">
@@ -176,13 +188,29 @@ export default {
         navigate(go.dataset.go);
         return;
       }
+      const pick = e.target.closest('[data-mountain-pick]');
+      if (pick) {
+        applyMountain(pick.dataset.mountainPick);
+        return;
+      }
       if (e.target.closest('[data-action="mountain"]')) openMountainSheet();
       if (e.target.closest('[data-action="retry-weather"]')) {
         $('#verdictSentence').textContent = '正在重新获取…';
         ensureWeather(true)
-          .then((wx) => {
+          .then(async (wx) => {
+            cityWx = wx;
             renderHero(wx);
-            renderVerdict(wx);
+            const seq = ++mountainSeq;
+            let data;
+            try {
+              data = await fetchMountainWx(currentMountain(), true);
+            } catch {
+              data = wx;
+            }
+            if (seq !== mountainSeq) return;
+            mountainWx = data;
+            renderVerdict(data);
+            renderCompanion();
           })
           .catch((err) => {
             $('#verdictSentence').innerHTML = `${escapeHtml(err.message || '仍然连不上')}。<br /><button class="btn btn--sm btn--ghost" type="button" data-action="retry-weather" style="margin-top:10px">再试一次</button>`;
@@ -205,7 +233,7 @@ export default {
         source: wx.source,
         calibration: calib
       });
-      const target = pickTarget(ranked.all);
+      const target = pickTarget(ranked.all, mountain);
       if (!target) return;
 
       const p = target.probability;
@@ -277,13 +305,54 @@ export default {
       });
     };
 
+    /* ---------------- 山峰快速切换（横排） ---------------- */
+    let mountainSeq = 0;
+    let cityWx = null; // 城市实况（顶部 hero 用）
+    let mountainWx = null; // 所选山峰天气（判断卡用）
+
+    /** 按山峰坐标取数；失败时退回城市天气，保证判断卡不空 */
+    const fetchMountainWx = async (mountain, force = false) => {
+      try {
+        return await loadWeather({ lat: mountain.lat, lon: mountain.lon, name: mountain.name, force });
+      } catch (err) {
+        if (cityWx) return cityWx;
+        throw err;
+      }
+    };
+
+    const applyMountain = async (id) => {
+      if (!id || id === appState.mountainId) return;
+      setMountain(id);
+      el.querySelectorAll('[data-mountain-pick]').forEach((b) => {
+        const on = b.dataset.mountainPick === id;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      const pill = $('#verdictMountain');
+      if (pill) pill.innerHTML = `${currentMountain().name} ${icon('chevronDown', 13)}`;
+      // 连点的竞态保护：只有最后一次选择能写回并渲染
+      const seq = ++mountainSeq;
+      const mountain = currentMountain();
+      try {
+        const c = await calibrationFor(id, 'cloudsea');
+        const data = await fetchMountainWx(mountain);
+        if (seq !== mountainSeq) return;
+        calib = c;
+        mountainWx = data;
+        renderVerdict(data);
+        renderCompanion();
+      } catch {
+        /* 取数失败时保留原卡片内容，不塞假数据 */
+      }
+    };
+
     /* ---------------- 陪伴句：此刻想对你说的一句话 ---------------- */
     let latestTrails = [];
     const buildWindow = (wx) => {
       if (!wx?.daily?.length) return null;
       const mountain = currentMountain();
       const ranked = rankDays(wx.daily, 'cloudsea', { mountain, source: wx.source, calibration: calib });
-      const target = pickTarget(ranked.all);
+      const target = pickTarget(ranked.all, mountain);
       if (!target) return null;
       const dateObj =
         target.day.dateObj instanceof Date ? target.day.dateObj : new Date(target.day.date);
@@ -391,15 +460,8 @@ export default {
       sheet.addEventListener('click', (e2) => {
         const btn = e2.target.closest('[data-mountain]');
         if (!btn) return;
-        setMountain(btn.dataset.mountain);
         close();
-        $('#verdictMountain').innerHTML = `${currentMountain().name} ${icon('chevronDown', 13)}`;
-        calibrationFor(btn.dataset.mountain, 'cloudsea')
-          .then((c) => {
-            calib = c;
-            return ensureWeather();
-          })
-          .then((wx) => renderVerdict(wx));
+        applyMountain(btn.dataset.mountain);
       });
     }
 
@@ -459,26 +521,35 @@ export default {
     });
 
     const offWeather = bus.on('weather:change', (wx) => {
+      cityWx = wx;
       renderHero(wx);
-      renderVerdict(wx);
       renderCompanion();
     });
     const offTrail = bus.on('trail:change', renderTrails);
 
+    const bootSeq = ++mountainSeq;
     try {
-      calib = await calibrationFor(m.id, 'cloudsea');
-      const wx = await ensureWeather();
-      renderHero(wx);
-      renderVerdict(wx);
+      const c = await calibrationFor(m.id, 'cloudsea');
+      cityWx = await ensureWeather();
+      renderHero(cityWx);
+      const data = await fetchMountainWx(m);
+      if (bootSeq === mountainSeq) {
+        calib = c;
+        mountainWx = data;
+        renderVerdict(data);
+        renderCompanion();
+      }
     } catch (err) {
       // 取不到真实数据就直说，并给一个能点的重试入口。
       // 这里绝不塞一份编造的天气进来充数。
-      $('#verdictNum').textContent = '--';
-      $('#verdictGrade').textContent = '取数失败';
-      $('#verdictKicker').innerHTML = `${icon('info', 13)} 没有数据`;
-      $('#verdictSentence').innerHTML = `${escapeHtml(err.message || '天气服务连不上')}。<br /><button class="btn btn--sm btn--ghost" type="button" data-action="retry-weather" style="margin-top:10px">重试</button>`;
-      $('#verdictFacts').innerHTML = '';
-      toastWarn(err.message || '天气获取失败');
+      if (bootSeq === mountainSeq) {
+        $('#verdictNum').textContent = '--';
+        $('#verdictGrade').textContent = '取数失败';
+        $('#verdictKicker').innerHTML = `${icon('info', 13)} 没有数据`;
+        $('#verdictSentence').innerHTML = `${escapeHtml(err.message || '天气服务连不上')}。<br /><button class="btn btn--sm btn--ghost" type="button" data-action="retry-weather" style="margin-top:10px">重试</button>`;
+        $('#verdictFacts').innerHTML = '';
+        toastWarn(err.message || '天气获取失败');
+      }
     }
 
     renderTrails();

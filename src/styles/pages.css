@@ -1732,6 +1732,20 @@
   position: relative;
 }
 
+/* —— 山峰快速切换（横排，可直接点选） —— */
+.mountain-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.mountain-strip::-webkit-scrollbar { display: none; }
+.mountain-strip .chip { flex: none; }
+#verdictCard .mountain-strip { margin: 12px -4px 0; padding: 2px 4px; }
+#chaseMountainStrip { margin: 0 0 14px; }
+
 /* —— 三种模式横排 —— */
 .mini-modes {
   display: grid;
