@@ -37,10 +37,14 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK packages
-        run: sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+      # GitHub 的 ubuntu runner 预装了 Android SDK（含 API 34 与 build-tools），
+      # 直接用 ANDROID_SDK_ROOT 即可，无需 android-actions/setup-android（其 sdkmanager tools 有兼容问题）。
+      - name: Show Android SDK
+        run: |
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_SDK_ROOT/platforms" 2>/dev/null || true
+          ls "$ANDROID_SDK_ROOT/build-tools" 2>/dev/null || true
 
       - name: Install dependencies
         run: npm ci
