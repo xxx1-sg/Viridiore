@@ -61,10 +61,30 @@ export default {
       <div class="trail-map" id="trailMapWrap">
         <canvas id="trailCanvas"></canvas>
         <div class="team-map__tools">
+          <button class="map-tool" type="button" data-action="layers" id="layerBtn" title="切换底图" aria-haspopup="true" aria-expanded="false">${icon('layers', 16)}</button>
           <button class="map-tool" type="button" data-action="locate" title="定位到我">${icon('crosshair', 16)}</button>
           <button class="map-tool" type="button" data-action="zoom-in" title="放大">${icon('zoomIn', 16)}</button>
           <button class="map-tool" type="button" data-action="zoom-out" title="缩小">${icon('zoomOut', 16)}</button>
           <button class="map-tool" type="button" data-action="fit" title="适配范围">${icon('expand', 16)}</button>
+        </div>
+        <div class="map-layer-menu" id="mapLayerMenu" hidden>
+          <div class="map-layer-menu__title">底图来源</div>
+          ${[
+            ['amap', '高德', '加载快 · 中文标注'],
+            ['satellite', '卫星', '真实影像'],
+            ['osm', 'OSM', 'OpenStreetMap'],
+            ['none', '无', '纯地形背景']
+          ]
+            .map(
+              ([v, label, hint]) =>
+                `<button type="button" class="map-layer-opt ${
+                  config.get('map.provider', 'amap') === v ? 'is-active' : ''
+                }" data-map-set="${v}">
+                  <span class="map-layer-opt__text"><span class="map-layer-opt__label">${label}</span><span class="map-layer-opt__hint">${hint}</span></span>
+                  <span class="map-layer-opt__check">${icon('check', 14)}</span>
+                </button>`
+            )
+            .join('')}
         </div>
         <div class="map-empty" id="trailEmpty">
           <div class="map-empty__card">
@@ -124,11 +144,41 @@ export default {
       },
       onTileError: () => toastWarn('底图加载失败，已切换为离线地形背景')
     });
-    // 设置页切换底图后实时应用（路由是页面缓存模式，不会重建本页）
-    bus.on('config:change', () => {
-      map.setTileProvider(resolveTileProvider(config.get('map.provider', 'amap')));
-    });
     map.setView({ lat: currentMountain().lat, lon: currentMountain().lon, zoom: 13 });
+
+    /* ---------- 底图切换 ---------- */
+    const layerMenu = $('#mapLayerMenu');
+    const layerBtn = $('#layerBtn');
+    const syncLayerLabel = () => {
+      const name = config.get('map.provider', 'amap');
+      const label = { amap: '高德', satellite: '卫星', osm: 'OSM', none: '无' }[name] || '高德';
+      layerBtn.title = `切换底图 · 当前：${label}`;
+    };
+    const closeLayerMenu = () => {
+      layerMenu.hidden = true;
+      layerBtn.setAttribute('aria-expanded', 'false');
+    };
+    const toggleLayerMenu = () => {
+      const open = layerMenu.hidden;
+      layerMenu.hidden = !open;
+      layerBtn.setAttribute('aria-expanded', String(open));
+    };
+    const applyMapProvider = (name) => {
+      config.set({ map: { provider: name } });
+      map.setTileProvider(resolveTileProvider(name));
+      el.querySelectorAll('[data-map-set]').forEach((b) => {
+        b.classList.toggle('is-active', b.dataset.mapSet === name);
+      });
+      syncLayerLabel();
+      closeLayerMenu();
+    };
+    // 点在菜单/按钮之外时收起（绑定在页面根节点，页面缓存复用时不会重复挂载）
+    el.addEventListener('pointerdown', (e) => {
+      if (layerMenu.hidden) return;
+      if (layerMenu.contains(e.target) || layerBtn.contains(e.target)) return;
+      closeLayerMenu();
+    });
+    syncLayerLabel();
 
     const profileCanvas = $('#trailProfile');
     let currentPoints = [];
@@ -521,12 +571,22 @@ export default {
 
     /* ---------- 事件 ---------- */
     el.addEventListener('click', async (e) => {
+      const mapOpt = e.target.closest('[data-map-set]');
+      if (mapOpt) {
+        applyMapProvider(mapOpt.dataset.mapSet);
+        return;
+      }
+
       const target = e.target.closest('[data-action], [data-preview], [data-gpx], [data-share], [data-del]');
       if (!target) return;
 
       if (target.id === 'recordBtn') return;
 
       const action = target.dataset.action;
+      if (action === 'layers') {
+        toggleLayerMenu();
+        return;
+      }
       if (action === 'locate') {
         if (myPos) {
           map.centerOn(myPos.lat, myPos.lon, 16);

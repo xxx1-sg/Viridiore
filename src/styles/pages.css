@@ -1369,6 +1369,50 @@
 .map-tool:hover { background: rgba(30, 50, 38, 0.9); }
 .map-tool svg { width: 16px; height: 16px; }
 
+/* 底图切换菜单（轨迹页地图工具栏） */
+.map-layer-menu {
+  position: absolute;
+  top: 10px;
+  right: 52px;
+  z-index: 3;
+  width: 172px;
+  padding: 6px;
+  border-radius: 12px;
+  background: rgba(14, 26, 20, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.7);
+  display: grid;
+  gap: 2px;
+}
+.map-layer-menu[hidden] { display: none; }
+.map-layer-menu__title {
+  padding: 4px 8px 5px;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: rgba(220, 234, 223, 0.5);
+}
+.map-layer-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: 8px;
+  text-align: left;
+  color: rgba(226, 240, 230, 0.82);
+  transition: background var(--dur);
+}
+.map-layer-opt:hover { background: rgba(255, 255, 255, 0.08); }
+.map-layer-opt.is-active { background: rgba(127, 211, 154, 0.16); color: #eafff0; }
+.map-layer-opt__text { display: grid; gap: 1px; min-width: 0; }
+.map-layer-opt__label { font-size: 12.5px; font-weight: 600; }
+.map-layer-opt__hint { font-size: 10px; color: rgba(200, 220, 206, 0.5); }
+.map-layer-opt__check { display: inline-flex; opacity: 0; color: var(--moss-300); }
+.map-layer-opt.is-active .map-layer-opt__check { opacity: 1; }
+
 .team-list { display: grid; gap: 8px; }
 
 .team-card {
