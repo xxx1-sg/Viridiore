@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>晓山青 Viridiore · 产品分享</title>
+<meta name="description" content="不问天气好不好，只回答值不值得去。晓山青产品分享演示。" />
+<meta name="theme-color" content="#0a1710" />
+<link rel="icon" href="assets/icon.png" />
+<style>
+  :root{
+    --moss-100:#ddeade;--moss-200:#bdd6c2;--moss-300:#92b89c;--moss-400:#649776;
+    --moss-500:#447a59;--moss-600:#326046;--moss-700:#274d39;--moss-800:#1c3a2b;--moss-900:#12241a;
+    --dawn-200:#f6dcb8;--dawn-300:#eec187;--dawn-400:#e5a457;--dawn-500:#d98a38;
+    --ink:#16261d;--ink-2:#4c6156;--ink-3:#84968a;
+    --paper:#f5f2ea;--paper-2:#efe9db;--surface:#fffdf8;
+    --font-sans:"PingFang SC","HarmonyOS Sans SC","Hiragino Sans GB","Microsoft YaHei UI","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --font-display:"Songti SC","Source Han Serif SC","Noto Serif SC","STSong",Georgia,serif;
+    --ease:cubic-bezier(.2,.7,.2,1);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:#07110b;color:#eaf3ec;font-family:var(--font-sans);overflow:hidden;-webkit-font-smoothing:antialiased}
+  img{display:block;max-width:100%}
+  em{font-style:normal}
+
+  /* ---------- 舞台与分页 ---------- */
+  .deck{position:fixed;inset:0;overflow:hidden}
+  .slide{position:absolute;inset:0;display:flex;align-items:center;opacity:0;visibility:hidden;transition:opacity .55s var(--ease),transform .55s var(--ease);transform:translateY(18px) scale(.995);overflow:hidden}
+  .slide.is-active{opacity:1;visibility:visible;transform:none;z-index:2}
+  .slide.is-prev{transform:translateY(-18px) scale(.995)}
+  .slide__inner{position:relative;width:min(1180px,calc(100% - 8vw));margin:0 auto;z-index:2;max-height:calc(100vh - 90px)}
+  .slide--dark{background:radial-gradient(120% 100% at 78% 6%,#284a34 0%,#152e1e 40%,#08130c 78%);color:#eaf3ec}
+  .slide--light{background:radial-gradient(110% 100% at 20% 0%,#fbf8f0,#efe8d7 85%);color:var(--ink)}
+  .slide--deep{background:linear-gradient(180deg,#0c1a12,#07110b);color:#eaf3ec}
+
+  /* 背景装饰 */
+  .glow{position:absolute;border-radius:50%;pointer-events:none;filter:blur(2px)}
+  .glow--dawn{width:52vw;height:52vw;right:-14vw;top:-18vw;background:radial-gradient(circle,rgba(229,164,87,.30),rgba(229,164,87,0) 62%)}
+  .sun{position:absolute;border-radius:50%;pointer-events:none;background:radial-gradient(circle at 40% 35%,#ffe9b8,#e9a95e 58%,#c8792c);box-shadow:0 0 90px rgba(233,169,94,.5)}
+  .sun--sm{width:clamp(60px,7vw,110px);height:clamp(60px,7vw,110px)}
+  .ridges{position:absolute;inset:auto 0 0;height:34vh;pointer-events:none}
+  .ridges svg{position:absolute;bottom:0;width:100%;height:100%}
+  .r-far{fill:#1e3b28;opacity:.55}.r-mid{fill:#132717;opacity:.9}.r-near{fill:#08130c}
+
+  /* ---------- 通用文字 ---------- */
+  .eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:clamp(11px,.9vw,13px);letter-spacing:.2em;color:rgba(232,242,234,.68);padding:7px 15px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(255,255,255,.04)}
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:#7fd39a;box-shadow:0 0 0 4px rgba(127,211,154,.16)}
+  .slide--light .eyebrow{color:var(--moss-600);border-color:rgba(22,38,29,.14);background:rgba(255,255,255,.5)}
+  .kicker{font-size:clamp(11px,.9vw,13px);letter-spacing:.26em;font-weight:700;color:var(--dawn-300);margin:0 0 18px}
+  .slide--light .kicker{color:var(--moss-500)}
+  h1{font-family:var(--font-display);font-weight:700;font-size:clamp(2.6rem,6.2vw,5.6rem);line-height:1.1;letter-spacing:.02em;margin:0}
+  h2{font-family:var(--font-display);font-weight:700;font-size:clamp(1.9rem,4.4vw,3.8rem);line-height:1.2;letter-spacing:.02em;margin:0 0 22px}
+  h3{font-size:clamp(1.05rem,1.7vw,1.5rem);margin:0 0 8px;letter-spacing:.02em}
+  p{font-size:clamp(1rem,1.55vw,1.45rem);line-height:1.8;color:rgba(232,242,234,.76);margin:0}
+  .slide--light p{color:var(--ink-2)}
+  .dawn{background:linear-gradient(100deg,#f7dcae,#e5a457 55%,#d98a38);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .big{font-family:var(--font-display);font-weight:700;letter-spacing:-.02em;line-height:.9}
+  .num{background:linear-gradient(160deg,var(--moss-500),var(--dawn-500));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .rule{width:64px;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--dawn-400),transparent);margin:22px 0}
+
+  /* ---------- 封面 ---------- */
+  .cover__sub{margin-top:30px;max-width:760px;font-size:clamp(1.05rem,1.8vw,1.6rem);line-height:1.8;color:rgba(232,242,234,.78)}
+  .cover__meta{display:flex;gap:22px;flex-wrap:wrap;margin-top:34px;font-size:clamp(11px,.95vw,13.5px);letter-spacing:.12em;color:rgba(232,242,234,.5)}
+  .cover__meta b{color:var(--dawn-300);font-weight:600}
+  .hint{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);display:flex;align-items:center;gap:12px;font-size:12px;letter-spacing:.14em;color:rgba(232,242,234,.42);z-index:3}
+  .hint kbd{font-family:var(--font-sans);font-size:11px;padding:2px 7px;border-radius:6px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:rgba(232,242,234,.7)}
+
+  /* ---------- 布局 ---------- */
+  .split{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(30px,5vw,72px);align-items:center}
+  .split--img-left{grid-template-columns:.95fr 1.05fr}
+  .stack>*+*{margin-top:clamp(14px,2vw,24px)}
+  .lead{font-size:clamp(1.1rem,1.85vw,1.7rem);line-height:1.7;color:rgba(232,242,234,.8);margin:0}
+  .slide--light .lead{color:var(--ink-2)}
+
+  /* 三栏卡片 */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(14px,2vw,22px);margin-top:clamp(22px,3.4vw,40px)}
+  .card{padding:clamp(20px,2.6vw,32px);border-radius:20px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.045);backdrop-filter:blur(8px)}
+  .slide--light .card{background:var(--surface);border-color:rgba(22,38,29,.1);box-shadow:0 18px 40px -26px rgba(22,38,29,.3)}
+  .card__idx{font-family:var(--font-display);font-size:clamp(13px,1.2vw,16px);color:var(--dawn-400);letter-spacing:.08em}
+  .card h3{margin-top:14px;font-size:clamp(1.1rem,1.7vw,1.55rem)}
+  .card .formula{font-family:var(--font-display);font-size:clamp(.95rem,1.35vw,1.2rem);color:var(--dawn-300);margin:10px 0 12px;letter-spacing:.02em}
+  .slide--light .card .formula{color:var(--moss-600)}
+  .card p{font-size:clamp(.92rem,1.25vw,1.12rem);line-height:1.7;color:rgba(232,242,234,.66)}
+  .slide--light .card p{color:var(--ink-2)}
+
+  /* 截图相框 */
+  .shot{border-radius:16px;padding:9px;background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.16);box-shadow:0 40px 90px -40px rgba(0,0,0,.75)}
+  .shot img{border-radius:10px;width:100%}
+  .shot--light{background:#fff;border-color:rgba(22,38,29,.12);box-shadow:0 30px 70px -34px rgba(22,38,29,.5)}
+  .cap{margin-top:14px;text-align:center;font-size:clamp(11px,.95vw,13px);letter-spacing:.05em;color:rgba(232,242,234,.5)}
+  .slide--light .cap{color:var(--ink-3)}
+  .pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;color:#2c1d0c;background:var(--dawn-400);border-radius:999px;padding:3px 10px;margin-right:8px;vertical-align:middle}
+
+  /* 大数字 */
+  .statline{display:flex;align-items:flex-end;gap:14px;margin:12px 0 8px}
+  .statline .big{font-size:clamp(5rem,13vw,11rem)}
+  .statline small{font-size:clamp(1.6rem,3.2vw,2.6rem);color:var(--ink-3);font-weight:600;margin-bottom:1.2vw}
+  .statcap{font-size:clamp(.95rem,1.4vw,1.25rem);letter-spacing:.04em;color:rgba(232,242,234,.62)}
+  .slide--light .statcap{color:var(--ink-2)}
+
+  /* 列表 */
+  .list{list-style:none;margin:0;padding:0;display:grid;gap:clamp(12px,1.8vw,20px)}
+  .list li{display:flex;gap:14px;align-items:flex-start;font-size:clamp(1rem,1.45vw,1.35rem);line-height:1.6;color:rgba(232,242,234,.78)}
+  .slide--light .list li{color:var(--ink-2)}
+  .list .b{flex:0 0 auto;width:24px;height:24px;border-radius:8px;display:grid;place-items:center;background:rgba(229,164,87,.16);color:var(--dawn-300);font-size:13px;font-weight:700;margin-top:2px}
+  .slide--light .list .b{background:rgba(50,96,70,.1);color:var(--moss-600)}
+
+  /* 平台网格 */
+  .platforms{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:34px}
+  .pf{padding:24px 20px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);text-align:center}
+  .pf svg{width:30px;height:30px;stroke:var(--moss-300);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;margin:0 auto 12px}
+  .pf b{display:block;font-size:clamp(1rem,1.4vw,1.25rem)}
+  .pf span{font-size:clamp(.78rem,1vw,.95rem);color:rgba(232,242,234,.5)}
+  .techline{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:30px;font-size:clamp(.82rem,1.1vw,1rem);color:rgba(232,242,234,.55);letter-spacing:.04em}
+  .techline span::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--moss-300);margin-right:9px;vertical-align:1px}
+
+  /* 诚实列表 */
+  .honest{display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px,1.8vw,20px);margin-top:26px}
+  .honest .item{padding:clamp(16px,2vw,24px);border-radius:16px;border:1px solid rgba(22,38,29,.1);background:var(--surface)}
+  .honest .item b{display:block;font-size:clamp(.98rem,1.35vw,1.2rem);margin-bottom:6px}
+  .honest .item p{font-size:clamp(.85rem,1.1vw,1rem);line-height:1.65}
+
+  /* 结尾 */
+  .final h1{font-size:clamp(2.4rem,6.4vw,6rem)}
+  .final p{margin-top:26px;font-size:clamp(1.05rem,1.9vw,1.7rem);color:rgba(232,242,234,.72)}
+  .final .sign{margin-top:40px;font-size:clamp(12px,1.1vw,14px);letter-spacing:.28em;color:rgba(232,242,234,.45)}
+
+  /* HUD */
+  .hud{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;align-items:center;gap:18px;padding:16px clamp(20px,4vw,54px);pointer-events:none}
+  .hud__brand{font-family:var(--font-display);letter-spacing:.16em;font-size:13px;color:rgba(232,242,234,.55)}
+  .hud__brand small{display:block;font-family:var(--font-sans);font-size:8.5px;letter-spacing:.32em;color:rgba(232,242,234,.32);margin-top:2px}
+  .dots{display:flex;gap:7px;margin-left:auto;pointer-events:auto}
+  .dots button{width:8px;height:8px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.22);cursor:pointer;transition:all .3s}
+  .dots button.on{background:var(--dawn-400);width:22px;border-radius:99px}
+  .pagenum{font-variant-numeric:tabular-nums;font-size:12px;letter-spacing:.12em;color:rgba(232,242,234,.5);min-width:52px;text-align:right}
+  body.is-light .hud__brand,body.is-light .pagenum{color:rgba(22,38,29,.45)}
+  body.is-light .dots button{background:rgba(22,38,29,.18)}
+  body.is-light .dots button.on{background:var(--moss-500)}
+  .hint{pointer-events:none;transition:opacity .5s}
+  .hint.gone{opacity:0}
+  .progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--moss-400),var(--dawn-400));z-index:30;transition:width .45s var(--ease)}
+
+  @media (max-width:820px){
+    .split,.split--img-left{grid-template-columns:1fr;gap:22px}
+    .cards{grid-template-columns:1fr}
+    .platforms{grid-template-columns:repeat(2,1fr)}
+    .honest{grid-template-columns:1fr}
+    .slide__inner{max-height:calc(100vh - 70px);overflow:auto;padding-block:20px}
+    .hud__brand{display:none}
+    .hint{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+  <!-- 1 封面 -->
+  <section class="slide slide--dark is-active" data-theme="dark">
+    <div class="glow glow--dawn"></div>
+    <div class="sun sun--sm" style="right:12%;top:14%"></div>
+    <div class="ridges" aria-hidden="true">
+      <svg class="r-far" viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0 250 100 218 200 240 300 200 400 220 500 180 600 210 700 172 800 196 900 162 1000 200 1100 180 1200 212 1300 190 1440 218V320H0Z"/></svg>
+      <svg class="r-mid" viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0 282 100 266 200 286 300 254 400 272 500 240 600 264 700 234 800 252 900 224 1000 258 1100 240 1200 268 1300 248 1440 272V320H0Z"/></svg>
+      <svg class="r-near" viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0 306 100 298 200 308 300 294 400 304 500 288 600 300 700 286 800 298 900 284 1000 300 1100 292 1200 306 1300 296 1440 308V320H0Z"/></svg>
+    </div>
+    <div class="slide__inner cover">
+      <p class="eyebrow"><span class="dot"></span>户外决策工具 · 深圳</p>
+      <h1 style="margin-top:30px">不问天气好不好<br><em class="dawn">只回答值不值得去</em></h1>
+      <p class="cover__sub">晓山青把「明早哪座山、几点出发、多大几率看到云海」<br>算成一个百分比。算不出来，就直说。</p>
+      <div class="cover__meta">
+        <span><b>晓山青</b> Viridiore</span>
+        <span>产品分享</span>
+        <span>2026</span>
+      </div>
+    </div>
+    <div class="hint" id="hint"><kbd>←</kbd><kbd>→</kbd> 翻页 <span style="opacity:.5">·</span> <kbd>F</kbd> 全屏</div>
+  </section>
+
+  <!-- 2 问题 -->
+  <section class="slide slide--light" data-theme="light">
+    <div class="slide__inner">
+      <p class="kicker">01 · 问题</p>
+      <h2>天气 App 给了数字，<br>却没回答你的问题</h2>
+      <div class="cards">
+        <div class="card"><span class="card__idx">云量 30%</span><h3>云在不在我脚下？</h3><p>数字很好看，可登山的人要的是云海，不是云量。</p></div>
+        <div class="card"><span class="card__idx">明天晴</span><h3>几点出发？</h3><p>晴不晴不等于看不看得到，窗口往往只有二十分钟。</p></div>
+        <div class="card"><span class="card__idx">有云海</span><h3>去哪个坡向？</h3><p>同一座山，东坡和西坡，是两种结果。</p></div>
+      </div>
+      <p class="lead" style="margin-top:clamp(24px,3vw,38px)">信息很多，<em class="dawn">决策很少</em>。</p>
+    </div>
+  </section>
+
+  <!-- 3 答案 -->
+  <section class="slide slide--light" data-theme="light">
+    <div class="slide__inner split">
+      <div>
+        <p class="kicker">02 · 答案</p>
+        <h2 style="margin-bottom:6px">只给一个<br>能被证伪的数字</h2>
+        <div class="statline"><span class="big num">72</span><small>%</small></div>
+        <p class="statcap">明早 6:12 · 梧桐山东麓 · 云海概率</p>
+      </div>
+      <div class="stack">
+        <p class="lead">下面永远跟着一行「基准率 16% · 置信度中」，以及每一项证据的加减值。</p>
+        <p>第二天上山，看到或没看到，答案就写在那儿。你可以反驳它——回来点「看到了 / 白跑一趟」，它会把误差记住。</p>
+        <div class="rule"></div>
+        <p style="font-size:clamp(.95rem,1.3vw,1.15rem)">100 分制是自说自话；<b>百分比能被检验</b>。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 怎么算 -->
+  <section class="slide slide--dark" data-theme="dark">
+    <div class="slide__inner">
+      <p class="kicker">03 · 怎么算的</p>
+      <h2>云海不是心情，是物理</h2>
+      <p class="lead" style="max-width:760px">模型不算「今天天气多好看」，只算三件事：云底多高、湿度够不够、层结稳不稳。</p>
+      <div class="cards">
+        <div class="card"><span class="card__idx">01</span><h3>云底高度</h3><p class="formula">LCL ≈ 125 m/℃ × (T − Td)</p><p>云顶低于山顶，你站在云上；高于山顶，你在云里，什么都看不见。</p></div>
+        <div class="card"><span class="card__idx">02</span><h3>露点差</h3><p class="formula">T − Td ≤ 2 ℃</p><p>差得越小空气越接近饱和；2℃ 以内是云海最容易成形的那一档。</p></div>
+        <div class="card"><span class="card__idx">03</span><h3>逆温稳定</h3><p class="formula">晴夜辐射降温 + 弱风</p><p>冷空气沉谷底、暖空气盖在上头，这层「盖子」把云压住；风一大就散了。</p></div>
+      </div>
+      <p style="margin-top:clamp(20px,2.6vw,32px);font-size:clamp(.85rem,1.1vw,1rem);color:rgba(232,242,234,.45)">逆温用 925 / 850 hPa 模式层结的温度直减率计算，不是拍脑袋的代理分；数据不够好时，界面主动标注「置信度」。</p>
+    </div>
+  </section>
+
+  <!-- 5 首页 -->
+  <section class="slide slide--light" data-theme="light">
+    <div class="slide__inner split split--img-left">
+      <div class="shot shot--light"><img src="assets/desktop-home.png" alt="首页" /><p class="cap">首页 · 只回答今天值不值得去</p></div>
+      <div>
+        <p class="kicker">04 · 产品</p>
+        <h2>一屏之内，<br>把决定做完</h2>
+        <ul class="list">
+          <li><span class="b">1</span><span>明早看到云海的概率，和一个基准率对照</span></li>
+          <li><span class="b">2</span><span>最佳出发窗口，精确到分钟</span></li>
+          <li><span class="b">3</span><span>去哪座山、哪个坡向、山顶多少度</span></li>
+          <li><span class="b">4</span><span>每个结论都能展开，看原始证据</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 追光 -->
+  <section class="slide slide--dark" data-theme="dark">
+    <div class="slide__inner split">
+      <div>
+        <p class="kicker">05 · 追光</p>
+        <h2>把七天的窗口<br>排给你看</h2>
+        <ul class="list">
+          <li><span class="b">☁</span><span>云海 / 日出 / 星空三种模式，各自一套权重</span></li>
+          <li><span class="b">◷</span><span>最佳日期与精确到分钟的时刻窗口</span></li>
+          <li><span class="b">⛰</span><span>该去哪个坡向、山顶温度、穿什么</span></li>
+          <li><span class="b">≡</span><span>点开每一天，能看到证据的加减</span></li>
+        </ul>
+        <div class="rule"></div>
+        <p style="font-size:clamp(.9rem,1.2vw,1.05rem);color:rgba(232,242,234,.5)">不铺十宫格——只把「这一次要不要去」回答清楚。</p>
+      </div>
+      <div class="shot"><img src="assets/desktop-chase.png" alt="追光页" /><p class="cap">追光 · 七天窗口，每天一个概率</p></div>
+    </div>
+  </section>
+
+  <!-- 7 轨迹 + 新底图 -->
+  <section class="slide slide--light" data-theme="light">
+    <div class="slide__inner split" style="grid-template-columns:.9fr 1.1fr">
+      <div>
+        <p class="kicker">06 · 轨迹<span class="pill" style="margin-left:10px">新</span></p>
+        <h2>山上没信号，<br>也照常记录</h2>
+        <ul class="list">
+          <li><span class="b">1</span><span>距离、爬升、配速全在本地算（Web Worker）</span></li>
+          <li><span class="b">2</span><span>地图自绘，不依赖在线瓦片，断网也能记</span></li>
+          <li><span class="b">3</span><span>底图在高德 / 卫星 / OSM / 无之间实时切换</span></li>
+          <li><span class="b">4</span><span>可导出 GPX，轨迹只存在本机</span></li>
+        </ul>
+      </div>
+      <div class="shot shot--light"><img src="assets/trail-basemap.jpg" alt="轨迹页底图切换" /><p class="cap">轨迹 · 点右上角切换底图，实时生效</p></div>
+    </div>
+  </section>
+
+  <!-- 8 光之卡片 -->
+  <section class="slide slide--deep" data-theme="dark">
+    <div class="glow glow--dawn" style="left:-18vw;right:auto;top:auto;bottom:-20vw"></div>
+    <div class="slide__inner">
+      <p class="kicker">07 · 光之卡片</p>
+      <h2>一次上山，<br>一张能发的图</h2>
+      <div class="cards" style="grid-template-columns:repeat(3,1fr)">
+        <div class="card"><span class="card__idx">1080 × 1350</span><h3>竖版卡片</h3><p>时间、坐标、海拔、当时的天气，配上写实的一句话。</p></div>
+        <div class="card"><span class="card__idx">事前 / 事后</span><h3>预测卡与复盘</h3><p>出发前生成预测卡，回来看命中没有——让每次预测有据可查。</p></div>
+        <div class="card"><span class="card__idx">一键分享</span><h3>不夸张的记录</h3><p>只写真实发生的事，不替你编故事。</p></div>
+      </div>
+      <p class="lead" style="margin-top:clamp(24px,3vw,38px)">这不是打卡，是把一次上山<em class="dawn">留下来</em>。</p>
+    </div>
+  </section>
+
+  <!-- 9 诚实 -->
+  <section class="slide slide--light" data-theme="light">
+    <div class="slide__inner">
+      <p class="kicker">08 · 诚实</p>
+      <h2>一个预测工具，<br>最该做的是交代边界</h2>
+      <div class="honest">
+        <div class="item"><b>逆温用模式层结，不是探空实测</b><p>山区实际层结会偏差几度：有无逆温判得住，精确到米判不住。</p></div>
+        <div class="item"><b>回测样本还不够</b><p>台账每天记一份、用 ERA5 对账；真实样本到位前，校准曲线只显示「样本积累中」。</p></div>
+        <div class="item"><b>地形只到山峰级别</b><p>没有精细坡向与山谷建模，所以「哪个坡向」是经验建议，不是计算结论。</p></div>
+        <div class="item"><b>不会替你求救</b><p>没有真实短信网关与卫星通道的求救按钮，比没有更危险——相关功能已下架。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 技术底座 -->
+  <section class="slide slide--dark" data-theme="dark">
+    <div class="slide__inner">
+      <p class="kicker">09 · 底座</p>
+      <h2>四端同源，离线可用</h2>
+      <p class="lead" style="max-width:780px">同一套代码，四个端。所有轨迹与偏好只存在本机，不上传云端，也不需要注册账号。</p>
+      <div class="platforms">
+        <div class="pf"><svg viewBox="0 0 24 24"><path d="M3 5.6 10.4 4.6v6.6H3ZM11.6 4.4 21 3v8.2h-9.4ZM3 12.6h7.4v6.8L3 18.4ZM11.6 12.6H21V21l-9.4-1.3Z"/></svg><b>Windows</b><span>桌面端</span></div>
+        <div class="pf"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.4"/><path d="M11 18.5h2"/></svg><b>Android</b><span>手机端</span></div>
+        <div class="pf"><svg viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10 18.5h4"/></svg><b>iOS</b><span>同一套页面</span></div>
+        <div class="pf"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3.4 9h17.2M3.4 15h17.2M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z"/></svg><b>PWA</b><span>浏览器即用</span></div>
+      </div>
+      <div class="techline">
+        <span>Open-Meteo 实时数据</span><span>本地 Web Worker 计算</span><span>IndexedDB 只存本机</span><span>断网可记录</span><span>无需注册</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 结尾 -->
+  <section class="slide slide--dark final" data-theme="dark">
+    <div class="glow glow--dawn"></div>
+    <div class="glow" style="left:50%;bottom:-34vh;transform:translateX(-50%);width:64vw;height:64vw;top:auto;right:auto;background:radial-gradient(circle,rgba(229,164,87,.28),rgba(229,164,87,0) 62%)"></div>
+    <div class="ridges" aria-hidden="true">
+      <svg class="r-mid" viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0 282 120 258 240 280 360 244 480 268 600 232 720 254 840 220 960 250 1080 230 1200 260 1320 240 1440 268V320H0Z"/></svg>
+      <svg class="r-near" viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0 306 120 296 240 308 360 292 480 304 600 288 720 300 840 286 960 302 1080 292 1200 306 1320 296 1440 308V320H0Z"/></svg>
+    </div>
+    <div class="slide__inner" style="text-align:center">
+      <h1>不问天气好不好<br><em class="dawn">只回答值不值得去</em></h1>
+      <p>让每一次出发，都有依据。</p>
+      <div class="sign">晓山青 · VIRIDIORE</div>
+    </div>
+  </section>
+
+</div>
+
+<div class="hud">
+  <div class="hud__brand">晓山青<small>VIRIDIORE</small></div>
+  <div class="dots" id="dots"></div>
+  <div class="pagenum" id="pagenum">1 / 11</div>
+</div>
+
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  const dots = document.getElementById('dots');
+  const pagenum = document.getElementById('pagenum');
+  const progress = document.getElementById('progress');
+  const hint = document.getElementById('hint');
+  let idx = 0;
+
+  slides.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('aria-label', '第 ' + (i + 1) + ' 页');
+    b.addEventListener('click', () => show(i));
+    dots.appendChild(b);
+  });
+
+  function show(n) {
+    idx = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, i) => {
+      s.classList.toggle('is-active', i === idx);
+      s.classList.toggle('is-prev', i < idx);
+    });
+    [...dots.children].forEach((d, i) => d.classList.toggle('on', i === idx));
+    pagenum.textContent = (idx + 1) + ' / ' + slides.length;
+    progress.style.width = ((idx + 1) / slides.length * 100) + '%';
+    document.body.classList.toggle('is-light', slides[idx].dataset.theme === 'light');
+  }
+  function next() { hint?.classList.add('gone'); show(idx + 1); }
+  function prev() { hint?.classList.add('gone'); show(idx - 1); }
+
+  addEventListener('keydown', (e) => {
+    if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
+    else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') { e.preventDefault(); show(0); }
+    else if (e.key === 'End') { e.preventDefault(); show(slides.length - 1); }
+    else if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    }
+  }, { passive: false });
+
+  // 点击左右三分之一也可翻页（讲解时用遥控翻页笔/鼠标）
+  addEventListener('click', (e) => {
+    if (e.target.closest('.dots')) return;
+    if (e.clientX > innerWidth * 0.62) next();
+    else if (e.clientX < innerWidth * 0.38) prev();
+  });
+
+  // 触摸滑动
+  let sx = null;
+  addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
+  addEventListener('touchend', (e) => {
+    if (sx == null) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    if (Math.abs(dx) > 46) (dx < 0 ? next : prev)();
+    sx = null;
+  }, { passive: true });
+
+  show(0);
+</script>
+</body>
+</html>
