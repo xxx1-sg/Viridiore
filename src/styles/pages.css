@@ -792,6 +792,10 @@
   border-color: var(--dawn-300);
   background: linear-gradient(100deg, var(--dawn-100), transparent 70%);
 }
+.chase-day.is-past {
+  opacity: 0.5;
+}
+.chase-day.is-past .chase-day__date small { color: var(--danger); }
 .chase-day__date { font-size: 12.5px; font-weight: 600; }
 .chase-day__date small { display: block; font-size: 10px; color: var(--ink-3); font-weight: 400; }
 .chase-day__icon { color: var(--moss-500); }

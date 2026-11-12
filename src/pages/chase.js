@@ -2,7 +2,7 @@
 import { icon, weatherIcon } from '../core/icons.js';
 import { appState, currentMountain, setMountain } from '../state.js';
 import { loadWeather } from '../services/weather.js';
-import { rankDays, advice, compensation, MODES, summitTemp, relativeDay } from '../services/chase.js';
+import { rankDays, advice, compensation, MODES, summitTemp, relativeDay, isWindowPast } from '../services/chase.js';
 import { calibrationFor, recordFeedback } from '../services/calibration.js';
 import { sunTimes, sunriseAzimuth, facingSlopeLabel } from '../services/sun.js';
 import { buildNarrative } from '../services/narrative.js';
@@ -178,7 +178,10 @@ export default {
       $('#chaseName').textContent = mountain.name;
       $('#chaseMeta').textContent = `海拔 ${mountain.elevation}m · ${mountain.area}`;
 
-      const best = ranked.ranked[0];
+      const now = Date.now();
+      // 跳过已经过去的当日窗口（云海/日出：日出已过；星空按今晚算，不判过期）
+      const best =
+        ranked.ranked.find((d) => !isWindowPast(d.day, d.index, mode, mountain, now)) || ranked.ranked[0];
       if (!best) return;
 
       $('#chaseRing').innerHTML = ringSvg(best.probability);
@@ -203,9 +206,10 @@ export default {
       $('#chaseDays').innerHTML = order
         .map((d) => {
           const isBest = d.index === best.index;
+          const past = isWindowPast(d.day, d.index, mode, mountain, now);
           const label = relativeDay(d.index, d.day);
-          return `<div class="chase-day ${isBest ? 'is-best' : ''}">
-            <span class="chase-day__date">${label}<small>${String(d.day.date).slice(5)}</small></span>
+          return `<div class="chase-day ${isBest ? 'is-best' : ''}${past ? ' is-past' : ''}">
+            <span class="chase-day__date">${label}<small>${String(d.day.date).slice(5)}${past ? ' · 已过' : ''}</small></span>
             <span class="chase-day__icon">${weatherIcon(d.day.codeDay, 22)}</span>
             <span class="chase-day__bar"><span style="width:${d.probability}%"></span></span>
             <span class="chase-day__score ${d.probability >= 55 ? 'is-high' : ''}">${d.probability}%</span>

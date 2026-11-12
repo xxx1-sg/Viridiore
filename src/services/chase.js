@@ -469,6 +469,22 @@ export function relativeDay(index, day) {
   return ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][d.getDay()] || dateLabel(day || {});
 }
 
+/**
+ * 某一天的"追光窗口"是否已经过去。
+ * · 未来日（index > 0）永不过期；
+ * · 云海 / 日出：以当日日出 + 30 分钟为界；
+ * · 星空：按"今晚"算，白天也不算过期（当晚还来得及）。
+ * 用于：选"最佳窗口"时跳过已过去的今天，避免把抓不到的机会当成希望。
+ */
+export function isWindowPast(day, index, mode = 'cloudsea', mountain = {}, now = Date.now()) {
+  if (index > 0) return false;
+  if (mode === 'stars') return false;
+  const d = day?.dateObj instanceof Date ? day.dateObj : new Date(day?.date || now);
+  const sun = sunTimes(d, mountain.lat ?? 22.58, mountain.lon ?? 114.2);
+  if (!sun.sunrise) return false;
+  return now > sun.sunrise.getTime() + 30 * 60000;
+}
+
 /** 山顶温度估算：干绝热递减率取 0.6 ℃/100 m */
 export function summitTemp(day, elevation) {
   const base = (Number(day.max) + Number(day.min)) / 2;
