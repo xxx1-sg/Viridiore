@@ -16,6 +16,8 @@ import { escapeHtml } from '../core/dom.js';
 import { appState, currentMountain, setMyPosition, MOUNTAINS } from '../state.js';
 
 let tracker = null;
+/** 页面被缓存：返回轨迹页时用它恢复定位与重绘（地图实例常驻，不销毁） */
+let trailView = null;
 
 /** 生成一段示例轨迹（无 GPS 环境体验用） */
 function demoPoints() {
@@ -121,6 +123,10 @@ export default {
         if (m.kind === 'peak') toastOk(`任务山峰：${m.label}`);
       },
       onTileError: () => toastWarn('底图加载失败，已切换为离线地形背景')
+    });
+    // 设置页切换底图后实时应用（路由是页面缓存模式，不会重建本页）
+    bus.on('config:change', () => {
+      map.setTileProvider(resolveTileProvider(config.get('map.provider', 'amap')));
     });
     map.setView({ lat: currentMountain().lat, lon: currentMountain().lon, zoom: 13 });
 
@@ -671,12 +677,26 @@ export default {
     refreshMarkers();
     drawProfile();
 
-    return () => {
-      off();
-      profileObserver.disconnect();
-      stopPresence?.();
-      map.destroy();
-      // tracker 保持运行（后台记录），只解绑 UI
+    // 返回本页时的恢复动作（不重建地图，避免实例丢失后无法缩放/平移）
+    trailView = {
+      show: () => {
+        bindPresence();
+        refreshMarkers();
+        map.resize();
+      }
     };
+
+    return () => {
+      // 路由是「页面缓存」模式：离开只是隐藏，不能销毁地图，否则再回来无法缩放/拖动。
+      // 这里只停止定位以省电，地图实例与 DOM 监听保留。
+      stopPresence?.();
+      stopPresence = null;
+      presenceBound = false;
+      // tracker 保持运行（后台记录）
+    };
+  },
+
+  onShow() {
+    trailView?.show?.();
   }
 };
