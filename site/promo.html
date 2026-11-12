@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-type="software">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>晓山青 Viridiore · 不问天气好不好，只回答值不值得去</title>
-<meta name="description" content="晓山青把「明早哪座山、几点出发、多大几率看到云海」算成一个百分比。Windows / 安卓 / 网页同源，离线可用。" />
+<meta name="description" content="晓山青把「明早哪座山、几点出发、多大几率看到云海」算成一个百分比。一个能被证伪的户外决策工具。" />
+<meta name="page-type" content="software" />
+<meta name="site-kind" content="software" />
 <meta name="theme-color" content="#0a1710" />
 <link rel="icon" href="assets/icon.png" />
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
@@ -12,446 +14,438 @@
 <meta property="og:title" content="晓山青 Viridiore" />
 <meta property="og:description" content="不问天气好不好，只回答值不值得去。" />
 <meta property="og:image" content="assets/desktop-home.png" />
-<meta property="og:url" content="https://xxx1-sg.github.io/Viridiore/promo.html" />
 <link rel="canonical" href="https://xxx1-sg.github.io/Viridiore/promo.html" />
 <style>
   :root{
-    --moss-50:#f1f6f1;--moss-100:#ddeade;--moss-200:#bdd6c2;--moss-300:#92b89c;
-    --moss-400:#649776;--moss-500:#447a59;--moss-600:#326046;--moss-700:#274d39;
-    --moss-800:#1c3a2b;--moss-900:#12241a;
-    --dawn-200:#f6dcb8;--dawn-300:#eec187;--dawn-400:#e5a457;--dawn-500:#d98a38;
-    --ink:#16261d;--ink-2:#4c6156;--ink-3:#84968a;
-    --bg:#f5f2ea;--bg-deep:#ebe5d8;--surface:#fffdf8;
-    --line:rgba(22,38,29,.1);--line-strong:rgba(22,38,29,.18);
+    --paper:#f4efe4;--paper-2:#eee7d8;--ink:#14241b;--ink-2:#45584b;--ink-3:#7d8e80;
+    --moss:#326046;--moss-2:#447a59;--moss-3:#649776;--moss-4:#92b89c;
+    --dawn:#b9762f;--dawn-2:#d98a38;--dawn-3:#e5a457;--dawn-4:#f0c281;
+    --night:#0a1710;--night-2:#0d1c14;--night-text:#e9f2ea;--night-muted:rgba(233,242,234,.62);
+    --line:rgba(20,36,27,.14);--line-dark:rgba(255,255,255,.13);
     --font-sans:"PingFang SC","HarmonyOS Sans SC","Hiragino Sans GB","Microsoft YaHei UI","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
     --font-display:"Songti SC","Source Han Serif SC","Noto Serif SC","STSong",Georgia,serif;
-    --shadow-md:0 8px 24px -8px rgba(22,38,29,.18),0 2px 6px rgba(22,38,29,.05);
-    --shadow-lg:0 30px 60px -28px rgba(18,36,26,.4),0 6px 16px rgba(18,36,26,.08);
-    --r-sm:12px;--r-md:16px;--r-lg:22px;--r-xl:30px;
+    --gutter:clamp(20px,5vw,80px);
+    --ease:cubic-bezier(.2,.7,.2,1);
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-sans);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-sans);line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  img{display:block;max-width:100%}
   a{color:inherit;text-decoration:none}
-  img{max-width:100%;display:block}
-  .wrap{width:min(1160px,calc(100% - 40px));margin-inline:auto}
-  .center{text-align:center}
+  .wrap{width:min(1200px,100% - var(--gutter)*2);margin-inline:auto}
+  .dark{background:var(--night);color:var(--night-text)}
+  .dark .lead,.dark p{color:var(--night-muted)}
+  .rule{height:1px;background:var(--line);border:0;margin:0}
+  .dark .rule{background:var(--line-dark)}
+  em{font-style:normal}
 
-  /* ---------- 顶栏 ---------- */
-  .nav{position:fixed;inset:0 0 auto;z-index:50;transition:background .3s,box-shadow .3s,backdrop-filter .3s}
-  .nav.is-solid{background:rgba(10,23,16,.82);backdrop-filter:blur(14px) saturate(130%);box-shadow:0 1px 0 rgba(255,255,255,.06)}
-  .nav__inner{width:min(1160px,calc(100% - 40px));margin-inline:auto;height:66px;display:flex;align-items:center;gap:28px}
-  .brand{display:flex;align-items:center;gap:11px;color:#f3f8f4}
-  .brand__mark{width:38px;height:38px;border-radius:11px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.35)}
-  .brand__mark svg{width:100%;height:100%;display:block}
-  .brand__name{font-family:var(--font-display);font-size:19px;letter-spacing:.18em;line-height:1}
-  .brand__sub{display:block;font-size:9px;letter-spacing:.34em;color:rgba(232,242,234,.55);margin-top:4px}
-  .nav__links{display:flex;gap:26px;margin-left:auto;font-size:13.5px;color:rgba(232,242,234,.72)}
-  .nav__links a{transition:color .2s}
-  .nav__links a:hover{color:#fff}
-  .nav__cta{padding:8px 18px;border-radius:999px;background:var(--dawn-400);color:#2c1d0c;font-size:13px;font-weight:700;letter-spacing:.04em;box-shadow:0 6px 18px -6px rgba(217,138,56,.7);transition:transform .2s,box-shadow .2s}
-  .nav__cta:hover{transform:translateY(-1px);box-shadow:0 10px 24px -8px rgba(217,138,56,.85)}
+  /* ---------- 顶部导航 ---------- */
+  .topbar{position:fixed;top:0;left:0;right:0;z-index:50;transition:background .35s,box-shadow .35s,backdrop-filter .35s}
+  .topbar.solid{background:rgba(244,239,228,.9);backdrop-filter:blur(16px);box-shadow:0 1px 0 var(--line)}
+  .topbar.dark-mode.solid{background:rgba(10,23,16,.86);box-shadow:0 1px 0 var(--line-dark)}
+  .topbar__in{width:min(1200px,100% - var(--gutter)*2);margin-inline:auto;height:68px;display:flex;align-items:center;gap:36px}
+  .brand{display:flex;align-items:center;gap:11px}
+  .brand svg{width:36px;height:36px;border-radius:10px;box-shadow:0 4px 12px rgba(18,36,26,.18)}
+  .brand__name{font-family:var(--font-display);font-size:18px;letter-spacing:.18em;line-height:1}
+  .brand__sub{display:block;font-size:8.5px;letter-spacing:.34em;color:var(--ink-3);margin-top:4px}
+  .topbar.dark-mode .brand__name{color:var(--night-text)}
+  .topbar.dark-mode .brand__sub{color:rgba(233,242,234,.45)}
+  .nav{display:flex;gap:30px;margin-left:auto;font-size:13.5px;color:var(--ink-2)}
+  .topbar.dark-mode .nav{color:var(--night-muted)}
+  .nav a{position:relative;padding:4px 0}
+  .nav a::after{content:"";position:absolute;left:0;bottom:-2px;width:0;height:1px;background:currentColor;transition:width .3s var(--ease)}
+  .nav a:hover::after{width:100%}
+  .topbar__meta{font-size:11px;letter-spacing:.18em;color:var(--ink-3)}
+  .topbar.dark-mode .topbar__meta{color:rgba(233,242,234,.4)}
+  .progress{position:fixed;top:0;left:0;height:2px;width:0;background:var(--dawn-3);z-index:60;transition:width .15s linear}
 
-  /* ---------- Hero ---------- */
-  .hero{position:relative;background:radial-gradient(120% 90% at 78% 8%,#2c5138 0%,#17301f 38%,#0a1710 78%);color:#eaf3ec;padding:130px 0 0;overflow:hidden}
-  .hero__glow{position:absolute;top:-180px;right:-80px;width:680px;height:680px;border-radius:50%;background:radial-gradient(circle,rgba(229,164,87,.42),rgba(229,164,87,0) 62%);filter:blur(6px);pointer-events:none}
-  .hero__sun{position:absolute;top:96px;right:13%;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#ffe9b8,#e9a95e 58%,#c8792c);box-shadow:0 0 90px rgba(233,169,94,.55);pointer-events:none}
-  .ridges{position:absolute;inset:auto 0 0;height:320px;pointer-events:none}
-  .ridges svg{position:absolute;inset:auto 0 0;width:100%;height:100%}
-  .ridge-far{opacity:.5;fill:#1f3d2a}
-  .ridge-mid{opacity:.8;fill:#142819}
-  .ridge-near{fill:#0a1710}
-  .hero__inner{position:relative;padding-bottom:96px}
-  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.16em;color:rgba(232,242,234,.7);padding:6px 14px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(255,255,255,.04);backdrop-filter:blur(6px)}
-  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:#7fd39a;box-shadow:0 0 0 4px rgba(127,211,154,.18);animation:pulse 2.4s infinite}
-  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(127,211,154,.45)}50%{box-shadow:0 0 0 7px rgba(127,211,154,0)}}
-  .hero__title{font-family:var(--font-display);font-weight:700;font-size:clamp(2.5rem,6vw,4.6rem);line-height:1.14;letter-spacing:.03em;margin:26px 0 22px;text-shadow:0 8px 40px rgba(0,0,0,.35)}
-  .hero__title em{font-style:normal;background:linear-gradient(100deg,#f7dcae,#e5a457 55%,#d98a38);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .hero__lede{max-width:620px;font-size:clamp(15px,1.7vw,18px);line-height:1.85;color:rgba(232,242,234,.78)}
-  .hero__actions{display:flex;flex-wrap:wrap;gap:14px;margin-top:34px}
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;height:52px;padding:0 28px;border-radius:999px;font-size:15px;font-weight:700;letter-spacing:.03em;transition:transform .2s,box-shadow .2s,background .2s}
-  .btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .btn--primary{background:linear-gradient(135deg,#f2c98a,#e5a457 55%,#d1713a);color:#2c1d0c;box-shadow:0 14px 34px -14px rgba(217,138,56,.9)}
-  .btn--primary:hover{transform:translateY(-2px);box-shadow:0 20px 44px -16px rgba(217,138,56,1)}
-  .btn--ghost{border:1px solid rgba(255,255,255,.22);color:#eaf3ec;background:rgba(255,255,255,.05);backdrop-filter:blur(8px)}
-  .btn--ghost:hover{background:rgba(255,255,255,.12);transform:translateY(-2px)}
-  .hero__meta{margin-top:20px;font-size:12.5px;letter-spacing:.08em;color:rgba(232,242,234,.5)}
-  .hero__shot{position:relative;margin:42px auto 0;width:min(1040px,calc(100% - 40px));z-index:2;padding-bottom:40px}
-  .shot-frame{border-radius:18px;padding:10px;background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.16);box-shadow:0 50px 100px -40px rgba(0,0,0,.75)}
-  .shot-frame img{border-radius:11px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-  .shot-cap{text-align:center;margin:18px 0 0;font-size:13px;color:rgba(232,242,234,.55);letter-spacing:.04em}
+  /* ---------- 首屏 ---------- */
+  .hero{position:relative;min-height:100svh;display:flex;align-items:center;background:radial-gradient(120% 95% at 76% 4%,#2b4f36 0%,#152e1e 42%,#08130c 82%);color:var(--night-text);overflow:hidden;padding:112px 0 72px}
+  .hero__sun{position:absolute;top:12%;right:14%;width:clamp(74px,8vw,128px);height:clamp(74px,8vw,128px);border-radius:50%;background:radial-gradient(circle at 40% 35%,#ffe9b8,#e9a95e 58%,#c8792c);box-shadow:0 0 90px rgba(233,169,94,.5);pointer-events:none}
+  .hero__glow{position:absolute;top:-16%;right:-10%;width:56vw;height:56vw;border-radius:50%;background:radial-gradient(circle,rgba(229,164,87,.24),rgba(229,164,87,0) 62%);pointer-events:none}
+  .ridges{position:absolute;inset:auto 0 0;height:30vh;pointer-events:none}
+  .ridges svg{position:absolute;bottom:0;width:100%;height:100%}
+  .r-far{fill:#1c3926;opacity:.55}.r-mid{fill:#122516;opacity:.9}.r-near{fill:#08130c}
+  .hero__in{position:relative;z-index:2;display:grid;grid-template-columns:1.08fr .92fr;gap:clamp(36px,5vw,72px);align-items:center}
+  .eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:12px;letter-spacing:.2em;color:rgba(233,242,234,.65);padding:6px 14px;border:1px solid rgba(255,255,255,.15);border-radius:999px}
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:#7fd39a;box-shadow:0 0 0 4px rgba(127,211,154,.16)}
+  h1{font-family:var(--font-display);font-weight:700;font-size:clamp(2.4rem,5vw,4.4rem);line-height:1.12;letter-spacing:.01em;margin:26px 0 0;text-wrap:balance}
+  .dawn-text{background:linear-gradient(100deg,#f7dcae,#e5a457 58%,#d98a38);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{margin:24px 0 0;font-size:clamp(1.02rem,1.5vw,1.35rem);line-height:1.8;color:rgba(233,242,234,.78);max-width:520px}
+  .hero__meta{margin-top:34px;display:flex;gap:22px;flex-wrap:wrap;font-size:12px;letter-spacing:.12em;color:rgba(233,242,234,.45)}
+  .hero__meta b{color:var(--dawn-4);font-weight:600}
+  .hero__media{position:relative}
+  .frame{border:1px solid var(--line-dark);border-radius:8px;overflow:hidden;background:#0d1c14;box-shadow:0 50px 100px -50px rgba(0,0,0,.85)}
+  .frame img{width:100%}
+  .hero__media .frame img{height:auto}
+  .scroll-cue{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:10px;font-size:10.5px;letter-spacing:.28em;color:rgba(233,242,234,.4)}
+  .scroll-cue i{width:1px;height:38px;background:linear-gradient(rgba(233,242,234,.5),transparent);position:relative;overflow:hidden}
+  .scroll-cue i::after{content:"";position:absolute;top:-50%;left:0;width:1px;height:50%;background:var(--dawn-3);animation:cue 2.4s infinite}
+  @keyframes cue{0%{top:-50%}100%{top:100%}}
 
-  /* ---------- 信任条 ---------- */
-  .trust{background:var(--moss-900);color:rgba(232,242,234,.72);padding:26px 0}
-  .trust__row{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 42px;font-size:13.5px;letter-spacing:.06em}
-  .trust__row span{display:inline-flex;align-items:center;gap:9px}
-  .trust__row svg{width:16px;height:16px;stroke:var(--moss-300);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  /* ---------- 通用区块 ---------- */
+  section{position:relative;scroll-margin-top:80px}
+  .sec{padding:clamp(84px,13vh,160px) 0}
+  .kicker{display:flex;align-items:center;gap:14px;font-size:11.5px;letter-spacing:.22em;font-weight:700;color:var(--moss);margin:0 0 22px}
+  .kicker span{color:var(--dawn);font-variant-numeric:tabular-nums}
+  .dark .kicker{color:var(--moss-4)}
+  .dark .kicker span{color:var(--dawn-3)}
+  h2{font-family:var(--font-display);font-weight:700;font-size:clamp(2.1rem,4.4vw,4.1rem);line-height:1.16;letter-spacing:.01em;margin:0;text-wrap:balance}
+  .lead{font-size:clamp(1.05rem,1.7vw,1.55rem);line-height:1.75;color:var(--ink-2);max-width:640px;margin:24px 0 0}
+  .body{font-size:clamp(.98rem,1.25vw,1.1rem);line-height:1.85;color:var(--ink-2);max-width:600px;margin:18px 0 0}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(34px,6vw,96px);align-items:center}
+  .split--wide{grid-template-columns:1.1fr .9fr}
+  .split--media{grid-template-columns:.9fr 1.1fr}
+  .stack>*+*{margin-top:clamp(16px,2.2vw,26px)}
+  .media{border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fffdf8;box-shadow:0 30px 70px -52px rgba(20,36,27,.55)}
+  .dark .media{border-color:var(--line-dark);background:#0d1c14;box-shadow:0 40px 90px -55px rgba(0,0,0,.9)}
+  .media img{width:100%;transition:transform .8s var(--ease)}
+  .media:hover img{transform:scale(1.012)}
 
-  /* ---------- 通用 section ---------- */
-  section{position:relative}
-  .sec{padding:96px 0}
-  .sec-label{display:inline-block;font-size:12px;letter-spacing:.2em;color:var(--moss-500);font-weight:700;margin:0 0 14px}
-  .sec-title{font-family:var(--font-display);font-weight:700;font-size:clamp(1.9rem,3.6vw,3rem);line-height:1.24;letter-spacing:.02em;margin:0 0 18px}
-  .sec-sub{max-width:660px;font-size:15.5px;line-height:1.85;color:var(--ink-2);margin:0 auto}
+  /* ---------- 01 主张 ---------- */
+  .claim__top{display:grid;grid-template-columns:1fr 1fr;gap:clamp(34px,6vw,96px);align-items:start}
+  .bigstat{font-family:var(--font-display);font-weight:700;font-size:clamp(5rem,12vw,10.5rem);line-height:.84;letter-spacing:-.03em;background:linear-gradient(160deg,var(--moss),var(--dawn));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .bigstat small{font-size:.28em;font-weight:600;color:var(--ink-3);-webkit-text-fill-color:var(--ink-3);margin-left:6px}
+  .bigstat__cap{margin-top:14px;font-size:13px;letter-spacing:.1em;color:var(--ink-3)}
+  .claim__body p{font-size:clamp(1rem,1.35vw,1.2rem);line-height:1.9;color:var(--ink-2);margin:0 0 18px}
+  .claim__body strong{color:var(--moss)}
+  .claim__foot{margin-top:clamp(30px,5vw,60px);padding-top:26px;border-top:1px solid var(--line);font-family:var(--font-display);font-size:clamp(1.15rem,2vw,1.6rem);line-height:1.6;color:var(--ink)}
 
-  /* ---------- 概率主张 ---------- */
-  .claim{background:radial-gradient(100% 100% at 20% 0%,#fbf8f0,#f1ebdd)}
-  .claim__grid{display:grid;grid-template-columns:1fr 1.15fr;gap:60px;align-items:center}
-  .big-stat{display:flex;align-items:flex-end;gap:14px;margin-top:10px}
-  .big-stat b{font-family:var(--font-display);font-size:clamp(4.5rem,9vw,7.5rem);line-height:.9;letter-spacing:-.02em;color:var(--moss-700);background:linear-gradient(160deg,var(--moss-600),var(--dawn-500));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .big-stat small{font-size:clamp(1.4rem,3vw,2rem);color:var(--ink-3);font-weight:600;margin-bottom:12px}
-  .big-stat__cap{font-size:13px;color:var(--ink-3);letter-spacing:.08em;margin-top:10px}
-  .claim p{font-size:15.5px;line-height:1.9;color:var(--ink-2);margin:0 0 16px}
-  .claim strong{color:var(--moss-700)}
+  /* ---------- 02 物理 ---------- */
+  .factors{margin-top:clamp(38px,6vw,72px);border-top:1px solid var(--line-dark)}
+  .factor{display:grid;grid-template-columns:90px 1fr 1.15fr;gap:clamp(20px,4vw,64px);padding:clamp(24px,3.4vw,40px) 0;border-bottom:1px solid var(--line-dark);align-items:baseline}
+  .factor__idx{font-family:var(--font-display);font-size:clamp(1rem,1.4vw,1.3rem);color:var(--dawn-3);letter-spacing:.08em}
+  .factor h3{font-family:var(--font-display);font-size:clamp(1.4rem,2.4vw,2.1rem);line-height:1.3;margin:0}
+  .factor__formula{font-family:var(--font-display);font-size:clamp(1rem,1.5vw,1.3rem);color:var(--dawn-4);margin:8px 0 0;letter-spacing:.02em}
+  .factor p{margin:0;font-size:clamp(.92rem,1.2vw,1.06rem);line-height:1.8;color:var(--night-muted)}
+  .note{margin-top:clamp(28px,4vw,48px);font-size:clamp(.85rem,1.05vw,.98rem);line-height:1.8;color:rgba(233,242,234,.42);max-width:860px}
 
-  /* ---------- 功能 ---------- */
-  .features{background:var(--bg)}
-  .feat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:44px}
-  .feat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:30px 30px 28px;box-shadow:var(--shadow-md);transition:transform .28s,box-shadow .28s,border-color .28s}
-  .feat:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:var(--moss-200)}
-  .feat__icon{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(145deg,var(--moss-100),#fff);border:1px solid var(--moss-100);margin-bottom:18px}
-  .feat__icon svg{width:23px;height:23px;stroke:var(--moss-600);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-  .feat h3{font-size:19px;margin:0 0 6px;letter-spacing:.02em}
-  .feat__sub{font-size:12.5px;letter-spacing:.08em;color:var(--dawn-500);font-weight:700;margin:0 0 12px}
-  .feat p{margin:0;font-size:14.5px;line-height:1.8;color:var(--ink-2)}
-  .feat__tag{display:inline-block;margin-left:8px;font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--moss-600);background:var(--moss-50);border:1px solid var(--moss-200);border-radius:999px;padding:2px 8px;vertical-align:middle}
+  /* ---------- 03/04/05 产品 ---------- */
+  .chapter__head{display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(28px,5vw,80px);align-items:end;margin-bottom:clamp(30px,5vw,56px)}
+  .chapter__head .lead{margin-top:0}
+  .feature-list{list-style:none;margin:0;padding:0;display:grid;gap:clamp(14px,2vw,22px)}
+  .feature-list li{display:flex;gap:16px;align-items:baseline;padding-bottom:clamp(12px,1.8vw,18px);border-bottom:1px solid var(--line);font-size:clamp(1rem,1.35vw,1.22rem);line-height:1.6;color:var(--ink-2)}
+  .dark .feature-list li{border-color:var(--line-dark);color:var(--night-muted)}
+  .feature-list b{font-family:var(--font-display);font-size:13px;color:var(--dawn);flex:0 0 26px}
+  .dark .feature-list b{color:var(--dawn-3)}
+  .full-media{margin-top:clamp(20px,3vw,34px)}
 
-  /* ---------- 界面 ---------- */
-  .look{background:linear-gradient(180deg,#0c1a12,#0a1710);color:#eaf3ec;overflow:hidden}
-  .look .sec-label{color:var(--moss-300)}
-  .look .sec-title{color:#f3f8f4}
-  .look .sec-sub{color:rgba(232,242,234,.62)}
-  .look__hero{margin-top:46px;border-radius:20px;padding:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);box-shadow:0 40px 80px -30px rgba(0,0,0,.7)}
-  .look__hero img{border-radius:12px;width:100%}
-  .look__hero-cap{display:flex;align-items:center;gap:10px;justify-content:center;margin-top:20px;font-size:13px;color:rgba(232,242,234,.6)}
-  .look__hero-cap .pill{font-size:11px;font-weight:700;letter-spacing:.08em;color:#2c1d0c;background:var(--dawn-400);border-radius:999px;padding:3px 10px}
-  .phones{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:54px}
-  .phone{border-radius:26px;padding:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);box-shadow:0 30px 60px -24px rgba(0,0,0,.7)}
-  .phone img{border-radius:19px;width:100%}
-  .phone figcaption{text-align:center;font-size:12.5px;color:rgba(232,242,234,.55);margin-top:14px;letter-spacing:.06em}
+  /* ---------- 06 卡片（排版式） ---------- */
+  .cardtype{display:grid;grid-template-columns:.85fr 1.15fr;gap:clamp(34px,6vw,90px);align-items:center}
+  .cardtype__num{font-family:var(--font-display);font-size:clamp(3rem,7vw,6.4rem);line-height:.9;letter-spacing:-.02em;color:var(--dawn-4);white-space:nowrap}
+  .cardtype__num small{font-size:.3em;color:rgba(233,242,234,.5);margin-left:8px;letter-spacing:.06em}
+  .cardtype__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(18px,3vw,34px);margin-top:clamp(28px,4vw,44px);border-top:1px solid var(--line-dark);padding-top:clamp(22px,3vw,34px)}
+  .cardtype__grid h3{font-family:var(--font-display);font-size:clamp(1.05rem,1.6vw,1.35rem);margin:0 0 8px}
+  .cardtype__grid p{margin:0;font-size:clamp(.88rem,1.15vw,1rem);line-height:1.75;color:var(--night-muted)}
 
-  /* ---------- 下载 ---------- */
-  .download{background:radial-gradient(120% 100% at 50% 0%,#1b3926,#0c1a12 70%);color:#eaf3ec;padding:96px 0}
-  .download .sec-label{color:var(--dawn-300)}
-  .download .sec-title{color:#f6faf7}
-  .download .sec-sub{color:rgba(232,242,234,.62)}
-  .dl-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:46px}
-  .dl{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.12);border-radius:var(--r-lg);padding:28px;display:flex;flex-direction:column;transition:transform .28s,border-color .28s,background .28s}
-  .dl:hover{transform:translateY(-4px);border-color:rgba(229,164,87,.5);background:rgba(255,255,255,.07)}
-  .dl__os{display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.12em;color:rgba(232,242,234,.6);margin-bottom:16px}
-  .dl__os svg{width:18px;height:18px;stroke:var(--moss-300);fill:none;stroke-width:1.7;stroke-linejoin:round}
-  .dl h3{font-size:21px;margin:0 0 8px;font-family:var(--font-display);letter-spacing:.03em}
-  .dl p{font-size:13.5px;line-height:1.7;color:rgba(232,242,234,.62);margin:0 0 20px}
-  .dl .btn{width:100%;height:48px;font-size:14px}
-  .dl__note{font-size:11.5px;letter-spacing:.04em;color:rgba(232,242,234,.38);margin:12px 0 0;word-break:break-all}
-  .dl--light{background:linear-gradient(150deg,rgba(229,164,87,.16),rgba(255,255,255,.04));border-color:rgba(229,164,87,.32)}
-  .dl--light .dl__os{color:var(--dawn-300)}
-  .dl--light .btn--primary{background:linear-gradient(135deg,#f2c98a,#e5a457 55%,#d1713a)}
-  .foot-note{text-align:center;margin-top:34px;font-size:12px;color:rgba(232,242,234,.4);letter-spacing:.05em}
+  /* ---------- 07 边界 ---------- */
+  .honest{display:grid;grid-template-columns:1fr 1fr;gap:0 clamp(34px,6vw,80px);margin-top:clamp(34px,5vw,56px);border-top:1px solid var(--line)}
+  .honest__item{padding:clamp(22px,3vw,34px) 0;border-bottom:1px solid var(--line)}
+  .honest__item h3{display:flex;gap:12px;align-items:baseline;font-family:var(--font-display);font-size:clamp(1.05rem,1.5vw,1.3rem);margin:0 0 8px}
+  .honest__item h3 span{font-size:11px;color:var(--dawn);letter-spacing:.08em}
+  .honest__item p{margin:0;font-size:clamp(.88rem,1.15vw,1.02rem);line-height:1.75;color:var(--ink-2)}
 
-  /* ---------- 诚实 ---------- */
-  .honest{background:var(--bg);padding:88px 0}
-  .honest__grid{display:grid;grid-template-columns:.85fr 1.4fr;gap:56px;align-items:start}
-  .honest ul{list-style:none;margin:0;padding:0;display:grid;gap:14px}
-  .honest li{display:flex;gap:16px;padding:18px 20px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line)}
-  .honest li b{display:block;font-size:14.5px;margin-bottom:3px}
-  .honest li p{margin:0;font-size:13.5px;line-height:1.7;color:var(--ink-2)}
-  .honest__mark{font-family:var(--font-display);font-size:15px;color:var(--dawn-500);font-weight:700;flex:0 0 auto}
+  /* ---------- 08 底座 ---------- */
+  .platforms{display:grid;grid-template-columns:repeat(4,1fr);gap:0 clamp(24px,4vw,54px);margin-top:clamp(36px,6vw,64px);border-top:1px solid var(--line-dark)}
+  .platform{padding:clamp(24px,3vw,36px) 0;border-bottom:1px solid var(--line-dark)}
+  .platform svg{width:30px;height:30px;stroke:var(--moss-4);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin-bottom:16px}
+  .platform b{display:block;font-family:var(--font-display);font-size:clamp(1.05rem,1.5vw,1.3rem);margin-bottom:4px}
+  .platform span{font-size:clamp(.82rem,1.05vw,.95rem);color:rgba(233,242,234,.45)}
+  .techline{display:flex;flex-wrap:wrap;gap:12px 28px;margin-top:clamp(26px,4vw,44px);font-size:clamp(.82rem,1.05vw,.98rem);color:rgba(233,242,234,.5);letter-spacing:.04em}
+  .techline span::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--moss-3);margin-right:9px;vertical-align:2px}
 
-  /* ---------- 尾 ---------- */
-  .closing{position:relative;background:radial-gradient(110% 120% at 50% 100%,#1f4130,#0a1710 70%);color:#eaf3ec;padding:110px 0;text-align:center;overflow:hidden}
-  .closing h2{font-family:var(--font-display);font-size:clamp(2.1rem,4.6vw,3.6rem);line-height:1.25;margin:0 0 18px;letter-spacing:.03em}
-  .closing p{font-size:15px;color:rgba(232,242,234,.62);margin:0 0 30px}
-  .closing .sun{position:absolute;bottom:-120px;left:50%;transform:translateX(-50%);width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(229,164,87,.32),rgba(229,164,87,0) 62%);pointer-events:none}
-  footer{background:#08120c;color:rgba(232,242,234,.42);font-size:12.5px;padding:30px 0}
-  .foot__row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px}
-  .foot__links{display:flex;gap:22px}
-  .foot__links a:hover{color:rgba(232,242,234,.8)}
+  /* ---------- 结尾 ---------- */
+  .closing{position:relative;min-height:88svh;display:flex;align-items:center;text-align:center;overflow:hidden;background:radial-gradient(120% 120% at 50% 108%,#25482f,#0a1710 66%);color:var(--night-text)}
+  .closing .sun2{position:absolute;left:50%;bottom:-26vh;transform:translateX(-50%);width:72vw;height:72vw;border-radius:50%;background:radial-gradient(circle,rgba(229,164,87,.22),rgba(229,164,87,0) 62%);pointer-events:none}
+  .closing .wrap{position:relative;z-index:2;padding-block:clamp(80px,10vh,140px)}
+  .closing h2{font-size:clamp(2.4rem,5.6vw,5.2rem)}
+  .closing p{margin-top:26px;font-size:clamp(1rem,1.7vw,1.5rem);color:rgba(233,242,234,.6)}
+  .closing .sign{margin-top:44px;font-size:11px;letter-spacing:.32em;color:rgba(233,242,234,.38)}
 
-  /* reveal */
-  .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
-  .reveal.is-in{opacity:1;transform:none}
+  footer{background:#07110b;color:rgba(233,242,234,.35);font-size:12px;padding:26px 0}
+  .foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;letter-spacing:.06em}
 
-  @media (max-width:900px){
-    .nav__links{display:none}
-    .nav__cta{margin-left:auto}
-    .claim__grid,.honest__grid{grid-template-columns:1fr;gap:34px}
-    .feat-grid,.dl-grid{grid-template-columns:1fr}
-    .hero{padding-top:110px}
-    .hero__inner{padding-bottom:90px}
-    .hero__sun{width:74px;height:74px;right:8%;top:80px}
-    .phones{gap:14px}
-    .sec,.download,.honest{padding:70px 0}
+  /* ---------- 动效 ---------- */
+  .reveal{opacity:0;transform:translateY(30px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+  .reveal.in{opacity:1;transform:none}
+  .hero .reveal{transition-delay:var(--d,0s)}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+
+  /* ---------- 响应式 ---------- */
+  @media (max-width:980px){
+    .nav{display:none}
+    .topbar__meta{margin-left:auto}
+    .hero__in{grid-template-columns:1fr;gap:40px}
+    .hero{min-height:auto;padding-top:120px}
+    .hero__media{order:2}
+    .scroll-cue{display:none}
+    .split,.split--wide,.split--media,.claim__top,.chapter__head,.cardtype{grid-template-columns:1fr;gap:26px}
+    .factor{grid-template-columns:56px 1fr;gap:12px 20px}
+    .factor p{grid-column:2}
+    .honest{grid-template-columns:1fr}
+    .platforms{grid-template-columns:repeat(2,1fr)}
+    .cardtype__grid{grid-template-columns:1fr;gap:20px}
   }
   @media (max-width:620px){
-    .phones{grid-template-columns:1fr;max-width:300px;margin-inline:auto}
-    .hero__actions .btn{width:100%}
-    .hero__shot{width:calc(100% - 28px)}
-    .trust__row{gap:10px 22px;font-size:12px}
+    .sec{padding:70px 0}
+    .hero{padding-top:104px;padding-bottom:50px}
+    .bigstat{font-size:4.6rem}
   }
 </style>
 </head>
 <body>
 
-<header class="nav" id="nav">
-  <div class="nav__inner">
-    <a class="brand" href="#top">
-      <span class="brand__mark">
-        <svg viewBox="0 0 40 40" aria-hidden="true">
-          <defs>
-            <linearGradient id="bm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5c946e"/><stop offset="1" stop-color="#132a1c"/></linearGradient>
-            <linearGradient id="bs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9b8"/><stop offset="1" stop-color="#e9a95e"/></linearGradient>
-          </defs>
-          <rect width="40" height="40" rx="11" fill="url(#bm)"/>
-          <circle cx="26.6" cy="12.6" r="4.6" fill="url(#bs)"/>
-          <path d="M1.2 32.8 12 20.9l5.2 6.4L23 19.4l6 8.4 4.4-5.1 5.4 10.1v7.2H1.2Z" fill="#0e2016"/>
-        </svg>
-      </span>
-      <span class="brand__text"><span class="brand__name">晓山青</span><span class="brand__sub">VIRIDIORE</span></span>
+<div class="progress" id="progress"></div>
+
+<header class="topbar" id="topbar">
+  <div class="topbar__in">
+    <a class="brand" href="#top" aria-label="晓山青首页">
+      <svg viewBox="0 0 40 40" aria-hidden="true">
+        <defs>
+          <linearGradient id="bm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5c946e"/><stop offset="1" stop-color="#132a1c"/></linearGradient>
+          <linearGradient id="bs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9b8"/><stop offset="1" stop-color="#e9a95e"/></linearGradient>
+        </defs>
+        <rect width="40" height="40" rx="10" fill="url(#bm)"/>
+        <circle cx="26.6" cy="12.6" r="4.6" fill="url(#bs)"/>
+        <path d="M1.2 32.8 12 20.9l5.2 6.4L23 19.4l6 8.4 4.4-5.1 5.4 10.1v7.2H1.2Z" fill="#0e2016"/>
+      </svg>
+      <span><span class="brand__name">晓山青</span><span class="brand__sub">VIRIDIORE</span></span>
     </a>
-    <nav class="nav__links">
+    <nav class="nav">
       <a href="#claim">主张</a>
-      <a href="#features">功能</a>
-      <a href="#look">界面</a>
-      <a href="#download">下载</a>
+      <a href="#physics">怎么算</a>
+      <a href="#product">产品</a>
+      <a href="#honest">边界</a>
     </nav>
-    <a class="nav__cta" href="#download">立即使用</a>
+    <span class="topbar__meta">产品分享 · 2026</span>
   </div>
 </header>
 
 <main id="top">
 
-  <!-- Hero -->
+  <!-- 首屏 -->
   <section class="hero">
     <div class="hero__glow"></div>
     <div class="hero__sun"></div>
     <div class="ridges" aria-hidden="true">
-      <svg class="ridge-far" viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0 240 90 212 180 236 270 196 360 214 450 176 540 206 630 168 720 190 810 158 900 196 990 176 1080 208 1170 184 1260 214 1350 196 1440 220V320H0Z"/></svg>
-      <svg class="ridge-mid" viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0 278 90 258 180 280 270 246 360 264 450 232 540 258 630 226 720 246 810 218 900 252 990 234 1080 262 1170 240 1260 268 1350 250 1440 274V320H0Z"/></svg>
-      <svg class="ridge-near" viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0 306 90 296 180 308 270 292 360 304 450 286 540 300 630 284 720 298 810 282 900 300 990 290 1080 304 1170 292 1260 308 1350 298 1440 310V320H0Z"/></svg>
+      <svg class="r-far" viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0 248 100 220 200 242 300 204 400 224 500 184 600 214 700 176 800 198 900 166 1000 204 1100 184 1200 216 1300 194 1440 222V320H0Z"/></svg>
+      <svg class="r-mid" viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0 282 100 266 200 286 300 254 400 272 500 240 600 264 700 234 800 252 900 224 1000 258 1100 240 1200 268 1300 248 1440 272V320H0Z"/></svg>
+      <svg class="r-near" viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0 306 100 298 200 308 300 294 400 304 500 288 600 300 700 286 800 298 900 284 1000 300 1100 292 1200 306 1300 296 1440 308V320H0Z"/></svg>
     </div>
-
-    <div class="wrap hero__inner">
-      <p class="eyebrow"><span class="dot"></span>户外决策工具 · 深圳</p>
-      <h1 class="hero__title">不问天气好不好<br /><em>只回答值不值得去</em></h1>
-      <p class="hero__lede">明早哪座山、几点出发、多大几率看到云海——算成一个百分比。算不出来，就直说。</p>
-      <div class="hero__actions">
-        <a class="btn btn--primary" href="https://github.com/xxx1-sg/Viridiore/releases/download/v2.6.6/XiaoShanQing-2.6.6-Setup-x64.exe" rel="noopener">
-          <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16"/></svg>
-          下载 Windows 版
-        </a>
-        <a class="btn btn--ghost" href="https://xxx1-sg.github.io/Viridiore/app/" target="_blank" rel="noopener">
-          网页版直接打开
-          <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg>
-        </a>
+    <div class="wrap hero__in">
+      <div>
+        <p class="eyebrow reveal"><span class="dot"></span>户外决策工具 · 深圳</p>
+        <h1 class="reveal" style="--d:.08s">不问天气好不好<br><em class="dawn-text">只回答值不值得去</em></h1>
+        <p class="reveal" style="--d:.16s">明早哪座山、几点出发、多大几率看到云海——算成一个百分比。算不出来，就直说。</p>
+        <div class="hero__meta reveal" style="--d:.24s">
+          <span><b>晓山青</b> Viridiore</span><span>Windows / 安卓 / 网页</span><span>无需注册 · 离线可用</span>
+        </div>
       </div>
-      <p class="hero__meta">v2.6.6 &nbsp;·&nbsp; Windows / 安卓 / 网页同源 &nbsp;·&nbsp; 无需注册账号 &nbsp;·&nbsp; 离线可用</p>
+      <div class="hero__media reveal" style="--d:.2s">
+        <div class="frame"><img src="assets/desktop-home.png" alt="晓山青首页：明早云海概率与判断依据" width="1280" height="900" /></div>
+      </div>
     </div>
-
-    <div class="hero__shot reveal">
-      <div class="shot-frame"><img src="assets/desktop-home.png" alt="晓山青首页：明早云海概率与判断依据" width="1280" height="900" /></div>
-      <p class="shot-cap">首页只做一件事：告诉你今天值不值得上山。</p>
-    </div>
+    <div class="scroll-cue" aria-hidden="true"><span>向下</span><i></i></div>
   </section>
 
-  <div class="trust">
-    <div class="wrap trust__row">
-      <span><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6Z"/><path d="m9 12 2 2 4-4"/></svg>数据只存本机</span>
-      <span><svg viewBox="0 0 24 24"><path d="M2 8.8a15 15 0 0 1 20 0M5 12.9a10 10 0 0 1 14 0M8.5 16.4a5 5 0 0 1 7 0M12 20h.01"/></svg>断网也能记录</span>
-      <span><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>打开即用，无需注册</span>
-      <span><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>每一项概率都能被检验</span>
-    </div>
-  </div>
-
-  <!-- 主张 -->
-  <section class="sec claim" id="claim">
-    <div class="wrap claim__grid">
-      <div class="reveal">
-        <p class="sec-label">核心主张</p>
-        <h2 class="sec-title">给概率，<br />不给评分</h2>
-        <div class="big-stat"><b>72</b><small>%</small></div>
-        <p class="big-stat__cap">明早 6:12 · 梧桐山东麓 · 云海概率</p>
-      </div>
-      <div class="reveal">
-        <p>天气 App 告诉你「云量 30%」。这个数字对登山的人没有意义——你要知道的是云在不在你脚下。</p>
-        <p>所以晓山青只输出一个能被证伪的数字：<strong>明早 6:12，梧桐山东麓，云海概率 72%</strong>。下面永远跟着一行「基准率 16% · 置信度中」，以及每一项证据的加减值。</p>
-        <p>你可以反驳它。下次上山回来说一句「看到了」或「白跑一趟」，它会把误差记住。样本越多，它越不敢乱说。</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 功能 -->
-  <section class="sec features" id="features">
+  <!-- 01 主张 -->
+  <section class="sec" id="claim">
     <div class="wrap">
-      <div class="center reveal">
-        <p class="sec-label">做减法之后剩下的</p>
-        <h2 class="sec-title">四个能力，每个都能用</h2>
-        <p class="sec-sub">不铺十宫格。把每一次出发真正需要的几件事，做到底。</p>
+      <div class="claim__top">
+        <div class="reveal">
+          <p class="kicker"><span>01</span>核心主张</p>
+          <h2>给概率，<br>不给评分</h2>
+          <div style="margin-top:clamp(26px,4vw,46px)">
+            <div class="bigstat">72<small>%</small></div>
+            <p class="bigstat__cap">明早 6:12 · 梧桐山东麓 · 云海概率</p>
+          </div>
+        </div>
+        <div class="claim__body reveal" style="transition-delay:.1s">
+          <p>天气 App 告诉你「云量 30%」。这个数字对登山的人没有意义——你要知道的是云在不在你脚下。</p>
+          <p>所以晓山青只输出一个<strong>能被证伪的数字</strong>：明早 6:12，梧桐山东麓，云海概率 72%。下面永远跟着一行「基准率 16% · 置信度中」，以及每一项证据的加减值。</p>
+          <p>你可以反驳它。下次上山回来说一句「看到了」或「白跑一趟」，它会把误差记住。样本越多，它越不敢乱说。</p>
+        </div>
       </div>
-      <div class="feat-grid">
-        <article class="feat reveal">
-          <div class="feat__icon"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.4"/></svg></div>
-          <h3>追光</h3>
-          <p class="feat__sub">七天窗口，一个概率</p>
-          <p>云海、日出、星空三种模式，各自一套权重。给出最佳日期、精确到分钟的时刻窗口、该去哪个坡向、山顶多少度、穿什么。</p>
-        </article>
-        <article class="feat reveal" style="--d:.08s">
-          <div class="feat__icon"><svg viewBox="0 0 24 24"><path d="M3 17.5 8.5 9l3.6 5.2L15 10l6 8.5"/><circle cx="8" cy="6" r="1.6"/></svg></div>
-          <h3>轨迹 <span class="feat__tag">新版底图切换</span></h3>
-          <p class="feat__sub">山上没信号也照常记</p>
-          <p>距离、爬升、配速全在本地算，地图自己画，不依赖任何在线瓦片。底图可在高德 / 卫星 / OSM / 无之间实时切换，断网自动回退地形背景。</p>
-        </article>
-        <article class="feat reveal" style="--d:.16s">
-          <div class="feat__icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.4"/><path d="M3 15.2 8 10l3.4 4 3-3.4L21 15"/><circle cx="8.4" cy="9" r="1.3"/></svg></div>
-          <h3>光之卡片</h3>
-          <p class="feat__sub">一次上山，一张能发的图</p>
-          <p>时间、坐标、海拔、当时的天气，加一句写实的叙事，渲染成 1080×1350 的卡片。事前还能生成「预测卡」，回来看命中没有。</p>
-        </article>
-        <article class="feat reveal" style="--d:.24s">
-          <div class="feat__icon"><svg viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 11 3.5 3.5 0 0 0 7 19Z"/><path d="M8 22h.01M12 21h.01M16 22h.01"/></svg></div>
-          <h3>天气</h3>
-          <p class="feat__sub">实况、预报与预警并排</p>
-          <p>24 小时与 7 天，气象预警直接并进顶部横幅。现在取 15 分钟实况场，不拿整点预报冒充；取数失败就如实显示失败。</p>
-        </article>
-      </div>
+      <p class="claim__foot reveal">100 分制是自说自话。百分比能被检验——第二天上山，看到或没看到，答案就写在那儿。</p>
     </div>
   </section>
 
-  <!-- 界面 -->
-  <section class="sec look" id="look">
+  <!-- 02 物理 -->
+  <section class="sec dark" id="physics">
     <div class="wrap">
-      <div class="center reveal">
-        <p class="sec-label">界面</p>
-        <h2 class="sec-title">信息密度换掉了热闹</h2>
-        <p class="sec-sub">深森林绿与晨曦琥珀，深色浅色都做了。下面是真机渲染。</p>
+      <p class="kicker reveal"><span>02</span>怎么算的</p>
+      <h2 class="reveal">云海不是心情，<br>是物理</h2>
+      <p class="lead reveal">模型不算「今天天气多好看」，只算三件事：云底多高、湿度够不够、层结稳不稳。</p>
+      <div class="factors">
+        <div class="factor reveal">
+          <span class="factor__idx">01</span>
+          <div><h3>云底高度</h3><p class="factor__formula">LCL ≈ 125 m/℃ × (T − Td)</p></div>
+          <p>由气温与露点差反解抬升凝结高度，再叠加云层厚度估出云顶。云顶低于山顶，你站在云上；高于山顶，你在云里，什么都看不见。</p>
+        </div>
+        <div class="factor reveal">
+          <span class="factor__idx">02</span>
+          <div><h3>露点差</h3><p class="factor__formula">T − Td ≤ 2 ℃</p></div>
+          <p>差得越小，空气越接近饱和。大于 6℃ 基本不会有成片的云，2℃ 以内是云海最容易成形的那一档。</p>
+        </div>
+        <div class="factor reveal">
+          <span class="factor__idx">03</span>
+          <div><h3>逆温稳定</h3><p class="factor__formula">晴夜辐射降温 + 弱风</p></div>
+          <p>冷空气沉在谷底，暖空气盖在上面——这层盖子把云压住。风力超过 4 级，盖子就被搅散了。</p>
+        </div>
       </div>
-      <figure class="look__hero reveal" style="margin-bottom:0">
-        <img src="assets/trail-basemap.jpg" alt="轨迹页：底图切换菜单（高德/卫星/OSM/无）" />
-        <figcaption class="look__hero-cap"><span class="pill">新</span>轨迹页 · 点右上角切换高德 / 卫星 / OSM / 无，实时生效</figcaption>
-      </figure>
-      <div class="phones">
-        <figure class="phone reveal"><img src="assets/mobile-home.png" alt="手机端首页" /><figcaption>首页 · 今天值不值得去</figcaption></figure>
-        <figure class="phone reveal" style="--d:.08s"><img src="assets/mobile-chase.png" alt="手机端追光页" /><figcaption>追光 · 七天窗口</figcaption></figure>
-        <figure class="phone reveal" style="--d:.16s"><img src="assets/mobile-trail.png" alt="手机端轨迹页" /><figcaption>轨迹 · 离线记录</figcaption></figure>
-      </div>
+      <p class="note reveal">逆温用 925 / 850 hPa 模式层结的温度直减率计算，不是拍脑袋的代理分；数据不够好时，界面会主动标注「置信度」——它会告诉你这个概率别太当真。</p>
     </div>
   </section>
 
-  <!-- 下载 -->
-  <section class="download" id="download">
+  <!-- 03 产品首页 -->
+  <section class="sec" id="product">
     <div class="wrap">
-      <div class="center reveal">
-        <p class="sec-label">下载</p>
-        <h2 class="sec-title">选一个装到你机器上</h2>
-        <p class="sec-sub">装完就能看真实预报：不用注册、不用填 Key、不用登录。Windows 安装包、安卓 APK、网页版同源。</p>
+      <div class="chapter__head">
+        <div class="reveal">
+          <p class="kicker"><span>03</span>产品</p>
+          <h2>一屏之内，<br>把决定做完</h2>
+        </div>
+        <p class="lead reveal" style="transition-delay:.1s">打开就是答案：明早的概率、最佳窗口、去哪座山，以及每一项判断的依据。</p>
       </div>
-
-      <div class="dl-grid">
-        <article class="dl dl--light reveal">
-          <span class="dl__os"><svg viewBox="0 0 24 24"><path d="M3 5.6 10.4 4.6v6.6H3ZM11.6 4.4 21 3v8.2h-9.4ZM3 12.6h7.4v6.8L3 18.4ZM11.6 12.6H21V21l-9.4-1.3Z"/></svg>Windows · 推荐</span>
-          <h3>安装版</h3>
-          <p>标准安装向导，可选目录，自动创建桌面与开始菜单快捷方式。适合长期使用。</p>
-          <a class="btn btn--primary" href="https://github.com/xxx1-sg/Viridiore/releases/download/v2.6.6/XiaoShanQing-2.6.6-Setup-x64.exe" rel="noopener">
-            下载安装包
-            <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16"/></svg>
-          </a>
-          <p class="dl__note">XiaoShanQing-2.6.6-Setup-x64.exe · Windows 10/11 · 64 位 · 78 MB</p>
-        </article>
-
-        <article class="dl reveal" style="--d:.06s">
-          <span class="dl__os"><svg viewBox="0 0 24 24"><path d="M3 5.6 10.4 4.6v6.6H3ZM11.6 4.4 21 3v8.2h-9.4ZM3 12.6h7.4v6.8L3 18.4ZM11.6 12.6H21V21l-9.4-1.3Z"/></svg>Windows · 免安装</span>
-          <h3>绿色版</h3>
-          <p>单文件，双击即用，不写注册表。丢进 U 盘换台电脑也能跑。</p>
-          <a class="btn btn--ghost" href="https://github.com/xxx1-sg/Viridiore/releases/download/v2.6.6/XiaoShanQing-2.6.6-Portable-x64.exe" rel="noopener">
-            下载绿色版
-            <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16"/></svg>
-          </a>
-          <p class="dl__note">XiaoShanQing-2.6.6-Portable-x64.exe · 删掉文件即卸载干净</p>
-        </article>
-
-        <article class="dl reveal" style="--d:.12s">
-          <span class="dl__os"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.4"/><path d="M11 18.5h2"/></svg>Android · APK</span>
-          <h3>安卓安装包</h3>
-          <p>debug 签名，安装前在手机设置里允许「安装未知来源应用」即可。数据同样只存本机。</p>
-          <a class="btn btn--ghost" href="https://github.com/xxx1-sg/Viridiore/releases/download/v2.6.6-android/XiaoShanQing-2.6.6-android-debug.apk" rel="noopener">
-            下载 Android APK
-            <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16"/></svg>
-          </a>
-          <p class="dl__note">XiaoShanQing-2.6.6-android-debug.apk · 手机专用，电脑不能直接运行</p>
-        </article>
-
-        <article class="dl reveal" style="--d:.18s">
-          <span class="dl__os"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3.4 9h17.2M3.4 15h17.2M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z"/></svg>网页版 · 免下载</span>
-          <h3>打开即用</h3>
-          <p>不装任何东西，电脑和手机浏览器都能开。手机上「添加到主屏幕」，用起来和 App 一样，断网也能开。</p>
-          <a class="btn btn--ghost" href="https://xxx1-sg.github.io/Viridiore/app/" target="_blank" rel="noopener">
-            立即打开网页版
-            <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg>
-          </a>
-          <p class="dl__note">xxx1-sg.github.io/Viridiore/app/ · 数据存在你自己的浏览器里</p>
-        </article>
-      </div>
-
-      <p class="foot-note">安装包托管在 GitHub Release，支持断点续传。未做代码签名，首次运行 SmartScreen 可能拦一次，点「更多信息 → 仍要运行」即可。</p>
+      <div class="media full-media reveal"><img src="assets/desktop-home.png" alt="晓山青首页" loading="lazy" /></div>
     </div>
   </section>
 
-  <!-- 诚实 -->
-  <section class="honest">
-    <div class="wrap honest__grid">
+  <!-- 04 追光 -->
+  <section class="sec dark">
+    <div class="wrap split">
       <div class="reveal">
-        <p class="sec-label">已知局限</p>
-        <h2 class="sec-title">这些事它做不到</h2>
-        <p class="sec-sub" style="margin:0;text-align:left">一个预测工具最该做的，是交代边界。下面几条写在 README 里，也写在设置页里。</p>
+        <p class="kicker"><span>04</span>追光</p>
+        <h2>把七天的窗口<br>排给你看</h2>
+        <ul class="feature-list" style="margin-top:clamp(26px,4vw,40px)">
+          <li><b>01</b><span>云海 / 日出 / 星空三种模式，各自一套权重</span></li>
+          <li><b>02</b><span>最佳日期与精确到分钟的时刻窗口</span></li>
+          <li><b>03</b><span>该去哪个坡向、山顶温度、穿什么</span></li>
+          <li><b>04</b><span>点开每一天，能看到证据的加减</span></li>
+        </ul>
       </div>
-      <ul class="reveal">
-        <li><span class="honest__mark">01</span><div><b>逆温用模式层结，不是探空实测</b><p>925 / 850 hPa 温度取自数值模式同化场，山区实际层结会偏差几度：逆温有无判得住，精确到米判不住。</p></div></li>
-        <li><span class="honest__mark">02</span><div><b>回测样本还不够</b><p>预测台账每天记一份、用 ERA5 再分析对账；真实样本到位前，校准曲线只显示「样本积累中」。</p></div></li>
-        <li><span class="honest__mark">03</span><div><b>地形只到山峰级别</b><p>没有做坡向与山谷的精细建模，所以「哪个坡向」给的是经验建议，不是计算结论。</p></div></li>
-        <li><span class="honest__mark">04</span><div><b>不会替你求救</b><p>没有真实短信网关与卫星通道的求救按钮，比没有更危险——相关功能已下架。</p></div></li>
-      </ul>
+      <div class="media reveal" style="transition-delay:.1s"><img src="assets/desktop-chase.png" alt="追光页：七天窗口与概率环" loading="lazy" /></div>
     </div>
   </section>
 
-  <!-- 尾 -->
+  <!-- 05 轨迹 -->
+  <section class="sec">
+    <div class="wrap split split--media">
+      <div class="media reveal"><img src="assets/trail-basemap.jpg" alt="轨迹页：地图与底图切换菜单" loading="lazy" /></div>
+      <div class="reveal" style="transition-delay:.08s">
+        <p class="kicker"><span>05</span>轨迹</p>
+        <h2>山上没信号，<br>也照常记录</h2>
+        <ul class="feature-list" style="margin-top:clamp(26px,4vw,40px)">
+          <li><b>01</b><span>距离、爬升、配速全在本地算（Web Worker）</span></li>
+          <li><b>02</b><span>地图自绘，不依赖在线瓦片，断网也能记</span></li>
+          <li><b>03</b><span>底图在高德 / 卫星 / OSM / 无之间实时切换</span></li>
+          <li><b>04</b><span>可导出 GPX，轨迹只存在本机</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 光之卡片 -->
+  <section class="sec dark">
+    <div class="wrap">
+      <div class="cardtype">
+        <div class="reveal">
+          <p class="kicker"><span>06</span>光之卡片</p>
+          <h2>一次上山，<br>一张能发的图</h2>
+          <div style="margin-top:clamp(26px,4vw,40px)" class="cardtype__num">1080<small>× 1350</small></div>
+        </div>
+        <div class="reveal" style="transition-delay:.1s">
+          <p class="lead" style="margin-top:0">时间、坐标、海拔、当时的天气，加一句写实的叙事，渲染成一张竖版卡片。</p>
+          <p class="body" style="color:var(--night-muted)">不是打卡，是把一次上山留下来。出发前还能生成「预测卡」，回来看命中没有——让每一次预测都有据可查。</p>
+        </div>
+      </div>
+      <div class="cardtype__grid reveal">
+        <div><h3>真实</h3><p>只写发生的事：几点、多少度、云在哪个高度，不替你编故事。</p></div>
+        <div><h3>可复盘</h3><p>预测卡与当天实况对照，命中与否都留下记录。</p></div>
+        <div><h3>可分享</h3><p>适合发出去的比例与清晰度，不加水印，不导流。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 边界 -->
+  <section class="sec" id="honest">
+    <div class="wrap">
+      <p class="kicker reveal"><span>07</span>诚实</p>
+      <h2 class="reveal">一个预测工具，<br>最该做的是交代边界</h2>
+      <p class="lead reveal">下面几条写在 README 里，也写在设置页里。知道它什么时候不灵，比多一个漂亮数字重要。</p>
+      <div class="honest">
+        <div class="honest__item reveal"><h3><span>01</span>逆温用模式层结，不是探空实测</h3><p>925 / 850 hPa 温度取自数值模式同化场，山区实际层结会偏差几度：逆温有无判得住，精确到米判不住。</p></div>
+        <div class="honest__item reveal"><h3><span>02</span>回测样本还不够</h3><p>预测台账每天记一份、用 ERA5 再分析对账；真实样本到位前，校准曲线只显示「样本积累中」。</p></div>
+        <div class="honest__item reveal"><h3><span>03</span>地形只到山峰级别</h3><p>没有做坡向与山谷的精细建模，所以「哪个坡向」给的是经验建议，不是计算结论。</p></div>
+        <div class="honest__item reveal"><h3><span>04</span>不会替你求救</h3><p>没有真实短信网关与卫星通道的求救按钮，比没有更危险——相关功能已下架。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08 底座 -->
+  <section class="sec dark">
+    <div class="wrap">
+      <p class="kicker reveal"><span>08</span>底座</p>
+      <h2 class="reveal">四端同源，<br>离线可用</h2>
+      <p class="lead reveal">同一套代码，四个端。所有轨迹与偏好只存在本机，不上传云端，也不需要注册账号。</p>
+      <div class="platforms">
+        <div class="platform reveal"><svg viewBox="0 0 24 24"><path d="M3 5.6 10.4 4.6v6.6H3ZM11.6 4.4 21 3v8.2h-9.4ZM3 12.6h7.4v6.8L3 18.4ZM11.6 12.6H21V21l-9.4-1.3Z"/></svg><b>Windows</b><span>桌面端</span></div>
+        <div class="platform reveal"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.4"/><path d="M11 18.5h2"/></svg><b>Android</b><span>手机端</span></div>
+        <div class="platform reveal"><svg viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10 18.5h4"/></svg><b>iOS</b><span>同一套页面</span></div>
+        <div class="platform reveal"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3.4 9h17.2M3.4 15h17.2M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z"/></svg><b>PWA</b><span>浏览器即用</span></div>
+      </div>
+      <div class="techline reveal"><span>Open-Meteo 实时数据</span><span>本地 Web Worker 计算</span><span>IndexedDB 只存本机</span><span>断网可记录</span><span>无需注册</span></div>
+    </div>
+  </section>
+
+  <!-- 结尾 -->
   <section class="closing">
-    <div class="sun" aria-hidden="true"></div>
+    <div class="sun2" aria-hidden="true"></div>
     <div class="wrap">
-      <h2>下一次窗口，<br />它帮你盯着。</h2>
-      <p>今早云量 68%，白跑一趟——三天后有个更好的窗口，别急着放弃。</p>
-      <a class="btn btn--primary" href="#download">下载晓山青</a>
+      <h2 class="reveal">不问天气好不好<br><em class="dawn-text">只回答值不值得去</em></h2>
+      <p class="reveal">让每一次出发，都有依据。</p>
+      <div class="sign reveal">晓山青 · VIRIDIORE</div>
     </div>
   </section>
 
 </main>
 
 <footer>
-  <div class="wrap foot__row">
-    <span>晓山青 VIRIDIORE · v2.6.6</span>
-    <nav class="foot__links">
-      <a href="https://xxx1-sg.github.io/Viridiore/" rel="noopener">官网</a>
-      <a href="https://github.com/xxx1-sg/Viridiore" rel="noopener">GitHub</a>
-      <a href="https://xxx1-sg.github.io/Viridiore/app/" rel="noopener">网页版</a>
-    </nav>
+  <div class="wrap foot">
+    <span>晓山青 VIRIDIORE</span>
     <span>无痕山林 · 只带走照片，只留下脚印</span>
   </div>
 </footer>
 
 <script>
-  const nav = document.getElementById('nav');
-  const onScroll = () => nav.classList.toggle('is-solid', window.scrollY > 24);
+  const topbar = document.getElementById('topbar');
+  const progress = document.getElementById('progress');
+  const darkSections = [...document.querySelectorAll('.dark, .hero, .closing')];
+
+  function onScroll() {
+    const y = window.scrollY;
+    topbar.classList.toggle('solid', y > 40);
+    // 导航在深色区块上切成浅色字
+    const probe = y + 34;
+    let dark = false;
+    darkSections.forEach((s) => {
+      const r = s.getBoundingClientRect();
+      const top = r.top + y;
+      if (probe >= top && probe <= top + s.offsetHeight) dark = true;
+    });
+    topbar.classList.toggle('dark-mode', dark);
+    const max = document.documentElement.scrollHeight - innerHeight;
+    progress.style.width = (max > 0 ? Math.min(1, y / max) * 100 : 0) + '%';
+  }
   onScroll();
   addEventListener('scroll', onScroll, { passive: true });
 
   const io = new IntersectionObserver((entries) => {
     entries.forEach((e) => {
-      if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
     });
   }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
-  document.querySelectorAll('.reveal').forEach((el, i) => {
-    el.style.transitionDelay = (el.style.getPropertyValue('--d') || '0s');
-    io.observe(el);
-  });
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
 </script>
 </body>
 </html>
