@@ -219,7 +219,7 @@ export default {
 
       $('#chaseWindowDesc').textContent = `${MODES[mode].name} · 基准率 ${best.baseRate}% · ${
         wx.providerName || '实时预报'
-      }`;
+      } ${formatTime(wx.updatedAt)} 更新 · 本机校准 ${calib?.n || 0} 条`;
 
       /* 证据链 */
       const rows = ranked.all[0].index === 0 ? ranked.all[0].factors : best.factors;

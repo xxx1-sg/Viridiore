@@ -268,7 +268,7 @@ export default {
 
       $('#verdictFoot').textContent = `基准率 ${target.baseRate}% · 置信度 ${target.confidence.label} · ${
         wx.providerName || '实时预报'
-      } ${formatTime(wx.updatedAt)} 更新`;
+      } ${formatTime(wx.updatedAt)} 更新 · 本机校准 ${calib?.n || 0} 条`;
 
       /* 三个模式横排 */
       const otherModes = MODE_ORDER.map((key) => {

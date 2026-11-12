@@ -14,6 +14,8 @@ import { logit, clamp } from './atmos.js';
 const STORE = 'feedback';
 const SHRINK_K = 8;
 const MAX_OFFSET = 0.9;
+/** 样本达到该数量后才真正参与校准，避免一两条偶然反馈带偏概率 */
+const MIN_CALIBRATION_SAMPLES = 3;
 
 let cache = null;
 
@@ -47,7 +49,17 @@ export async function recordFeedback({ mountainId, mode, date, predicted, observ
 export async function calibrationFor(mountainId, mode) {
   const all = await ensure();
   const rows = all.filter((r) => r.mountainId === mountainId && r.mode === mode);
-  if (!rows.length) return { offset: 0, n: 0, hitRate: null, meanPredicted: null };
+  if (rows.length < MIN_CALIBRATION_SAMPLES) {
+    return {
+      offset: 0,
+      n: rows.length,
+      hitRate: null,
+      meanPredicted: null,
+      note: rows.length
+        ? `已收集 ${rows.length} 次反馈，满 ${MIN_CALIBRATION_SAMPLES} 次开始参与校准（当前不生效）`
+        : `还没有反馈样本，满 ${MIN_CALIBRATION_SAMPLES} 次开始参与校准`
+    };
+  }
 
   const hits = rows.reduce((s, r) => s + (r.observed ? 1 : 0), 0);
   const meanPred = rows.reduce((s, r) => s + r.predicted, 0) / rows.length / 100;
@@ -60,13 +72,9 @@ export async function calibrationFor(mountainId, mode) {
     n: rows.length,
     hitRate,
     meanPredicted: meanPred,
-    // 样本不足时不解释，避免误导
-    note:
-      rows.length < 3
-        ? `已收集 ${rows.length} 次反馈，满 3 次开始参与校准`
-        : `基于你的 ${rows.length} 次反馈：实测命中 ${Math.round(hitRate * 100)}%，模型平均预测 ${Math.round(
-            meanPred * 100
-          )}%`
+    note: `基于你的 ${rows.length} 次反馈：实测命中 ${Math.round(hitRate * 100)}%，模型平均预测 ${Math.round(
+      meanPred * 100
+    )}%（已生效）`
   };
 }
 
