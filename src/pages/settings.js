@@ -136,6 +136,33 @@ export default {
 
       <section class="section">
         <div class="settings-group">
+          <div class="settings-group__title">轨迹地图</div>
+          <div class="setting-row" style="border-bottom:none;flex-direction:column;align-items:stretch;gap:10px">
+            <div class="setting-row__main">
+              <div class="setting-row__title">底图来源</div>
+              <div class="setting-row__desc">高德加载快、中文标注；断网时自动回退为地形背景。切换后回到「轨迹」页生效。</div>
+            </div>
+            <div class="segmented" id="mapSeg" style="align-self:flex-start">
+              ${[
+                ['amap', '高德'],
+                ['satellite', '卫星'],
+                ['osm', 'OSM'],
+                ['none', '无']
+              ]
+                .map(
+                  ([v, label]) =>
+                    `<button type="button" data-map-set="${v}" class="${
+                      config.get('map.provider', 'amap') === v ? 'is-active' : ''
+                    }">${label}</button>`
+                )
+                .join('')}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="settings-group">
           <div class="settings-group__title">数据</div>
           <button class="list-row" type="button" data-action="export-data">
             <span class="list-row__icon">${icon('download', 18)}</span>
@@ -207,6 +234,15 @@ export default {
         themeManager.set(themeBtn.dataset.themeSet);
         el.querySelectorAll('[data-theme-set]').forEach((b) => b.classList.toggle('is-active', b === themeBtn));
         $('#themeDesc').textContent = themeManager.label();
+        return;
+      }
+
+      const mapBtn = e.target.closest('[data-map-set]');
+      if (mapBtn) {
+        config.set({ map: { provider: mapBtn.dataset.mapSet } });
+        el.querySelectorAll('[data-map-set]').forEach((b) => b.classList.toggle('is-active', b === mapBtn));
+        bus.emit('config:change', config.all);
+        toastOk(`底图已切换为「${mapBtn.textContent.trim()}」，回到轨迹页查看`);
         return;
       }
 

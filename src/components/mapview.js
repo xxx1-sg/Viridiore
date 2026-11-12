@@ -1,11 +1,48 @@
 /**
  * 轻量 Canvas 地图
- * 不依赖任何地图服务：离线可用、性能可控，支持平移 / 缩放 / 标记 / 轨迹绘制。
- * 需要真实底图时由 map-factory 切换到高德适配器。
+ * - 支持在线栅格底图（高德 / 卫星 / OpenStreetMap，可切换），断网时自动回退为地形底色
+ * - 高德底图为 GCJ-02 坐标，内部自动把 GPS(WGS-84) 点转换到瓦片坐标系，保证定位不偏移
+ * - 保留平移 / 缩放 / 标记 / 轨迹绘制，无第三方地图库依赖
  */
+import { wgs84ToGcj02, gcj02ToWgs84 } from '../services/geo.js';
 
 const TILE = 256;
 const WORLD = TILE; // 世界像素 = 256 * 2^zoom
+const TILE_CACHE_MAX = 280;
+
+/** 内置底图提供方。key 对应设置页里保存的 map.provider */
+export const TILE_PROVIDERS = {
+  amap: {
+    label: '高德地图',
+    url: 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
+    subdomains: ['1', '2', '3', '4'],
+    crs: 'gcj02',
+    attribution: '© 高德地图',
+    maxZoom: 18
+  },
+  satellite: {
+    label: '卫星影像',
+    url: 'https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
+    subdomains: ['1', '2', '3', '4'],
+    crs: 'gcj02',
+    attribution: '© 高德地图',
+    maxZoom: 18
+  },
+  osm: {
+    label: 'OpenStreetMap',
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    subdomains: [],
+    crs: 'wgs84',
+    attribution: '© OpenStreetMap',
+    maxZoom: 19
+  }
+};
+
+/** 把设置里的 provider 名字解析为提供方对象；'none' 返回 null（纯地形背景） */
+export function resolveTileProvider(name) {
+  if (!name || name === 'none') return null;
+  return TILE_PROVIDERS[name] || TILE_PROVIDERS.amap;
+}
 
 function toWorld(lat, lon, zoom) {
   const scale = WORLD * Math.pow(2, zoom);
@@ -34,10 +71,12 @@ export class CanvasMap {
     this.ctx = canvas.getContext('2d');
     this.options = {
       minZoom: 8,
-      maxZoom: 17,
-      padding: 36,
+      maxZoom: 18,
+      padding: 40,
+      tile: null, // { url, subdomains, crs, attribution, maxZoom }
       onMarkerClick: null,
       onViewChange: null,
+      onTileError: null,
       ...options
     };
     this.view = { lat: 22.55, lon: 114.06, zoom: 12 };
@@ -50,6 +89,11 @@ export class CanvasMap {
     this.pinchStart = null;
     this.raf = null;
     this.destroyed = false;
+
+    this.tileCache = new Map();
+    this._tilesOk = 0;
+    this._tilesFailed = 0;
+    this._tileErrorNotified = false;
 
     this._bind();
     this.resizeObserver = new ResizeObserver(() => this.resize());
@@ -74,6 +118,35 @@ export class CanvasMap {
     this.render();
   }
 
+  /* ---------------- 底图 ---------------- */
+  setTileProvider(provider) {
+    this.options.tile = provider || null;
+    if (provider?.maxZoom) this.options.maxZoom = provider.maxZoom;
+    this.tileCache.clear();
+    this._tilesOk = 0;
+    this._tilesFailed = 0;
+    this._tileErrorNotified = false;
+    this.render();
+  }
+
+  /* ---------------- 坐标系辅助 ---------------- */
+  _toCrs(lat, lon) {
+    const t = this.options.tile;
+    if (t && t.crs === 'gcj02') return wgs84ToGcj02(lat, lon);
+    return { lat, lon };
+  }
+
+  _fromCrs(lat, lon) {
+    const t = this.options.tile;
+    if (t && t.crs === 'gcj02') return gcj02ToWgs84(lat, lon);
+    return { lat, lon };
+  }
+
+  _centerWorld(zoom) {
+    const c = this._toCrs(this.view.lat, this.view.lon);
+    return toWorld(c.lat, c.lon, zoom);
+  }
+
   /* ---------------- 数据 ---------------- */
   setView(view) {
     this.view = { ...this.view, ...view };
@@ -96,12 +169,12 @@ export class CanvasMap {
     this.render();
   }
 
-  fitBounds(points, padding = 40) {
+  fitBounds(points, padding = this.options.padding, zoomCap = this.options.maxZoom) {
     const pts = (points || []).filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lon));
     if (!pts.length) return;
 
     if (pts.length === 1) {
-      this.setView({ lat: pts[0].lat, lon: pts[0].lon, zoom: 14 });
+      this.setView({ lat: pts[0].lat, lon: pts[0].lon, zoom: Math.min(15, zoomCap) });
       return;
     }
 
@@ -117,13 +190,16 @@ export class CanvasMap {
     });
 
     const center = { lat: (minLat + maxLat) / 2, lon: (minLon + maxLon) / 2 };
+    const aCrs = this._toCrs(maxLat, minLon);
+    const bCrs = this._toCrs(minLat, maxLon);
+
     let zoom = this.view.zoom;
     const w = Math.max(40, this.width - padding * 2);
     const h = Math.max(40, this.height - padding * 2);
 
-    for (let z = this.options.maxZoom; z >= this.options.minZoom; z--) {
-      const a = toWorld(maxLat, minLon, z);
-      const b = toWorld(minLat, maxLon, z);
+    for (let z = Math.min(this.options.maxZoom, zoomCap); z >= this.options.minZoom; z--) {
+      const a = toWorld(aCrs.lat, aCrs.lon, z);
+      const b = toWorld(bCrs.lat, bCrs.lon, z);
       if (Math.abs(b.x - a.x) <= w && Math.abs(b.y - a.y) <= h) {
         zoom = z;
         break;
@@ -133,6 +209,10 @@ export class CanvasMap {
 
     this.view = { ...center, zoom };
     this.render();
+  }
+
+  centerOn(lat, lon, zoom = 16) {
+    this.setView({ lat, lon, zoom });
   }
 
   zoomBy(delta) {
@@ -145,8 +225,9 @@ export class CanvasMap {
 
   /* ---------------- 投影 ---------------- */
   project(lat, lon) {
-    const c = toWorld(this.view.lat, this.view.lon, this.view.zoom);
-    const p = toWorld(lat, lon, this.view.zoom);
+    const c = this._centerWorld(this.view.zoom);
+    const q = this._toCrs(lat, lon);
+    const p = toWorld(q.lat, q.lon, this.view.zoom);
     return {
       x: p.x - c.x + this.width / 2,
       y: p.y - c.y + this.height / 2
@@ -154,8 +235,9 @@ export class CanvasMap {
   }
 
   unproject(x, y) {
-    const c = toWorld(this.view.lat, this.view.lon, this.view.zoom);
-    return fromWorld(c.x + x - this.width / 2, c.y + y - this.height / 2, this.view.zoom);
+    const c = this._centerWorld(this.view.zoom);
+    const w = fromWorld(c.x + x - this.width / 2, c.y + y - this.height / 2, this.view.zoom);
+    return this._fromCrs(w.lat, w.lon);
   }
 
   /* ---------------- 交互 ---------------- */
@@ -201,8 +283,9 @@ export class CanvasMap {
       this.moved += Math.abs(dx) + Math.abs(dy);
       this.lastPointer = { x: e.offsetX, y: e.offsetY };
 
-      const c = toWorld(this.view.lat, this.view.lon, this.view.zoom);
-      const next = fromWorld(c.x - dx, c.y - dy, this.view.zoom);
+      const c = this._centerWorld(this.view.zoom);
+      const nextCrs = fromWorld(c.x - dx, c.y - dy, this.view.zoom);
+      const next = this._fromCrs(nextCrs.lat, nextCrs.lon);
       this.view.lat = Math.max(-84, Math.min(84, next.lat));
       this.view.lon = next.lon;
       this.scheduleRender();
@@ -280,10 +363,11 @@ export class CanvasMap {
     if (this.destroyed || !this.width) return;
     const { ctx, width: w, height: h } = this;
     const c = this.colors();
+    const hasTiles = !!this.options.tile;
 
     ctx.clearRect(0, 0, w, h);
 
-    // 地形底色
+    // 地形底色（瓦片未加载 / 断网时的兜底）
     const bg = ctx.createLinearGradient(0, 0, w, h);
     bg.addColorStop(0, '#0d1d15');
     bg.addColorStop(0.55, '#12291d');
@@ -291,43 +375,47 @@ export class CanvasMap {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, w, h);
 
-    // 地形斑块
-    ctx.save();
-    ctx.globalAlpha = 0.5;
-    const blobs = [
-      { x: w * 0.24, y: h * 0.32, r: h * 0.42, color: 'rgba(63,107,76,0.28)' },
-      { x: w * 0.74, y: h * 0.62, r: h * 0.5, color: 'rgba(43,84,60,0.3)' },
-      { x: w * 0.55, y: h * 0.15, r: h * 0.3, color: 'rgba(90,120,80,0.16)' }
-    ];
-    blobs.forEach((b) => {
-      const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
-      g.addColorStop(0, b.color);
-      g.addColorStop(1, 'transparent');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-      ctx.fill();
-    });
-    ctx.restore();
+    if (!hasTiles) {
+      // 无底图：保留地形斑块与网格
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      const blobs = [
+        { x: w * 0.24, y: h * 0.32, r: h * 0.42, color: 'rgba(63,107,76,0.28)' },
+        { x: w * 0.74, y: h * 0.62, r: h * 0.5, color: 'rgba(43,84,60,0.3)' },
+        { x: w * 0.55, y: h * 0.15, r: h * 0.3, color: 'rgba(90,120,80,0.16)' }
+      ];
+      blobs.forEach((b) => {
+        const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+        g.addColorStop(0, b.color);
+        g.addColorStop(1, 'transparent');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
 
-    // 网格
-    const gridSize = 64;
-    const origin = this.project(this.view.lat, this.view.lon);
-    ctx.strokeStyle = 'rgba(255,255,255,0.045)';
-    ctx.lineWidth = 1;
-    const offX = ((origin.x % gridSize) + gridSize) % gridSize;
-    const offY = ((origin.y % gridSize) + gridSize) % gridSize;
-    for (let x = offX; x < w; x += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(Math.round(x) + 0.5, 0);
-      ctx.lineTo(Math.round(x) + 0.5, h);
-      ctx.stroke();
-    }
-    for (let y = offY; y < h; y += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(0, Math.round(y) + 0.5);
-      ctx.lineTo(w, Math.round(y) + 0.5);
-      ctx.stroke();
+      // 网格
+      const gridSize = 64;
+      const origin = this.project(this.view.lat, this.view.lon);
+      ctx.strokeStyle = 'rgba(255,255,255,0.045)';
+      ctx.lineWidth = 1;
+      const offX = ((origin.x % gridSize) + gridSize) % gridSize;
+      const offY = ((origin.y % gridSize) + gridSize) % gridSize;
+      for (let x = offX; x < w; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(Math.round(x) + 0.5, 0);
+        ctx.lineTo(Math.round(x) + 0.5, h);
+        ctx.stroke();
+      }
+      for (let y = offY; y < h; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, Math.round(y) + 0.5);
+        ctx.lineTo(w, Math.round(y) + 0.5);
+        ctx.stroke();
+      }
+    } else {
+      this._drawTiles(ctx);
     }
 
     // 轨迹
@@ -348,9 +436,10 @@ export class CanvasMap {
         ctx.stroke();
         ctx.restore();
       };
-      drawPath(9, 'rgba(229,164,87,0.16)', 0);
+      drawPath(11, 'rgba(0,0,0,0.22)', 0);
+      drawPath(7, 'rgba(229,164,87,0.32)', 0);
       drawPath(4, c.dawn, 8);
-      drawPath(1.4, 'rgba(255,240,215,0.85)', 0);
+      drawPath(1.4, 'rgba(255,240,215,0.9)', 0);
 
       // 起终点
       const s = pts[0];
@@ -370,12 +459,120 @@ export class CanvasMap {
     // 比例尺
     this._scaleBar(c);
 
-    // 暗角
-    const vignette = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.32, w / 2, h / 2, Math.max(w, h) * 0.78);
-    vignette.addColorStop(0, 'transparent');
-    vignette.addColorStop(1, 'rgba(3,10,6,0.5)');
-    ctx.fillStyle = vignette;
+    // 底图版权
+    if (hasTiles) this._attribution(c);
+
+    // 暗角（有底图时更轻）
+    const vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.36, w / 2, h / 2, Math.max(w, h) * 0.8);
+    vg.addColorStop(0, 'transparent');
+    vg.addColorStop(1, hasTiles ? 'rgba(3,10,6,0.26)' : 'rgba(3,10,6,0.5)');
+    ctx.fillStyle = vg;
     ctx.fillRect(0, 0, w, h);
+  }
+
+  /* ---------------- 瓦片底图 ---------------- */
+  _tileUrl(provider, z, x, y) {
+    let url = provider.url.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+    if (url.includes('{s}')) {
+      const subs = provider.subdomains && provider.subdomains.length ? provider.subdomains : ['a', 'b', 'c'];
+      url = url.replace('{s}', subs[(x + y) % subs.length]);
+    }
+    return url;
+  }
+
+  _getTile(provider, z, x, y) {
+    const key = `${z}/${x}/${y}`;
+    let tile = this.tileCache.get(key);
+    if (tile) return tile;
+
+    tile = { status: 'loading', img: null };
+    const img = new Image();
+    img.decoding = 'async';
+    img.onload = () => {
+      tile.status = 'loaded';
+      tile.img = img;
+      this._tilesOk++;
+      this.scheduleRender();
+    };
+    img.onerror = () => {
+      tile.status = 'error';
+      this._tilesFailed++;
+      if (!this._tileErrorNotified && this._tilesFailed >= 4 && this._tilesOk === 0) {
+        this._tileErrorNotified = true;
+        this.options.onTileError?.();
+      }
+    };
+    img.src = this._tileUrl(provider, z, x, y);
+    this.tileCache.set(key, tile);
+
+    // 简单的 LRU 上限，避免长时间使用占内存
+    while (this.tileCache.size > TILE_CACHE_MAX) {
+      const oldest = this.tileCache.keys().next().value;
+      this.tileCache.delete(oldest);
+    }
+    return tile;
+  }
+
+  _drawTiles(ctx) {
+    const provider = this.options.tile;
+    if (!provider) return;
+    const maxZ = provider.maxZoom || this.options.maxZoom;
+    const z = Math.max(0, Math.min(maxZ, Math.round(this.view.zoom)));
+    const scale = Math.pow(2, this.view.zoom - z); // 分数缩放：让瓦片与连续缩放对齐
+    const size = TILE * scale;
+
+    const center = this._centerWorld(z);
+    const originX = center.x - this.width / 2 / scale;
+    const originY = center.y - this.height / 2 / scale;
+
+    const startX = Math.floor(originX / TILE);
+    const endX = Math.floor((originX + this.width / scale) / TILE);
+    const startY = Math.floor(originY / TILE);
+    const endY = Math.floor((originY + this.height / scale) / TILE);
+    const n = Math.pow(2, z);
+
+    for (let ty = startY; ty <= endY; ty++) {
+      if (ty < 0 || ty >= n) continue;
+      for (let tx0 = startX; tx0 <= endX; tx0++) {
+        const tx = ((tx0 % n) + n) % n;
+        const screenX = (tx0 * TILE - originX) * scale;
+        const screenY = (ty * TILE - originY) * scale;
+        const tile = this._getTile(provider, z, tx, ty);
+        if (tile.status === 'loaded' && tile.img) {
+          ctx.drawImage(tile.img, screenX, screenY, size + 0.6, size + 0.6);
+        }
+      }
+    }
+  }
+
+  _attribution() {
+    const { ctx } = this;
+    const provider = this.options.tile;
+    const text = provider?.attribution || '';
+    if (!text) return;
+    ctx.save();
+    ctx.font = '9.5px -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif';
+    const tw = ctx.measureText(text).width;
+    const padX = 6;
+    const bw = tw + padX * 2;
+    const bh = 16;
+    const x = 8;
+    const y = 8;
+    ctx.fillStyle = 'rgba(8,18,12,0.5)';
+    ctx.beginPath();
+    const r = 4;
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + bw, y, x + bw, y + bh, r);
+    ctx.arcTo(x + bw, y + bh, x, y + bh, r);
+    ctx.arcTo(x, y + bh, x, y, r);
+    ctx.arcTo(x, y, x + bw, y, r);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = 'rgba(230,240,232,0.78)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, x + padX, y + bh / 2 + 0.5);
+    ctx.restore();
   }
 
   _dot(x, y, r, color) {
@@ -397,6 +594,8 @@ export class CanvasMap {
     const { ctx } = this;
     const selected = m.id === this.selectedId;
     const color = m.color || '#e5a457';
+    const isPoi = m.kind === 'poi';
+    const baseR = isPoi ? 3.4 : 6.5;
 
     if (m.kind === 'self') {
       const pulse = (performance.now() % 2000) / 2000;
@@ -404,19 +603,28 @@ export class CanvasMap {
       ctx.arc(p.x, p.y, 10 + pulse * 20, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(127,211,154,${0.24 * (1 - pulse)})`;
       ctx.fill();
+      // 外圈白边，便于在任何底图上辨认
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 9, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 6.5, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, selected ? baseR + 1.5 : baseR, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.lineWidth = isPoi ? 1.2 : 2;
+      ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+      ctx.stroke();
     }
 
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, selected ? 8 : 6.5, 0, Math.PI * 2);
-    ctx.fillStyle = color;
-    ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = 'rgba(255,255,255,0.92)';
-    ctx.stroke();
-
-    if (selected) {
+    if (selected && !isPoi) {
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 15, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, baseR + 9, 0, Math.PI * 2);
       ctx.strokeStyle = 'rgba(255,255,255,0.5)';
       ctx.lineWidth = 1.2;
       ctx.stroke();
@@ -424,8 +632,9 @@ export class CanvasMap {
 
     const showLabel =
       m.label &&
-      (selected || this.markers.length <= 3 || this.view.zoom >= 13.2) &&
-      this._labelRects.length < 6;
+      !isPoi &&
+      (selected || m.kind === 'peak' || m.kind === 'self' || this.markers.length <= 4 || this.view.zoom >= 13.2) &&
+      this._labelRects.length < 8;
 
     if (showLabel) {
       const fontSize = 10.5;
@@ -434,7 +643,7 @@ export class CanvasMap {
       const bw = textWidth + 12;
       const bh = 18;
       const bx = p.x - bw / 2;
-      const by = p.y - 10 - bh;
+      const by = p.y - 11 - bh;
 
       // 与已绘制标签碰撞时跳过
       const collides = this._labelRects.some(
@@ -450,7 +659,7 @@ export class CanvasMap {
       ctx.arcTo(bx, by + bh, bx, by, r);
       ctx.arcTo(bx, by, bx + bw, by, r);
       ctx.closePath();
-      ctx.fillStyle = selected ? 'rgba(229,164,87,0.94)' : 'rgba(9,22,15,0.8)';
+      ctx.fillStyle = selected ? 'rgba(229,164,87,0.95)' : 'rgba(9,22,15,0.82)';
       ctx.fill();
       ctx.fillStyle = selected ? '#2c1d0c' : '#e8f2ea';
       ctx.textAlign = 'center';
@@ -470,8 +679,8 @@ export class CanvasMap {
     const px = nice / mpp;
 
     const x = 14;
-    const y = h - 18;
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    const y = h - 52;
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(x, y - 5);
@@ -481,7 +690,7 @@ export class CanvasMap {
     ctx.stroke();
 
     ctx.font = '10px -apple-system, "PingFang SC", sans-serif';
-    ctx.fillStyle = 'rgba(230,240,232,0.72)';
+    ctx.fillStyle = 'rgba(230,240,232,0.78)';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'bottom';
     ctx.fillText(nice >= 1000 ? `${nice / 1000} km` : `${nice} m`, x + 2, y - 6);
@@ -498,5 +707,6 @@ export class CanvasMap {
     el.removeEventListener('pointercancel', this._onPointerUp);
     el.removeEventListener('pointerleave', this._onPointerUp);
     el.removeEventListener('wheel', this._onWheel);
+    this.tileCache.clear();
   }
 }

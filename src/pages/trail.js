@@ -1,8 +1,10 @@
 /** 轨迹页 */
 import { icon } from '../core/icons.js';
-import { CanvasMap } from '../components/mapview.js';
+import { CanvasMap, resolveTileProvider } from '../components/mapview.js';
 import { TrailTracker } from '../services/tracker.js';
+import { watchPosition, getPosition } from '../services/geo.js';
 import { trailRepo, bus } from '../core/store.js';
+import { config } from '../config.js';
 import { formatDate, formatTime, formatDistance, formatDuration, humanDuration, relTime } from '../core/format.js';
 import { download, toGPX } from '../services/exporter.js';
 import { buildNarrative, compareWithPrevious } from '../services/narrative.js';
@@ -11,7 +13,7 @@ import { renderCard, downloadCard, shareCard } from '../services/sharecard.js';
 import { confirmDialog, formDialog, openModal } from '../core/modal.js';
 import { toastOk, toastError, toastWarn } from '../core/toast.js';
 import { escapeHtml } from '../core/dom.js';
-import { appState, currentMountain } from '../state.js';
+import { appState, currentMountain, setMyPosition, MOUNTAINS } from '../state.js';
 
 let tracker = null;
 
@@ -57,14 +59,15 @@ export default {
       <div class="trail-map" id="trailMapWrap">
         <canvas id="trailCanvas"></canvas>
         <div class="team-map__tools">
+          <button class="map-tool" type="button" data-action="locate" title="定位到我">${icon('crosshair', 16)}</button>
           <button class="map-tool" type="button" data-action="zoom-in" title="放大">${icon('zoomIn', 16)}</button>
           <button class="map-tool" type="button" data-action="zoom-out" title="缩小">${icon('zoomOut', 16)}</button>
           <button class="map-tool" type="button" data-action="fit" title="适配范围">${icon('expand', 16)}</button>
         </div>
         <div class="map-empty" id="trailEmpty">
           <div class="map-empty__card">
-            ${icon('map', 26)}
-            <div>还没有轨迹数据<br />点下方「开始记录」，或先载入示例</div>
+            ${icon('crosshair', 26)}
+            <div>正在获取定位…<br />点「开始记录」开始采集轨迹</div>
           </div>
         </div>
         <div class="trail-map__overlay">
@@ -112,9 +115,14 @@ export default {
   async mount(el, ctx) {
     const $ = (s) => el.querySelector(s);
     const canvas = $('#trailCanvas');
-    const map = new CanvasMap(canvas, { onViewChange: () => {} });
-    map.setView({ lat: currentMountain().lat, lon: currentMountain().lon, zoom: 14 });
-    map.setMarkers([]);
+    const map = new CanvasMap(canvas, {
+      tile: resolveTileProvider(config.get('map.provider', 'amap')),
+      onMarkerClick: (m) => {
+        if (m.kind === 'peak') toastOk(`任务山峰：${m.label}`);
+      },
+      onTileError: () => toastWarn('底图加载失败，已切换为离线地形背景')
+    });
+    map.setView({ lat: currentMountain().lat, lon: currentMountain().lon, zoom: 13 });
 
     const profileCanvas = $('#trailProfile');
     let currentPoints = [];
@@ -122,6 +130,73 @@ export default {
     let savedTrails = [];
     let currentStats = null;
     let activeTrail = null;
+    let myPos = null;
+    let myPosErr = null;
+    let firstFix = false;
+    let presenceBound = false;
+    let stopPresence = null;
+
+    /* ---------- 标记：任务山峰 + 我的位置 + 邻近山峰 ---------- */
+    const refreshMarkers = () => {
+      const m = currentMountain();
+      const markers = [];
+      // 其余山峰作为小点，帮助判断方位
+      MOUNTAINS.forEach((p) => {
+        if (p.id === m.id) return;
+        markers.push({ id: `poi-${p.id}`, lat: p.lat, lon: p.lon, kind: 'poi', color: '#a7cdb4' });
+      });
+      // 任务所在的山峰
+      markers.push({ id: 'peak', lat: m.lat, lon: m.lon, label: m.name, color: '#e5a457', kind: 'peak' });
+      // 我当前的位置（实时定位优先，其次取最后轨迹点）
+      const here = myPos || (currentPoints.length ? currentPoints[currentPoints.length - 1] : null);
+      if (here && Number.isFinite(here.lat) && Number.isFinite(here.lon)) {
+        markers.push({ id: 'self', lat: here.lat, lon: here.lon, label: '我', color: '#7fd39a', kind: 'self' });
+      }
+      map.setMarkers(markers);
+    };
+
+    /* ---------- 实时定位（独立于记录器，进入页面即显示「我在哪」） ---------- */
+    const bindPresence = () => {
+      if (presenceBound) return;
+      presenceBound = true;
+      stopPresence = watchPosition(
+        (pos) => {
+          myPos = pos;
+          myPosErr = null;
+          setMyPosition(pos);
+          refreshMarkers();
+          $('#trailEmpty')?.classList.add('hidden');
+          if (!firstFix) {
+            firstFix = true;
+            // 首次定位：把我与任务山峰一起框进视野（记录中不打断当前视野）
+            if (!tracker || !tracker.isRunning) {
+              const m = currentMountain();
+              map.fitBounds(
+                [
+                  { lat: pos.lat, lon: pos.lon },
+                  { lat: m.lat, lon: m.lon }
+                ],
+                54,
+                15
+              );
+            }
+          }
+        },
+        (err) => {
+          myPosErr = err;
+          if (!firstFix) {
+            const card = $('#trailEmpty .map-empty__card');
+            if (card) {
+              card.innerHTML = `${icon('crosshair', 26)}<div>未获取到定位：${escapeHtml(
+                err.message || '定位失败'
+              )}<br />请检查系统定位权限后重试</div>`;
+            }
+          }
+        },
+        { maximumAge: 3000, timeout: 20000 }
+      );
+    };
+    bindPresence();
 
     /* ---------- 绘制 ---------- */
     const drawProfile = () => {
@@ -211,13 +286,8 @@ export default {
       profile = stats.profile || [];
       const path = stats.simplified || points;
       map.setPath(path);
-      // 空状态下不显示山峰标注，避免与空状态卡片叠在一起
-      map.setMarkers(
-        path.length > 1
-          ? [{ id: 'peak', lat: currentMountain().lat, lon: currentMountain().lon, label: currentMountain().name, color: '#8dbf9e', kind: 'peak' }]
-          : []
-      );
-      $('#trailEmpty')?.classList.toggle('hidden', path.length > 1);
+      refreshMarkers();
+      $('#trailEmpty')?.classList.toggle('hidden', path.length > 1 || !!myPos);
       renderStats(stats);
       drawProfile();
     };
@@ -261,8 +331,14 @@ export default {
         profile = [];
         drawProfile();
         await tracker.start();
+        $('#trailEmpty')?.classList.add('hidden');
         toastOk('开始记录，请保持应用在前台以获得更准的轨迹');
-        map.fitBounds([{ lat: currentMountain().lat, lon: currentMountain().lon }]);
+        // 把我与任务山峰一起框进视野，便于看清起点与目标
+        const m = currentMountain();
+        const frame = [{ lat: m.lat, lon: m.lon }];
+        if (myPos) frame.push({ lat: myPos.lat, lon: myPos.lon });
+        map.fitBounds(frame, 54, 15);
+        refreshMarkers();
       } catch (err) {
         toastError(err.message);
       }
@@ -445,6 +521,28 @@ export default {
       if (target.id === 'recordBtn') return;
 
       const action = target.dataset.action;
+      if (action === 'locate') {
+        if (myPos) {
+          map.centerOn(myPos.lat, myPos.lon, 16);
+          toastOk('已定位到我的位置');
+        } else {
+          target.classList.add('is-busy');
+          try {
+            const pos = await getPosition();
+            myPos = pos;
+            myPosErr = null;
+            setMyPosition(pos);
+            refreshMarkers();
+            $('#trailEmpty')?.classList.add('hidden');
+            map.centerOn(pos.lat, pos.lon, 16);
+            toastOk('已定位到我的位置');
+          } catch (err) {
+            toastError(myPosErr?.message || err.message || '定位失败，请检查定位权限');
+          } finally {
+            target.classList.remove('is-busy');
+          }
+        }
+      }
       if (action === 'zoom-in') map.zoomBy(1);
       if (action === 'zoom-out') map.zoomBy(-1);
       if (action === 'fit') map.fitBounds(currentPoints.length ? currentPoints : [{ lat: currentMountain().lat, lon: currentMountain().lon }]);
@@ -489,6 +587,8 @@ export default {
         profile = fake.profile || [];
         map.setPath(fake.simplified || points);
         map.fitBounds(points);
+        refreshMarkers();
+        $('#trailEmpty')?.classList.add('hidden');
         renderStats(fake);
         drawProfile();
         $('#trailState').innerHTML = '<span class="dot"></span>示例轨迹';
@@ -505,6 +605,7 @@ export default {
         profile = trail.stats?.profile || [];
         map.setPath(trail.stats?.simplified || trail.points || []);
         map.fitBounds(trail.points || []);
+        refreshMarkers();
         renderStats(trail.stats);
         drawProfile();
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -555,23 +656,25 @@ export default {
     const off = bus.on('trail:change', loadHistory);
     await loadHistory();
 
-    // 默认展示最近一条
+    // 默认展示最近一条轨迹（保留视野，定位到达后再框住「我 + 山」）
     if (savedTrails.length) {
       const t = savedTrails[0];
       activeTrail = t;
       currentPoints = t.points || [];
       profile = t.stats?.profile || [];
       map.setPath(t.stats?.simplified || t.points || []);
-      map.fitBounds(t.points || []);
       renderStats(t.stats);
       drawProfile();
       $('#trailState').innerHTML = `<span class="dot"></span>${t.name}`;
+      $('#trailEmpty')?.classList.add('hidden');
     }
+    refreshMarkers();
     drawProfile();
 
     return () => {
       off();
       profileObserver.disconnect();
+      stopPresence?.();
       map.destroy();
       // tracker 保持运行（后台记录），只解绑 UI
     };
