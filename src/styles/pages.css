@@ -2127,3 +2127,129 @@
   .mini-modes { margin-left: var(--sp-1); margin-right: var(--sp-1); }
   .verdict__num { font-size: 54px; }
 }
+
+/* ============================================================
+   追光 · 出行方案
+   ============================================================ */
+.travel__origin {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  margin-bottom: 2px;
+  border-bottom: 1px dashed var(--line);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.travel__origin span { display: inline-flex; align-items: center; gap: 6px; }
+.travel__origin svg { color: var(--moss-500); }
+
+.travel__timeline {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  margin: 16px 0 20px 5px;
+  padding-left: 16px;
+  border-left: 2px solid var(--line);
+}
+.travel-step { position: relative; display: flex; align-items: baseline; gap: 10px; }
+.travel-step__dot {
+  position: absolute;
+  left: -23px;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--moss-500);
+  box-shadow: 0 0 0 3px var(--surface);
+}
+.travel-step.is-dawn .travel-step__dot { background: var(--dawn-400); }
+.travel-step__time {
+  flex: none;
+  width: 52px;
+  font-size: 14px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.travel-step__body { display: grid; gap: 1px; min-width: 0; }
+.travel-step__body b { font-size: 13px; font-weight: 600; }
+.travel-step__body em { font-style: normal; font-size: 11.5px; line-height: 1.5; color: var(--ink-3); }
+
+.travel__modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.travel-mode {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.travel-mode.is-recommended { border-color: var(--moss-300); background: var(--ok-soft); }
+:root[data-theme='dark'] .travel-mode.is-recommended {
+  background: rgba(120, 184, 146, 0.12);
+  border-color: rgba(120, 184, 146, 0.32);
+}
+.travel-mode__icon {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--moss-500);
+}
+.travel-mode__main { min-width: 0; display: grid; gap: 3px; }
+.travel-mode__head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.travel-mode__head b { font-size: 13px; font-weight: 600; }
+.travel-mode__head .badge { height: 20px; padding: 0 8px; font-size: 10.5px; }
+.travel-mode__meta { font-size: 12px; font-weight: 550; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.travel-mode__detail { font-size: 11px; line-height: 1.5; color: var(--ink-3); }
+
+.travel-sub { margin-top: 16px; }
+.travel-sub__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.travel-sub__title svg { color: var(--moss-500); }
+.travel-sub__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.travel-sub__chips .chip { height: 30px; font-size: 12px; }
+
+.travel-advice { margin-top: 12px; display: grid; gap: 4px; }
+.travel-warns { display: grid; gap: 6px; margin-bottom: 10px; }
+.travel-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 9px 11px;
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.travel-warn.is-warn { background: var(--warn-soft); color: var(--warn); }
+.travel-warn.is-info { background: var(--info-soft); color: var(--info); }
+.travel-warn svg { flex: none; margin-top: 1px; }
+.travel-list {
+  margin: 0;
+  padding-left: 16px;
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.travel-list li::marker { color: var(--moss-400); }
+
+/* 小屏：出行方式由三列改为单列堆叠 */
+@media (max-width: 899px) {
+  .travel__modes { grid-template-columns: 1fr; }
+  .travel-step__time { width: 48px; }
+}
+

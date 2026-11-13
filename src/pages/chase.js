@@ -1,12 +1,14 @@
 /** 追光页：七天窗口的概率、证据与可保存的预测卡 */
 import { icon, weatherIcon } from '../core/icons.js';
-import { appState, currentMountain, setMountain } from '../state.js';
+import { appState, currentMountain, setMountain, setMyPosition } from '../state.js';
 import { loadWeather } from '../services/weather.js';
 import { rankDays, advice, compensation, MODES, summitTemp, relativeDay, isWindowPast } from '../services/chase.js';
 import { calibrationFor, recordFeedback } from '../services/calibration.js';
 import { sunTimes, sunriseAzimuth, facingSlopeLabel } from '../services/sun.js';
 import { buildNarrative } from '../services/narrative.js';
 import { renderCard, downloadCard, shareCard } from '../services/sharecard.js';
+import { buildTravelPlan } from '../services/travel.js';
+import { getPosition } from '../services/geo.js';
 import { MOUNTAINS } from '../data/mountains.js';
 import { formatTime, formatDate } from '../core/format.js';
 import { openSheet, openModal } from '../core/modal.js';
@@ -137,6 +139,21 @@ export default {
       </section>
 
       <section class="section">
+        <div class="section__head">
+          <div>
+            <h2 class="section__title">出行方案</h2>
+            <p class="section__desc" id="travelDesc">从出发地到登山口，再到山顶</p>
+          </div>
+          <button class="btn btn--sm btn--ghost" type="button" data-action="locate">${icon('crosshair', 14)} 用我的位置</button>
+        </div>
+        <div class="card travel" id="travelCard">
+          <div class="loading-inline"><span class="spinner"></span>正在整理出行方案…</div>
+        </div>
+        <div class="card travel-advice" id="travelAdvice" hidden></div>
+        <p class="footnote" id="travelFoot"></p>
+      </section>
+
+      <section class="section">
         <div class="feedback-card">
           <div class="feedback-card__text">
             <strong>今天这趟看到了吗</strong>
@@ -164,6 +181,7 @@ export default {
     let ranked = null;
     let calib = { offset: 0, n: 0 };
     let loadSeq = 0;
+    let lastBest = null;
 
     const requested = new URLSearchParams(location.hash.split('?')[1] || '').get('mode');
     if (requested && MODES[requested]) {
@@ -183,6 +201,7 @@ export default {
       const best =
         ranked.ranked.find((d) => !isWindowPast(d.day, d.index, mode, mountain, now)) || ranked.ranked[0];
       if (!best) return;
+      lastBest = best;
 
       $('#chaseRing').innerHTML = ringSvg(best.probability);
       const probNode = document.createElement('div');
@@ -263,6 +282,160 @@ export default {
       if (ranked.all[0] && ranked.all[0].probability < 50 && comp) {
         $('#chaseSentence').textContent += ` ${comp.text}`;
       }
+
+      renderTravel(best, mountain);
+    };
+
+    /* ---------------- 出行方案 ---------------- */
+    const renderTravel = (best, mountain) => {
+      const card = $('#travelCard');
+      if (!card) return;
+      const from = appState.myPosition || appState.location;
+      const fromLabel = appState.myPosition ? '当前位置' : appState.location.name || '当前城市';
+      const tp = buildTravelPlan({ mountain, day: best?.day, mode, from });
+      const { plan, road } = tp;
+
+      const timeText = (d) => (d ? formatTime(d) : '--:--');
+
+      const steps = [];
+      if (plan.homeAt) {
+        steps.push({
+          time: timeText(plan.homeAt),
+          title: '从出发地动身',
+          meta: `自驾约 ${road.minutes} 分钟到登山口（含 10 分钟停车缓冲）`,
+          tone: 'moss'
+        });
+      }
+      if (plan.trailheadAt) {
+        steps.push({
+          time: timeText(plan.trailheadAt),
+          title: '登山口起登',
+          meta: `预留 ${plan.ascentHours} 小时登顶（按常速参考）`,
+          tone: 'dawn'
+        });
+      }
+      if (plan.summitAt) {
+        steps.push({
+          time: timeText(plan.summitAt),
+          title: mode === 'stars' ? '山顶看星空' : '山顶等日出',
+          meta:
+            mode === 'stars'
+              ? '日落后约 45 分钟，天色已全黑'
+              : plan.sun.sunrise
+                ? `日出 ${timeText(plan.sun.sunrise)}，提前 30 分钟到顶`
+                : '',
+          tone: 'dawn'
+        });
+      }
+
+      const timelineHtml = steps
+        .map(
+          (s) => `<div class="travel-step is-${s.tone}">
+            <span class="travel-step__dot"></span>
+            <span class="travel-step__time">${s.time}</span>
+            <span class="travel-step__body">
+              <b>${s.title}</b>
+              ${s.meta ? `<em>${escapeHtml(s.meta)}</em>` : ''}
+            </span>
+          </div>`
+        )
+        .join('');
+
+      const modesHtml = tp.modes
+        .map(
+          (m) => `<div class="travel-mode${m.recommended ? ' is-recommended' : ''}">
+            <span class="travel-mode__icon">${icon(m.icon, 17)}</span>
+            <div class="travel-mode__main">
+              <div class="travel-mode__head">
+                <b>${m.name}</b>
+                <span class="badge badge--${m.tone}">${m.badge}</span>
+              </div>
+              <div class="travel-mode__meta">${escapeHtml(m.meta)}</div>
+              <div class="travel-mode__detail">${escapeHtml(m.detail)}</div>
+            </div>
+          </div>`
+        )
+        .join('');
+
+      const trailheadsHtml = tp.trailheads.length
+        ? `<div class="travel-sub">
+            <div class="travel-sub__title">${icon('mountain', 14)} 常用登山口</div>
+            <div class="travel-sub__chips">${tp.trailheads
+              .map((h) => `<span class="chip chip--sm">${escapeHtml(h)}</span>`)
+              .join('')}</div>
+          </div>`
+        : '';
+
+      const warnHtml = tp.warnings.length
+        ? `<div class="travel-warns">${tp.warnings
+            .map(
+              (w) => `<div class="travel-warn is-${w.tone}">${icon(
+                w.tone === 'warn' ? 'alert' : 'info',
+                14
+              )}<span>${escapeHtml(w.text)}</span></div>`
+            )
+            .join('')}</div>`
+        : '';
+
+      const gearHtml = tp.gear.length
+        ? `<div class="travel-sub">
+            <div class="travel-sub__title">${icon('backpack', 14)} 装备建议</div>
+            <div class="travel-sub__chips">${tp.gear
+              .map((g) => `<span class="chip chip--sm">${escapeHtml(g)}</span>`)
+              .join('')}</div>
+          </div>`
+        : '';
+
+      const safetyHtml = tp.safety.length
+        ? `<div class="travel-sub">
+            <div class="travel-sub__title">${icon('shield', 14)} 安全提示</div>
+            <ul class="travel-list">${tp.safety.map((s) => `<li>${escapeHtml(s)}</li>`).join('')}</ul>
+          </div>`
+        : '';
+
+      card.innerHTML = `
+        <div class="travel__origin">
+          <span>${icon('navigation', 14)} 出发地：<b>${escapeHtml(fromLabel)}</b></span>
+          ${
+            road
+              ? `<span class="muted">直线 ${road.straightKm.toFixed(1)} km · 参考道路 ${road.roadKm.toFixed(0)} km</span>`
+              : '<span class="muted">未获取定位，按所在城市估算</span>'
+          }
+        </div>
+        <div class="travel__timeline">${timelineHtml || '<p class="muted">暂无可用时间信息</p>'}</div>
+        <div class="travel__modes">${modesHtml}</div>
+        ${trailheadsHtml}
+      `;
+
+      const advice = $('#travelAdvice');
+      if (advice) {
+        advice.innerHTML = `${warnHtml}${gearHtml}${safetyHtml}`;
+        advice.hidden = !(warnHtml || gearHtml || safetyHtml);
+      }
+
+      const foot = $('#travelFoot');
+      if (foot) {
+        foot.innerHTML = `出行时间由 <b>${mountain.name}</b> 的真实日出 / 日落时间倒推；距离与耗时按直线距离和城市道路速度折算，<b>仅供参考，以导航与实时班次为准</b>。公交 / 地铁站点为人工整理，出发前请再核对。`;
+      }
+
+      const desc = $('#travelDesc');
+      if (desc) {
+        desc.textContent = mode === 'stars' ? '按夜间观星安排，从出发地到山顶' : '从出发地到登山口，再到山顶';
+      }
+    };
+
+    const useMyLocation = async (btn) => {
+      if (btn) btn.disabled = true;
+      try {
+        const pos = await getPosition();
+        setMyPosition({ lat: pos.lat, lon: pos.lon, accuracy: pos.accuracy, ts: pos.ts });
+        if (lastBest) renderTravel(lastBest, currentMountain());
+        toastOk('已按当前位置重算出行距离');
+      } catch (err) {
+        toastWarn(err.message || '定位失败，仍按所在城市估算');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
     };
 
     /* ---------------- 数据 ---------------- */
@@ -284,6 +457,11 @@ export default {
       } catch (err) {
         if (seq !== loadSeq) return;
         toastError(err.message || '数据加载失败');
+        const card = $('#travelCard');
+        if (card) {
+          card.innerHTML =
+            '<p class="muted">出行方案需要天气数据来计算出发时间，取数失败后暂时无法估算。</p>';
+        }
       }
     };
 
@@ -440,6 +618,7 @@ export default {
       if (!action) return;
       if (action.dataset.action === 'mountain') openMountainSheet();
       if (action.dataset.action === 'refresh') load(true);
+      if (action.dataset.action === 'locate') useMyLocation(action);
       if (action.dataset.action === 'share') {
         if (!ranked) return toastWarn('数据还没加载完');
         makeCard();
