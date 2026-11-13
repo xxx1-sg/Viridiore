@@ -57,7 +57,7 @@ jobs:
 
       - name: List artifacts
         shell: pwsh
-        run: Get-ChildItem release -Filter '*.exe' | Select-Object Name, Length | Format-Table -AutoSize
+        run: Get-ChildItem release | Where-Object { $_.Name -match '\.(exe|zip)$' } | Select-Object Name, Length | Format-Table -AutoSize
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
@@ -67,14 +67,16 @@ jobs:
           body: |
             晓山青 Viridiore ${{ github.event.inputs.tag }}
 
-            - 官网改由 GitHub Pages 现构建发布；补 LICENSE、仓库元数据与界面截图
-            - 新增 45 个单元测试与 CI（push / PR 自动 npm test + npm run build）
-            - README 新增「回测记分牌」，无样本时如实显示「样本积累中」
-            - 设置页新增「导出反馈样本（匿名）」，可离线汇总；用户打卡以 basis:user 单列
-            - 清理下架模块死代码（约 2,000 行），IndexedDB 升级 v3
-            - 官网文案对齐真实实现：逆温用 925 / 850 hPa 模式层结，非探空实测
+            本版新增「出行方案」：在追光页选定山头后，给出出发地 → 登山口 → 山顶的时间线，自驾 / 公共交通 / 打车三种方式与参考里程耗时，以及随天气变化的装备与安全提示。
+
+            - 出发时间由真实日出 / 日落时间倒推
+            - 降水概率、风力、山顶温度自动追加装备与提醒
+            - 距离与耗时为参考估算，公交 / 地铁站点为人工整理，以导航与实时班次为准
+
+            Windows：Setup 为安装包，Portable 为免安装单文件版，ZIP 为解压即用的绿色版（若杀毒软件误报，可优先尝试 ZIP）。
           files: |
             release/XiaoShanQing-*-Setup-x64.exe
             release/XiaoShanQing-*-Portable-x64.exe
+            release/XiaoShanQing-*-x64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
