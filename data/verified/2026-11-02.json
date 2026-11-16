@@ -1,0 +1,628 @@
+{
+  "schema": 1,
+  "kind": "verified",
+  "date": "2026-11-02",
+  "verifiedAt": "2026-11-16T00:36:01.707Z",
+  "basis": "reanalysis",
+  "provider": "archive-api.open-meteo.com (ERA5)",
+  "ruleVersion": 2,
+  "verifiedScope": [
+    "cloud_layers",
+    "surface_temp_humidity",
+    "precipitation",
+    "wind"
+  ],
+  "unverifiedScope": [
+    "pressure_level_temperature"
+  ],
+  "prev": null,
+  "prevFile": null,
+  "summary": {
+    "entries": 12,
+    "observed": 0,
+    "hitRate": 0,
+    "missing": 24
+  },
+  "entries": [
+    {
+      "mountainId": "wutong",
+      "mountain": "梧桐山",
+      "mode": "stars",
+      "date": "2026-11-02",
+      "predictedOn": "2026-11-02",
+      "leadDays": 0,
+      "probability": 3,
+      "baseRate": 38,
+      "modelVersion": "2.4.0",
+      "observed": 0,
+      "verdict": "未成立（云量通透）",
+      "basis": "reanalysis",
+      "ruleVersion": 2,
+      "checks": [
+        {
+          "key": "云量通透",
+          "ok": false,
+          "text": "总云量 70%"
+        },
+        {
+          "key": "低层无遮挡",
+          "ok": true,
+          "text": "低云 8%"
+        },
+        {
+          "key": "无降水",
+          "ok": true,
+          "text": "观测窗降水 0.2 mm"
+        }
+      ],
+      "degraded": [
+        "inv",
+        "rh850"
+      ],
+      "actual": {
+        "cloudLow": 8,
+        "cloud": 70,
+        "cloudMid": 7,
+        "cloudHigh": 59,
+        "t2m": 19.6,
+        "td2m": 18.3,
+        "cloudBase": 227,
+        "cloudTop": 551,
+        "margin": 392,
+        "precip": 0.2,
+        "windMs": 2.9,
+        "hours": 11
+      }
+    },
+    {
+      "mountainId": "qiniang",
+      "mountain": "七娘山",
+      "mode": "stars",
+      "date": "2026-11-02",
+      "predictedOn": "2026-11-02",
+      "leadDays": 0,
+      "probability": 5,
+      "baseRate": 38,
+      "modelVersion": "2.4.0",
+      "observed": 0,
+      "verdict": "未成立（云量通透）",
+      "basis": "reanalysis",
+      "ruleVersion": 2,
+      "checks": [
+        {
+          "key": "云量通透",
+          "ok": false,
+          "text": "总云量 73%"
+        },
+        {
+          "key": "低层无遮挡",
+          "ok": true,
+          "text": "低云 12%"
+        },
+        {
+          "key": "无降水",
+          "ok": true,
+          "text": "观测窗降水 0.0 mm"
+        }
+      ],
+      "degraded": [
+        "inv",
+        "rh850"
+      ],
+      "actual": {
+        "cloudLow": 12,
+        "cloud": 73,
+        "cloudMid": 7,
+        "cloudHigh": 62,
+        "t2m": 25.2,
+        "td2m": 22.5,
+        "cloudBase": 369,
+        "cloudTop": 710,
+        "margin": 159,
+        "precip": 0,
+        "windMs": 6.4,
+        "hours": 11
+      }
+    },
+    {
+      "mountainId": "maluan",
+      "mountain": "马峦山",
+      "mode": "stars",
+      "date": "2026-11-02",
+      "predictedOn": "2026-11-02",
+      "leadDays": 0,
+      "probability": 4,
+      "baseRate": 38,
+      "modelVersion": "2.4.0",
+      "observed": 0,
+      "verdict": "未成立（云量通透、无降水）",
+      "basis": "reanalysis",
+      "ruleVersion": 2,
+      "checks": [
+        {
+          "key": "云量通透",
+          "ok": false,
+          "text": "总云量 71%"
+        },
+        {
+          "key": "低层无遮挡",
+          "ok": true,
+          "text": "低云 11%"
+        },
+        {
+          "key": "无降水",
+          "ok": false,
+          "text": "观测窗降水 0.3 mm"
+        }
+      ],
+      "degraded": [
+        "inv",
+        "rh850"
+      ],
+      "actual": {
+        "cloudLow": 11,
+        "cloud": 71,
+        "cloudMid": 7,
+        "cloudHigh": 60,
+        "t2m": 22.6,
+        "td2m": 21.1,
+        "cloudBase": 249,
+        "cloudTop": 583,
+        "margin": 7,
+        "precip": 0.3,
+        "windMs": 2.6,
+        "hours": 11
+      }
+    },
+    {
+      "mountainId": "paiya",
+      "mountain": "排牙山",
+      "mode": "stars",
+      "date": "2026-11-02",
+      "predictedOn": "2026-11-02",
+      "leadDays": 0,
+      "probability": 4,
+      "baseRate": 38,
+      "modelVersion": "2.4.0",
+      "observed": 0,
+      "verdict": "未成立（云量通透）",
+      "basis": "reanalysis",
+      "ruleVersion": 2,
+      "checks": [
+        {
+          "key": "云量通透",
+          "ok": false,
+          "text": "总云量 75%"
+        },
+        {
+          "key": "低层无遮挡",
+          "ok": true,
+          "text": "低云 11%"
+        },
+        {
+          "key": "无降水",
+          "ok": true,
+          "text": "观测窗降水 0.2 mm"
+        }
+      ],
+      "degraded": [
+        "inv",
+        "rh850"
+      ],
+      "actual": {
+        "cloudLow": 11,
+        "cloud": 75,
+        "cloudMid": 9,
+        "cloudHigh": 62,
+        "t2m": 24.6,
+        "td2m": 22.5,
+        "cloudBase": 305,
+        "cloudTop": 642,
+        "margin": 65,
+        "precip": 0.2,
+        "windMs": 4.1,
+        "hours": 11
+      }
+    },
+    {
+      "mountainId": "meishajian",
+      "mountain": "梅沙尖",
+      "mode": "stars",
+      "date": "2026-11-02",
+      "predictedOn": "2026-11-02",
+      "leadDays": 0,
+      "probability": 4,
+      "baseRate": 38,
+      "modelVersion": "2.4.0",
+      "observed": 0,
+      "verdict": "未成立（云量通透、无降水）",
+      "basis": "reanalysis",
+      "ruleVersion": 2,
+      "checks": [
+        {
+          "key": "云量通透",
+          "ok": false,
+          "text": "总云量 71%"
+        },
+        {
+          "key": "低层无遮挡",
+          "ok": true,
+          "text": "低云 11%"
+        },
+        {
+          "key": "无降水",
+          "ok": false,
+          "text": "观测窗降水 0.3 mm"
+        }
+      ],
+      "degraded": [
+        "inv",
+        "rh850"
+      ],
+      "actual": {
+        "cloudLow": 11,
+        "cloud": 71,
+        "cloudMid": 7,
+        "cloudHigh": 60,
+        "t2m": 24.9,
+        "td2m": 23.4,
+        "cloudBase": 189,
+        "cloudTop": 523,
+        "margin": 230,
+        "precip": 0.3,
+        "windMs": 2.6,
+        "hours": 11
+      }
+    },
+    {
+      "mountainId": "tanglang",
+      "mountain": "塘朗山",
+      "mode": "stars",
+      "date": "2026-11-02",
+      "predictedOn": "2026-11-02",
+      "leadDays": 0,
+      "probability": 2,
+      "baseRate": 38,
+      "modelVersion": "2.4.0",
+      "observed": 0,
+      "verdict": "未成立（云量通透、无降水）",
+      "basis": "reanalysis",
+      "ruleVersion": 2,
+      "checks": [
+        {
+          "key": "云量通透",
+          "ok": false,
+          "text": "总云量 70%"
+        },
+        {
+          "key": "低层无遮挡",
+          "ok": true,
+          "text": "低云 5%"
+        },
+        {
+          "key": "无降水",
+          "ok": false,
+          "text": "观测窗降水 0.3 mm"
+        }
+      ],
+      "degraded": [
+        "inv",
+        "rh850"
+      ],
+      "actual": {
+        "cloudLow": 5,
+        "cloud": 70,
+        "cloudMid": 11,
+        "cloudHigh": 59,
+        "t2m": 24.9,
+        "td2m": 23,
+        "cloudBase": 266,
+        "cloudTop": 572,
+        "margin": -142,
+        "precip": 0.3,
+        "windMs": 2.9,
+        "hours": 11
+      }
+    },
+    {
+      "mountainId": "fenghuang",
+      "mountain": "凤凰山",
+      "mode": "stars",
+      "date": "2026-11-02",
+      "predictedOn": "2026-11-02",
+      "leadDays": 0,
+      "probability": 2,
+      "baseRate": 38,
+      "modelVersion": "2.4.0",
+      "observed": 0,
+      "verdict": "未成立（云量通透）",
+      "basis": "reanalysis",
+      "ruleVersion": 2,
+      "checks": [
+        {
+          "key": "云量通透",
+          "ok": false,
+          "text": "总云量 66%"
+        },
+        {
+          "key": "低层无遮挡",
+          "ok": true,
+          "text": "低云 4%"
+        },
+        {
+          "key": "无降水",
+          "ok": true,
+          "text": "观测窗降水 0.1 mm"
+        }
+      ],
+      "degraded": [
+        "inv",
+        "rh850"
+      ],
+      "actual": {
+        "cloudLow": 4,
+        "cloud": 66,
+        "cloudMid": 10,
+        "cloudHigh": 56,
+        "t2m": 24.8,
+        "td2m": 23.3,
+        "cloudBase": 227,
+        "cloudTop": 531,
+        "margin": -155,
+        "precip": 0.1,
+        "windMs": 2.9,
+        "hours": 11
+      }
+    },
+    {
+      "mountainId": "yangtaishan",
+      "mountain": "阳台山",
+      "mode": "stars",
+      "date": "2026-11-02",
+      "predictedOn": "2026-11-02",
+      "leadDays": 0,
+      "probability": 2,
+      "baseRate": 38,
+      "modelVersion": "2.4.0",
+      "observed": 0,
+      "verdict": "未成立（云量通透、无降水）",
+      "basis": "reanalysis",
+      "ruleVersion": 2,
+      "checks": [
+        {
+          "key": "云量通透",
+          "ok": false,
+          "text": "总云量 70%"
+        },
+        {
+          "key": "低层无遮挡",
+          "ok": true,
+          "text": "低云 5%"
+        },
+        {
+          "key": "无降水",
+          "ok": false,
+          "text": "观测窗降水 0.3 mm"
+        }
+      ],
+      "degraded": [
+        "inv",
+        "rh850"
+      ],
+      "actual": {
+        "cloudLow": 5,
+        "cloud": 70,
+        "cloudMid": 11,
+        "cloudHigh": 59,
+        "t2m": 24.9,
+        "td2m": 23,
+        "cloudBase": 306,
+        "cloudTop": 612,
+        "margin": -25,
+        "precip": 0.3,
+        "windMs": 2.9,
+        "hours": 11
+      }
+    },
+    {
+      "mountainId": "dananshan",
+      "mountain": "大南山",
+      "mode": "stars",
+      "date": "2026-11-02",
+      "predictedOn": "2026-11-02",
+      "leadDays": 0,
+      "probability": 3,
+      "baseRate": 38,
+      "modelVersion": "2.4.0",
+      "observed": 0,
+      "verdict": "未成立（云量通透）",
+      "basis": "reanalysis",
+      "ruleVersion": 2,
+      "checks": [
+        {
+          "key": "云量通透",
+          "ok": false,
+          "text": "总云量 69%"
+        },
+        {
+          "key": "低层无遮挡",
+          "ok": true,
+          "text": "低云 5%"
+        },
+        {
+          "key": "无降水",
+          "ok": true,
+          "text": "观测窗降水 0.2 mm"
+        }
+      ],
+      "degraded": [
+        "inv",
+        "rh850"
+      ],
+      "actual": {
+        "cloudLow": 5,
+        "cloud": 69,
+        "cloudMid": 11,
+        "cloudHigh": 58,
+        "t2m": 26.1,
+        "td2m": 22.5,
+        "cloudBase": 470,
+        "cloudTop": 780,
+        "margin": -444,
+        "precip": 0.2,
+        "windMs": 5.6,
+        "hours": 11
+      }
+    },
+    {
+      "mountainId": "luofu",
+      "mountain": "罗浮山",
+      "mode": "stars",
+      "date": "2026-11-02",
+      "predictedOn": "2026-11-02",
+      "leadDays": 0,
+      "probability": 9,
+      "baseRate": 38,
+      "modelVersion": "2.4.0",
+      "observed": 0,
+      "verdict": "未成立（云量通透）",
+      "basis": "reanalysis",
+      "ruleVersion": 2,
+      "checks": [
+        {
+          "key": "云量通透",
+          "ok": false,
+          "text": "总云量 49%"
+        },
+        {
+          "key": "低层无遮挡",
+          "ok": true,
+          "text": "低云 4%"
+        },
+        {
+          "key": "无降水",
+          "ok": true,
+          "text": "观测窗降水 0.0 mm"
+        }
+      ],
+      "degraded": [
+        "inv",
+        "rh850"
+      ],
+      "actual": {
+        "cloudLow": 4,
+        "cloud": 49,
+        "cloudMid": 6,
+        "cloudHigh": 42,
+        "t2m": 23,
+        "td2m": 20.9,
+        "cloudBase": 377,
+        "cloudTop": 682,
+        "margin": 614,
+        "precip": 0,
+        "windMs": 4.4,
+        "hours": 11
+      }
+    },
+    {
+      "mountainId": "nankun",
+      "mountain": "南昆山",
+      "mode": "stars",
+      "date": "2026-11-02",
+      "predictedOn": "2026-11-02",
+      "leadDays": 0,
+      "probability": 3,
+      "baseRate": 38,
+      "modelVersion": "2.4.0",
+      "observed": 0,
+      "verdict": "未成立（云量通透）",
+      "basis": "reanalysis",
+      "ruleVersion": 2,
+      "checks": [
+        {
+          "key": "云量通透",
+          "ok": false,
+          "text": "总云量 61%"
+        },
+        {
+          "key": "低层无遮挡",
+          "ok": true,
+          "text": "低云 9%"
+        },
+        {
+          "key": "无降水",
+          "ok": true,
+          "text": "观测窗降水 0.0 mm"
+        }
+      ],
+      "degraded": [
+        "inv",
+        "rh850"
+      ],
+      "actual": {
+        "cloudLow": 9,
+        "cloud": 61,
+        "cloudMid": 10,
+        "cloudHigh": 52,
+        "t2m": 20.8,
+        "td2m": 18.8,
+        "cloudBase": 602,
+        "cloudTop": 929,
+        "margin": 299,
+        "precip": 0,
+        "windMs": 4.4,
+        "hours": 11
+      }
+    },
+    {
+      "mountainId": "yinhu",
+      "mountain": "银湖山",
+      "mode": "stars",
+      "date": "2026-11-02",
+      "predictedOn": "2026-11-02",
+      "leadDays": 0,
+      "probability": 3,
+      "baseRate": 38,
+      "modelVersion": "2.4.0",
+      "observed": 0,
+      "verdict": "未成立（云量通透、无降水）",
+      "basis": "reanalysis",
+      "ruleVersion": 2,
+      "checks": [
+        {
+          "key": "云量通透",
+          "ok": false,
+          "text": "总云量 69%"
+        },
+        {
+          "key": "低层无遮挡",
+          "ok": true,
+          "text": "低云 5%"
+        },
+        {
+          "key": "无降水",
+          "ok": false,
+          "text": "观测窗降水 0.3 mm"
+        }
+      ],
+      "degraded": [
+        "inv",
+        "rh850"
+      ],
+      "actual": {
+        "cloudLow": 5,
+        "cloud": 69,
+        "cloudMid": 8,
+        "cloudHigh": 59,
+        "t2m": 24.9,
+        "td2m": 22.7,
+        "cloudBase": 307,
+        "cloudTop": 614,
+        "margin": -169,
+        "precip": 0.3,
+        "windMs": 4.7,
+        "hours": 11
+      }
+    }
+  ]
+}
