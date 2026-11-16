@@ -2,7 +2,7 @@
 import { icon } from '../core/icons.js';
 import { CanvasMap, resolveTileProvider } from '../components/mapview.js';
 import { TrailTracker } from '../services/tracker.js';
-import { watchPosition, getPosition } from '../services/geo.js';
+import { watchPosition, getPosition, haversine } from '../services/geo.js';
 import { trailRepo, bus } from '../core/store.js';
 import { config } from '../config.js';
 import { formatDate, formatTime, formatDistance, formatDuration, humanDuration, relTime } from '../core/format.js';
@@ -18,6 +18,33 @@ import { appState, currentMountain, setMyPosition, MOUNTAINS } from '../state.js
 let tracker = null;
 /** 页面被缓存：返回轨迹页时用它恢复定位与重绘（地图实例常驻，不销毁） */
 let trailView = null;
+
+/**
+ * 把点序列切成多段：时间断档或异常跳变处断开。
+ * 段与段之间不连线，避免把「不知道中间怎么走」的一段距离画成一条假直线。
+ */
+const GAP_MS = 90 * 1000; // 超过 90 秒没有点，视为断档
+const MAX_SPEED_MPS = 90; // 速度异常（≈324km/h）视为 GPS 跳点
+function buildPathSegments(points) {
+  if (!Array.isArray(points) || !points.length) return [];
+  const segs = [];
+  let cur = [points[0]];
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1];
+    const b = points[i];
+    const dt = (b.ts || 0) - (a.ts || 0);
+    const d = haversine(a, b);
+    const speed = dt > 0 ? d / (dt / 1000) : Infinity;
+    if (dt > GAP_MS || speed > MAX_SPEED_MPS) {
+      if (cur.length) segs.push(cur);
+      cur = [b];
+    } else {
+      cur.push(b);
+    }
+  }
+  if (cur.length) segs.push(cur);
+  return segs;
+}
 
 /** 生成一段示例轨迹（无 GPS 环境体验用） */
 function demoPoints() {
@@ -341,7 +368,7 @@ export default {
       currentPoints = points;
       profile = stats.profile || [];
       const path = stats.simplified || points;
-      map.setPath(path);
+      map.setPath(buildPathSegments(path));
       refreshMarkers();
       $('#trailEmpty')?.classList.toggle('hidden', path.length > 1 || !!myPos);
       renderStats(stats);
@@ -388,7 +415,11 @@ export default {
         drawProfile();
         await tracker.start();
         $('#trailEmpty')?.classList.add('hidden');
-        toastOk('开始记录，请保持应用在前台以获得更准的轨迹');
+        toastOk(
+          tracker.native
+            ? '已开始记录：锁屏 / 切后台也会持续记录，结束后点「结束并保存」'
+            : '开始记录，请保持应用在前台以获得更准的轨迹'
+        );
         // 把我与任务山峰一起框进视野，便于看清起点与目标
         const m = currentMountain();
         const frame = [{ lat: m.lat, lon: m.lon }];
@@ -651,7 +682,7 @@ export default {
         }
         currentPoints = points;
         profile = fake.profile || [];
-        map.setPath(fake.simplified || points);
+        map.setPath(buildPathSegments(fake.simplified || points));
         map.fitBounds(points);
         refreshMarkers();
         $('#trailEmpty')?.classList.add('hidden');
@@ -669,7 +700,7 @@ export default {
         activeTrail = trail;
         currentPoints = trail.points || [];
         profile = trail.stats?.profile || [];
-        map.setPath(trail.stats?.simplified || trail.points || []);
+        map.setPath(buildPathSegments(trail.stats?.simplified || trail.points || []));
         map.fitBounds(trail.points || []);
         refreshMarkers();
         renderStats(trail.stats);
@@ -728,7 +759,7 @@ export default {
       activeTrail = t;
       currentPoints = t.points || [];
       profile = t.stats?.profile || [];
-      map.setPath(t.stats?.simplified || t.points || []);
+      map.setPath(buildPathSegments(t.stats?.simplified || t.points || []));
       renderStats(t.stats);
       drawProfile();
       $('#trailState').innerHTML = `<span class="dot"></span>${t.name}`;

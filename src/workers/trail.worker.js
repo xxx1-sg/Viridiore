@@ -15,14 +15,23 @@ function haversine(a, b) {
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
-/** 距离计算，过滤掉抖动点（<2m 位移） */
+/** 速度上限（米/秒 ≈ 324km/h），超过视为 GPS 跳点，不计入距离 */
+const MAX_SPEED_MPS = 90;
+
+/** 距离计算，过滤掉抖动点（<2m 位移）与明显的 GPS 跳点 */
 function calcDistance(points) {
   let total = 0;
   const segments = [];
   for (let i = 1; i < points.length; i++) {
-    const d = haversine(points[i - 1], points[i]);
+    const a = points[i - 1];
+    const b = points[i];
+    const d = haversine(a, b);
+    const dt = ((b.ts || 0) - (a.ts || 0)) / 1000;
     segments.push(d);
-    if (d > 2) total += d;
+    if (d <= 2) continue; // 抖动
+    if (dt <= 0) continue; // 时间异常
+    if (d / dt > MAX_SPEED_MPS) continue; // GPS 跳点
+    total += d;
   }
   return { total, segments };
 }

@@ -159,9 +159,23 @@ export class CanvasMap {
     this.render();
   }
 
+  /**
+   * 设置轨迹。支持两种形态：
+   *  - 扁平的坐标数组 [ {lat,lon}, ... ] → 单段
+   *  - 分段数组 [ [ {lat,lon}, ... ], ... ] → 多段（段与段之间不连线）
+   */
   setPath(points = []) {
     this.path = points;
     this.render();
+  }
+
+  /** 把 path 统一成「多段」结构，供渲染使用 */
+  _normalizeSegments(path) {
+    if (!Array.isArray(path) || !path.length) return [];
+    if (Array.isArray(path[0])) {
+      return path.filter((seg) => Array.isArray(seg) && seg.length);
+    }
+    return [path];
   }
 
   select(id) {
@@ -418,10 +432,13 @@ export class CanvasMap {
       this._drawTiles(ctx);
     }
 
-    // 轨迹
-    if (this.path.length > 1) {
-      const pts = this.path.map((p) => this.project(p.lat, p.lon));
-      const drawPath = (lineWidth, color, blur) => {
+    // 轨迹（支持单段 / 多段。多段用于跨过时间断档，避免把两段未知区域连成一条假直线）
+    const segments = this._normalizeSegments(this.path)
+      .map((seg) => seg.map((p) => this.project(p.lat, p.lon)))
+      .filter((seg) => seg.length > 1);
+
+    if (segments.length) {
+      const drawPath = (pts, lineWidth, color, blur) => {
         ctx.save();
         ctx.lineJoin = 'round';
         ctx.lineCap = 'round';
@@ -436,14 +453,18 @@ export class CanvasMap {
         ctx.stroke();
         ctx.restore();
       };
-      drawPath(11, 'rgba(0,0,0,0.22)', 0);
-      drawPath(7, 'rgba(229,164,87,0.32)', 0);
-      drawPath(4, c.dawn, 8);
-      drawPath(1.4, 'rgba(255,240,215,0.9)', 0);
+      segments.forEach((pts) => {
+        drawPath(pts, 11, 'rgba(0,0,0,0.22)', 0);
+        drawPath(pts, 7, 'rgba(229,164,87,0.32)', 0);
+        drawPath(pts, 4, c.dawn, 8);
+        drawPath(pts, 1.4, 'rgba(255,240,215,0.9)', 0);
+      });
 
-      // 起终点
-      const s = pts[0];
-      const e = pts[pts.length - 1];
+      // 起终点（整条轨迹的首、末）
+      const first = segments[0];
+      const last = segments[segments.length - 1];
+      const s = first[0];
+      const e = last[last.length - 1];
       this._dot(s.x, s.y, 5, '#8fd6a8');
       this._dot(e.x, e.y, 6, '#f0b268');
     }
