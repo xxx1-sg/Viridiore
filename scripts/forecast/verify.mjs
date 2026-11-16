@@ -136,6 +136,7 @@ function windowStats(hourly, dateStr, lat, lon, mode = 'cloudsea') {
   const times = (hourly.time || []).map(parseLocal);
   const [y, m, d] = dateStr.split('-').map(Number);
   const dayObj = new Date(y, m - 1, d, 12);
+  const sun = sunTimes(dayObj, lat, lon);
 
   const idx = [];
   if (mode === 'stars') {
@@ -145,7 +146,6 @@ function windowStats(hourly, dateStr, lat, lon, mode = 'cloudsea') {
       if (h >= 20 || h <= 6) idx.push(i);
     });
   } else {
-    const sun = sunTimes(dayObj, lat, lon);
     if (!sun?.sunrise) return null;
     const from = new Date(sun.sunrise.getTime() - 90 * 60000);
     const to = new Date(sun.sunrise.getTime() + 30 * 60000);
@@ -174,7 +174,7 @@ function windowStats(hourly, dateStr, lat, lon, mode = 'cloudsea') {
     cloudHigh: avg(pick('cloud_cover_high')),
     precip: sum(precipList),
     windMs: avg(pick('wind_speed_10m')),
-    sunrise: sun.sunrise
+    sunrise: sun?.sunrise ?? null
   };
 
   // 观测窗内全是空值 = 这天 ERA5 还没到位，返回 null 让上层标 pending
