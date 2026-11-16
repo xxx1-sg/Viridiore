@@ -69,23 +69,23 @@ export const MODES = {
   }
 };
 
-/* ---------------- 回测校准层（v2.6） ---------------- */
+/* ---------------- 回测校准层（v2.6.2） ---------------- */
 
 /**
  * 概率校准：p_calibrated = sigmoid(a * logit(p) + b)，a ≥ 0 保持排序（不破坏区分度）。
- * 拟合来源：data/verified 2026-11-03 ~ 11-09，共 1,224 条 ERA5 再分析对账；
+ * 拟合来源：data/verified 2026-11-02 ~ 11-15，共 2,166 条 ERA5 再分析对账（星空为夜间口径 RULE_VERSION 2）；
  * 由 scripts/forecast/calibrate.mjs 拟合，结果见 data/calibration.json。
  *
- *   · cloudsea: a=0.35, b=-1.60 —— 因子有区分度(AUC 0.77)但概率高估，收缩后 Brier 0.096→0.078（优于恒定基准 0.080）
- *   · sunrise : a=0.50, b=0    —— 略偏保守，轻微收缩 0.234→0.227
- *   · stars   : a=0,    b=-0.25 —— 首轮回测 AUC 仅 0.35（方向存疑），修好因子前只输出月度基准率 ≈44%，不输出假精度
+ *   · cloudsea: a=0.35, b=-2.30 —— AUC 0.778；Brier 0.061→0.040（= 恒定基准 0.040，保住排序）
+ *   · sunrise : a=1.00, b=-0.35 —— AUC 0.609；Brier 0.192→0.188（优于恒定基准 0.193）
+ *   · stars   : a=0.25, b=-1.50 —— 夜间口径后 AUC 0.599（从 0.35 回升）；Brier 0.143→0.116（优于恒定基准 0.117）
  *
- * 局限：样本只有 7 天。样本变多后必须重跑 calibrate.mjs 并更新此表。
+ * 局限：样本仍有限；样本继续增多后应重跑 calibrate.mjs 并更新此表。
  */
 export const MODE_CALIBRATION = {
-  cloudsea: { a: 0.35, b: -1.6 },
-  sunrise: { a: 0.5, b: 0 },
-  stars: { a: 0, b: -0.25 }
+  cloudsea: { a: 0.35, b: -2.3 },
+  sunrise: { a: 1, b: -0.35 },
+  stars: { a: 0.25, b: -1.5 }
 };
 
 function calibrateProbability(mode, p) {

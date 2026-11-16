@@ -146,13 +146,10 @@ test('rankDays：按概率降序，best 为最高分那天', () => {
   assert.equal(typeof best.index, 'number');
 });
 
-test('MODE_CALIBRATION：云海/日出保序(a>0)，星空退化为常数基准率', () => {
+test('MODE_CALIBRATION：三模式均为保序校准（a>0），星空夜间口径后恢复区分度', () => {
   assert.ok(MODE_CALIBRATION.cloudsea.a > 0, '云海校准必须保序，不能把区分度砸掉');
   assert.ok(MODE_CALIBRATION.sunrise.a > 0);
-  assert.equal(MODE_CALIBRATION.stars.a, 0, '星空首轮回测方向存疑，应退化为基准率');
-  const s1 = assessDay(mkDay({ windScale: 2 }), 'stars', { mountain }).probability;
-  const s2 = assessDay(mkDay({ windScale: 6 }), 'stars', { mountain }).probability;
-  assert.equal(s1, s2, '星空校准后应为常数，不因因子波动产生假精度');
+  assert.ok(MODE_CALIBRATION.stars.a > 0, '星空夜间口径后 AUC 回升，应恢复排序能力');
 });
 
 test('compensation：有更好的窗口时给希望，否则给安慰', () => {
