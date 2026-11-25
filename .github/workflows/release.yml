@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag（如 v2.4.1）'
+        description: 'Release tag（如 v2.6.3）'
         required: true
-        default: 'v2.4.1'
+        default: 'v2.6.3'
 
 permissions:
   contents: write
@@ -67,12 +67,16 @@ jobs:
           body: |
             晓山青 Viridiore ${{ github.event.inputs.tag }}
 
-            - 修复云海判据参考面错误：云底改以 min(格点海拔, 谷底海拔) 起算，梧桐山不再永远判不出云海（结构性不可能 7/84 → 0/84）
-            - 新增陪伴层：每日一句 + 「山记得你」
-            - 和风天气升为天气页主显示源，接新版 AQI / 预警接口
-            - 预测台账与 CI 上线（每日记预测、ERA5 对账）
+            - **桌面应用内更新**：内置 electron-updater，从 GitHub Releases 检查并后台下载、重启安装（NSIS 安装版；便携版需手动更新）
+            - **手机端**：应用内检查更新 + 一键下载；可选 Capgo 静默热更新网页层（Android / iOS）
+            - 追光分级改为「按模式可行区间」：云海 / 星空的高位也能显示「值得去」，概率数值本身不变
+            - 台账新增先验重估机制（`npm run ledger:prior`，样本达标才生效）
+            - 新增 版本比较 / 更新 / 先验 相关单元测试
           files: |
             release/XiaoShanQing-*-Setup-x64.exe
             release/XiaoShanQing-*-Portable-x64.exe
+            release/latest.yml
+            release/*.blockmap
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

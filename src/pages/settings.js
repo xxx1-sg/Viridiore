@@ -6,10 +6,12 @@ import { themeManager } from '../core/theme.js';
 import { ensureWeather } from '../state.js';
 import { qweather } from '../services/qweather.js';
 import { feedbackStats, invalidateCalibrationCache } from '../services/calibration.js';
+import { buildExportBundle } from '../services/feedback.js';
 import { toastOk, toastError, toastWarn } from '../core/toast.js';
 import { confirmDialog } from '../core/modal.js';
 import { download } from '../services/exporter.js';
 import { escapeHtml } from '../core/dom.js';
+import { manualCheck, hasDesktopUpdater } from '../services/updater.js';
 
 function detectPlatform() {
   const ua = navigator.userAgent;
@@ -42,13 +44,17 @@ export default {
         </div>
       </div>
 
+      <div class="card" style="padding:12px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start">
+        <span style="color:var(--moss-400);flex:0 0 auto;margin-top:1px">${icon('sparkles', 16)}</span>
+        <span style="font-size:13px;line-height:1.55">无需注册即可使用：预报走 Open-Meteo，打开就是真实数据。下方的和风天气只是<strong>可选增强</strong>，可以跳过。</span>
+      </div>
+
       <section class="section">
         <div class="settings-group">
-          <div class="settings-group__title">和风天气 · 实况数据源</div>
+          <div class="settings-group__title">和风天气 <span style="font-size:11px;font-weight:600;color:var(--moss-400);border:1px solid var(--moss-400);border-radius:999px;padding:1px 8px;margin-left:8px;vertical-align:middle">可选 · 可跳过</span></div>
           <p class="field__hint" style="margin:-6px 0 14px">
-            填了 Key 后，<strong>天气页的实况与预报改用和风天气</strong>（国内站点观测 + 中国区域预报），
-            与手机自带天气口径一致，比 ECMWF 模式更贴本地；追光用的高空层结仍取中国气象局 GRAPES 模式。
-            <strong>不填也能用</strong>，预报走 Open-Meteo，但「现在」是模式插值，通常比实况偏高、湿度偏低。
+            <strong>不填完全不影响使用</strong>：预报走 Open-Meteo，打开即可看真实数据；追光的高空层结也来自 Open-Meteo，和风替不了。
+            填了只是多两样——<strong>中国气象局预警</strong>和<strong>国控站官方 AQI</strong>，并让「现在」改用国内站点实况（更贴手机自带天气）。
           </p>
           <label class="field" style="margin-bottom:14px">
             <span class="field__label">API Key</span>
@@ -87,6 +93,14 @@ export default {
               <span class="list-row__sub" id="fbSub">读取中…</span>
             </span>
             <span class="list-row__tail" id="fbCount">--</span>
+          </button>
+          <button class="list-row" type="button" data-action="export-feedback">
+            <span class="list-row__icon">${icon('download', 18)}</span>
+            <span class="list-row__main">
+              <span class="list-row__title">导出反馈样本（匿名）</span>
+              <span class="list-row__sub">只含山、模式、日期、概率与结果；不含轨迹坐标、设备或账号</span>
+            </span>
+            <span class="list-row__tail">${icon('chevronRight', 15)}</span>
           </button>
           <button class="list-row" type="button" data-action="reset-calib">
             <span class="list-row__icon">${icon('refresh', 18)}</span>
@@ -138,6 +152,20 @@ export default {
             <span class="list-row__icon" style="color:var(--danger)">${icon('trash', 18)}</span>
             <span class="list-row__main"><span class="list-row__title" style="color:var(--danger)">清除全部数据</span><span class="list-row__sub">不可恢复，请先导出备份</span></span>
             <span class="list-row__tail">${icon('chevronRight', 15)}</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="settings-group">
+          <div class="settings-group__title">更新</div>
+          <button class="list-row" type="button" data-action="check-update">
+            <span class="list-row__icon">${icon('refresh', 18)}</span>
+            <span class="list-row__main">
+              <span class="list-row__title">检查更新</span>
+              <span class="list-row__sub" id="updateSub">当前版本 v${__APP_VERSION__}</span>
+            </span>
+            <span class="list-row__tail" id="updateState">--</span>
           </button>
         </div>
       </section>
@@ -248,6 +276,21 @@ export default {
           toastOk(`共 ${rows.length} 条样本，最近一条预测 ${rows[rows.length - 1].predicted}%`);
           break;
         }
+        case 'export-feedback': {
+          const { rows } = await feedbackStats();
+          if (!rows.length) {
+            toastWarn('还没有反馈样本。到追光页点「看到了 / 白跑一趟」后再来导出');
+            return;
+          }
+          const bundle = buildExportBundle(rows, { appVersion: __APP_VERSION__ });
+          download(
+            `xiaoshanqing-feedback-${new Date().toISOString().slice(0, 10)}.json`,
+            JSON.stringify(bundle, null, 2),
+            'application/json'
+          );
+          toastOk(`已导出 ${bundle.samples.length} 条匿名样本`);
+          break;
+        }
         case 'reset-calib': {
           const ok = await confirmDialog({
             title: '重置校准？',
@@ -310,6 +353,24 @@ export default {
           }
           break;
         }
+        case 'check-update': {
+          const sub = $('#updateSub');
+          if (window.Capacitor?.isNativePlatform?.()) {
+            try {
+              const m = await import('../services/liveupdate.js');
+              const r = await m.manualLiveCheck();
+              if (sub) sub.textContent = r.available ? `发现 v${r.version}（下次启动生效）` : '已是最新版本';
+              if (r.available) toastOk(`已下载 v${r.version}，下次启动生效`);
+              else toastOk('已是最新版本');
+            } catch (err) {
+              toastError(`检查更新失败：${err?.message || err}`);
+            }
+          } else {
+            const r = await manualCheck();
+            if (sub && r && !r.error) sub.textContent = r.available ? `发现新版本 v${r.version}` : '已是最新版本';
+          }
+          break;
+        }
         default:
           break;
       }
@@ -321,6 +382,9 @@ export default {
       : window.matchMedia('(display-mode: standalone)').matches
         ? '已安装'
         : '不可用';
+
+    const updateState = $('#updateState');
+    if (updateState) updateState.textContent = hasDesktopUpdater() ? '桌面自动更新' : 'GitHub 检查';
 
     refreshFeedback();
 

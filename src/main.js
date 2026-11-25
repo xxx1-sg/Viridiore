@@ -10,6 +10,8 @@ import { mountShell } from './components/shell.js';
 import { registerPage, setContainer, start } from './router.js';
 import { ensureWeather } from './state.js';
 import { toastError } from './core/toast.js';
+import { escapeHtml } from './core/dom.js';
+import { initUpdater } from './services/updater.js';
 
 import home from './pages/home.js';
 import weather from './pages/weather.js';
@@ -19,17 +21,26 @@ import settings from './pages/settings.js';
 
 /**
  * 只注册四个主功能 + 设置。
- * 已下架的模块（SOS / 队友 / 气压 / 装备 / 路书 / AI 对话）
- * 整目录移到了 src/pages/experimental/，不参与构建，
- * 需要时再逐个评估，不放回导航。
+ * 已下架的模块（SOS / 队友 / 气压 / 装备 / 路书 / AI 对话）代码已删除，
+ * 不再保留空壳目录，需要时从 git 历史里取回再评估。
  */
 [home, chase, trail, weather, settings].forEach(registerPage);
+
+/**
+ * 启动闪屏最短展示时长：动画（光环/加载条/文字浮现）需要一点时间才看得见，
+ * 否则启动太快会「闪一下就没了」，反而像卡顿。留足约 0.9s 让动效完整呈现。
+ */
+const BOOT_MIN_MS = 900;
+const bootStartedAt = performance.now();
 
 function hideSplash() {
   const splash = document.getElementById('boot-splash');
   if (!splash) return;
-  splash.classList.add('is-hidden');
-  setTimeout(() => splash.remove(), 600);
+  const remain = Math.max(0, BOOT_MIN_MS - (performance.now() - bootStartedAt));
+  setTimeout(() => {
+    splash.classList.add('is-hidden');
+    setTimeout(() => splash.remove(), 600);
+  }, remain);
 }
 
 function registerServiceWorker() {
@@ -64,6 +75,12 @@ async function boot() {
   await start(shell.pageRoot, 'home');
   hideSplash();
   registerServiceWorker();
+  initUpdater();
+  if (window.Capacitor?.isNativePlatform?.()) {
+    import('./services/liveupdate.js')
+      .then((m) => m.initLiveUpdate())
+      .catch(() => {});
+  }
 
   // 全局错误提示
   window.addEventListener('unhandledrejection', (e) => {
@@ -80,7 +97,7 @@ boot().catch((err) => {
   const splash = document.getElementById('boot-splash');
   if (splash) splash.innerHTML = `<div style="color:#fff;text-align:center;padding:24px">
     <div style="font-size:18px;margin-bottom:8px">应用启动失败</div>
-    <div style="font-size:12px;opacity:.75;max-width:320px">${err.message}</div>
+    <div style="font-size:12px;opacity:.75;max-width:320px">${escapeHtml(err.message || '')}</div>
   </div>`;
   toastError('应用启动失败，请刷新重试');
 });

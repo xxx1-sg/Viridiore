@@ -69,11 +69,15 @@ jobs:
         if: steps.plan.outputs.task == 'all' || steps.plan.outputs.task == 'verify'
         run: node scripts/forecast/report.mjs
 
+      - name: 刷新 README 回测记分牌
+        if: steps.plan.outputs.task == 'all' || steps.plan.outputs.task == 'verify'
+        run: node scripts/forecast/scorecard.mjs --write
+
       - name: 提交
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data
+          git add data README.md
           if git diff --staged --quiet; then
             echo "本次没有新记录（可能已记过账，或再分析数据还没到位）"
             exit 0

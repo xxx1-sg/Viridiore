@@ -115,79 +115,10 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 ::-webkit-scrollbar-thumb:hover { background-color: var(--ink-3); background-clip: content-box; }
 
 /* ============================================================
-   启动闪屏
+   启动闪屏「破晓山谷」加载动画
+   样式已内联进 index.html（关键 CSS，确保首帧正确渲染）。
+   这里不再重复定义，避免与内联样式冲突。
    ============================================================ */
-#boot-splash {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  background: linear-gradient(170deg, #0b1711 0%, #16301f 45%, #3c5f42 78%, #a8794a 100%);
-  transition: opacity 520ms var(--ease-out), visibility 520ms;
-}
-
-#boot-splash.is-hidden {
-  opacity: 0;
-  visibility: hidden;
-}
-
-.boot-sun {
-  position: absolute;
-  top: 46%;
-  left: 50%;
-  width: 130px;
-  height: 130px;
-  margin: -65px 0 0 -65px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 45%, #ffe1a8, #f0b268 55%, rgba(217, 138, 56, 0) 72%);
-  filter: blur(2px);
-  animation: bootSun 2.4s var(--ease-out) infinite alternate;
-}
-
-.boot-ridge {
-  position: absolute;
-  left: -10%;
-  right: -10%;
-  bottom: 0;
-  background: #0d1c14;
-}
-
-.boot-ridge--far {
-  height: 34%;
-  clip-path: polygon(0 62%, 14% 40%, 26% 56%, 41% 26%, 55% 50%, 68% 32%, 82% 52%, 100% 34%, 100% 100%, 0 100%);
-  background: #1c3527;
-  opacity: 0.9;
-}
-
-.boot-ridge--near {
-  height: 26%;
-  clip-path: polygon(0 74%, 18% 48%, 34% 68%, 52% 40%, 70% 66%, 86% 46%, 100% 64%, 100% 100%, 0 100%);
-  background: #0a1710;
-}
-
-.boot-title {
-  position: relative;
-  z-index: 2;
-  font-family: var(--font-display);
-  font-size: 38px;
-  letter-spacing: 0.32em;
-  text-indent: 0.32em;
-  color: #f7f3e6;
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.5);
-  animation: bootTitle 1.2s var(--ease-out) both;
-}
-
-@keyframes bootSun {
-  from { transform: translateY(14px) scale(0.96); opacity: 0.82; }
-  to { transform: translateY(0) scale(1.04); opacity: 1; }
-}
-
-@keyframes bootTitle {
-  from { opacity: 0; transform: translateY(10px); letter-spacing: 0.6em; }
-  to { opacity: 1; transform: none; letter-spacing: 0.32em; }
-}
 
 /* ============================================================
    通用工具类

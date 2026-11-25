@@ -81,14 +81,17 @@ export function companionLine({ weather = null, window: win = null, trails = [],
     const temp = num(weather?.now?.temp);
     const tempBit = Number.isFinite(temp) ? `，现在 ${Math.round(temp)}℃` : '';
 
-    if (win.probability >= 55) {
+    const tone = win.grade?.tone;
+    const isGood = tone ? tone === 'great' || tone === 'good' : win.probability >= 55;
+    const isFair = tone ? tone === 'fair' || tone === 'poor' : win.probability >= 30;
+    if (isGood) {
       return {
         tone: 'sunrise',
         text: `${when}${time !== '--:--' ? ` ${time}` : ''} 前后，${modeName}概率 ${win.probability}%，是接下来几天里最好的窗口${tempBit}。我替你记着了。`,
         source: `${win.providerName || weather?.providerName || '实时预报'} · ${when}`
       };
     }
-    if (win.probability >= 30) {
+    if (isFair) {
       return {
         tone: 'fair',
         text: `${when}${time !== '--:--' ? ` ${time}` : ''} 前后，${modeName}概率 ${win.probability}%。机会不算大，要是本来就要上山，顺手看一眼也好。`,

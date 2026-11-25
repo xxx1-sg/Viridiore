@@ -1,0 +1,56 @@
+{
+  "kind": "calibration",
+  "generatedAt": "2026-11-16T00:37:23.918Z",
+  "basis": "reanalysis",
+  "samples": 2166,
+  "days": 14,
+  "window": {
+    "from": "2026-11-02",
+    "to": "2026-11-15"
+  },
+  "form": "p_calibrated = sigmoid(a * logit(p_model) + b)，a≥0 保持排序",
+  "platt": {
+    "cloudsea": {
+      "a": 0.35,
+      "b": -2.3
+    },
+    "sunrise": {
+      "a": 1,
+      "b": -0.35
+    },
+    "stars": {
+      "a": 0.25,
+      "b": -1.5
+    }
+  },
+  "detail": {
+    "cloudsea": {
+      "n": 854,
+      "baseRate": 0.04215456674473068,
+      "meanPredicted": 0.12943793911007007,
+      "auc": 0.7783720456397718,
+      "brierBefore": 0.061319203747072226,
+      "brierAfter": 0.039541534980219825,
+      "constBrier": 0.04037755924729551
+    },
+    "sunrise": {
+      "n": 854,
+      "baseRate": 0.26229508196721313,
+      "meanPredicted": 0.298524590163935,
+      "auc": 0.6089250283446712,
+      "brierBefore": 0.19221920374707352,
+      "brierAfter": 0.18775750675737637,
+      "constBrier": 0.1934963719430253
+    },
+    "stars": {
+      "n": 458,
+      "baseRate": 0.13537117903930132,
+      "meanPredicted": 0.2347379912663748,
+      "auc": 0.598892147279244,
+      "brierBefore": 0.14346834061135366,
+      "brierAfter": 0.11609648452671942,
+      "constBrier": 0.11704582292481037
+    }
+  },
+  "note": "由 scripts/forecast/calibrate.mjs 从 data/verified 拟合；样本有限（首轮 7 天），样本变多后应重跑。"
+}

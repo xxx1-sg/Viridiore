@@ -4,6 +4,41 @@
 
 四端同源（浏览器 PWA / Windows / Android / iOS），离线可用。
 
+![version](https://img.shields.io/badge/version-2.6.3-5c946e) ![license](https://img.shields.io/badge/license-MIT-e9a95e) ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20PWA%20%7C%20Android%20%7C%20iOS-0a1710)
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/xxx1-sg/Viridiore/main/docs/screenshots/cover.png" alt="晓山青 Viridiore" width="720" />
+</p>
+
+### 界面
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/xxx1-sg/Viridiore/main/docs/screenshots/desktop-home.png" alt="首页 · 今天值不值得上山" width="48%" />
+  <img src="https://raw.githubusercontent.com/xxx1-sg/Viridiore/main/docs/screenshots/desktop-chase.png" alt="追光 · 概率与逐项证据" width="48%" />
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/xxx1-sg/Viridiore/main/docs/screenshots/mobile-home.png" alt="移动端 · 首页" width="24%" />
+  <img src="https://raw.githubusercontent.com/xxx1-sg/Viridiore/main/docs/screenshots/mobile-weather.png" alt="移动端 · 天气" width="24%" />
+</p>
+
+<!-- SCORECARD:START -->
+## 回测记分牌
+
+> 真值 = ERA5 再分析；判的是「气象条件是否成立」，不是「有人看到」。本表由 `npm run ledger:scorecard` 从 `data/ledger.json` 自动生成。
+
+| 指标 | 数值 |
+| --- | --- |
+| 已记录预测 | 504 条 |
+| 已对账 | 0 条（0 天） |
+| 待对账 | 1 天 |
+| 命中率 | — |
+| **Brier** | **—**（越低越好，0.25 = 永远说 50%） |
+
+⏳ **样本积累中**：ERA5 归档约延迟 5 天，首批对账在预测日 +5 天左右才到位。在此之前这里只显示「待对账」，不填任何编造的数字。
+
+<!-- SCORECARD:END -->
+
 ---
 
 ## 一、这个版本只做三件事
@@ -29,6 +64,8 @@ v2.0 之前它想做的事情太多：SOS、队友位置、气压计、装备清
 输出结构是 `logit(P) = logit(月度基准率) + Σ 各项证据`，最后转回概率。界面上同时展示**基准率**和**置信度**，并把每一项加减拉出来给人看——用户有权反驳。
 
 **反馈校准**：用户每次上山后点一下「看到了 / 白跑一趟」，就是一条带标签的样本。样本用收缩估计（`n/(n+8)`）逐步修正概率，全部存在本机 IndexedDB，不上传、不需要账号。这是这个产品唯一的数据飞轮。
+
+**出行方案**：在追光页选定山头后，会给出「出发地 → 登山口 → 山顶」的时间线、自驾 / 公共交通 / 打车三种方式与参考里程耗时，以及随天气变化的装备与安全提示。出发时间由**真实日出 / 日落倒推**，装备与预警按当天降水概率、风力、山顶温度自动追加。距离按坐标直线距离折算、耗时按城市道路平均速度估算，公交 / 地铁站点为人工整理，界面明确标注「仅供参考，以导航与实时班次为准」——不接实时班次，也不写会过期的线路号。
 
 ### 2. 轨迹
 
@@ -126,9 +163,37 @@ npm run desktop:build
 
 > 构建脚本设了 `signAndEditExecutable: false`，改由 `scripts/after-pack.cjs` 在打包后直接调用 `rcedit-x64.exe` 写图标与版本信息。原因：electron-builder 内置流程要下载含 macOS 符号链接的 `winCodeSign` 资源包，在无符号链接权限的 Windows 上必然失败。这样改完无需网络镜像，纯离线可重复构建。
 
+### 应用内更新
+
+- **桌面（Windows）**：内置 `electron-updater`，从 **GitHub Releases** 的 `latest.yml` 检查更新——发现新版本后台下载，完成后弹「重启安装」。仅 **NSIS 安装版** 支持自动更新；**Portable 绿色版不支持**（需手动下载覆盖）。发版时 `.github/workflows/release.yml` 会把 `latest.yml` 与 `*.blockmap` 一并上传。
+- **手机**：iOS 不允许 App 绕过 App Store 自更新原生，**只能热更新网页层或上架商店**；Android / 通用在这里用「**应用内检查更新 + 一键去下载**」（源为仓库最新 Release）。设置页「更新 → 检查更新」可手动触发，启动时也会静默检查一次（点「稍后」会记住该版本不再打扰）。
+- **未签名提醒**：安装包无代码签名，首次安装 / 更新时 Windows SmartScreen 会提示「未知发布者」，选「仍要运行」即可。
+- **（可选）手机静默热更新（Capgo，已接好骨架）**：Android + iOS 都能在应用内**静默更新网页层**（JS/CSS/HTML）；原生/插件/权限变更仍需重新发版。
+
+  ```bash
+  npm i @capgo/capacitor-updater   # 与 Capacitor 6 匹配，用 v6.x
+  npx cap sync
+  ```
+
+  代码已就位：[`src/services/liveupdate.js`](src/services/liveupdate.js)（启动 `notifyAppReady()` + 静默检查下载，下次启动生效）、[`capacitor.config.json`](capacitor.config.json) 的 `CapacitorUpdater` 配置、设置页「检查更新」在原生端走它。
+  更新包发布（GitHub Pages，免费）：
+
+  ```bash
+  npm run build
+  cd dist && zip -r "../site/ota/bundle-2.6.3.zip" . && cd ..
+  node scripts/live-update/manifest.mjs --version 2.6.3 --zip site/ota/bundle-2.6.3.zip
+  # 提交 site/ota/；Pages 会发布 https://xxx1-sg.github.io/Viridiore/ota/updates.json
+  ```
+
+  `updates.json` 含 `version/url/checksum`；App 端比对版本后 `download + next`，**下次冷启动生效**，不打扰当前使用。
+
+  > 托管建议：`updates.json` 与 zip 放在**明确带 CORS 头**的静态托管（Cloudflare Pages / jsDelivr 读 GitHub Release），或用 Capgo 官方服务；GitHub Pages 的 CORS 头不保证，跨域取清单可能失败（代码已用 CapacitorHttp 原生请求兜底）。
+
 ### Android
 
-本机没有 Android SDK，需要在装有 Android Studio 的机器上编译：
+不想自己编译，可直接下载预编译 APK（debug 签名，安装前允许「未知来源」即可）：见 [Release v2.5.0-android](https://github.com/xxx1-sg/Viridiore/releases/tag/v2.5.0-android)。自己出包则需要装有 Android Studio 的机器：
+
+> 仓库里提交的 `android/app/src/main/assets/public` 与 `ios/App/App/public` 只是旧构建快照。打包前务必先 `npm run mobile:sync`（已包含 `npm run build`），否则会把旧网页打进原生包。
 
 ```bash
 npm run build
@@ -184,6 +249,7 @@ src/
 │  ├─ atmos.js              大气物理量：露点、LCL、层结直减率、逆温判定
 │  ├─ chase.js              追光概率模型（核心）
 │  ├─ calibration.js        本地反馈校准
+│  ├─ feedback.js           反馈样本：匿名化 / 校验 / 汇总 / 合并
 │  ├─ companion.js          陪伴层：每日一句 + 山记得你
 │  ├─ intent.js             决策层：自然语言 → 路线
 │  ├─ narrative.js          叙事层：轨迹 → 一句话
@@ -201,8 +267,7 @@ src/
 │  ├─ mapview.js            自绘 Canvas 地图（无外部依赖，离线可用）
 │  └─ shell.js              外壳：导航与数据来源标识
 └─ pages/
-   ├─ home.js  chase.js  trail.js  weather.js  settings.js
-   └─ experimental/         已下架模块（不参与构建，见该目录 README）
+   └─ home.js  chase.js  trail.js  weather.js  settings.js
 
 site/                       官网（纯静态，独立于应用构建）
 ├─ index.html               落地页
@@ -212,21 +277,24 @@ site/                       官网（纯静态，独立于应用构建）
 └─ download/                Windows 安装包副本（已 gitignore）
 ```
 
-规模：34 个 JS 文件约 6,800 行，CSS 约 3,100 行。运行时依赖只有 3 个 Capacitor 包；构建依赖 4 个（Vite / Electron / electron-builder / Capacitor CLI）。
+规模：37 个 JS 文件约 7,400 行，CSS 约 3,100 行。运行时依赖只有 3 个 Capacitor 包；构建依赖 4 个（Vite / Electron / electron-builder / Capacitor CLI）。
 
-### 官网的更新方式
+### 官网的发布方式
 
-官网是纯静态目录，不参与 `npm run build`。应用重新构建后，需要手动把产物同步进去：
+官网 `site/` 是纯静态目录；**网页版应用由 GitHub Actions 在发布时现构建**：
+
+- `.github/workflows/pages.yml` 在 `main` 上改动 `site/`、`src/`、`index.html` 或 `vite.config.js` 时触发：`npm ci && npm run build`，把 `dist/` 覆盖进 `site/app`，再整体发布到 GitHub Pages。
+- 所以线上网页版始终跟 `main` 一致，不需要手动同步；仓库里提交的 `site/app` 只是本地预览用的快照。
+
+本地预览最新网页版：
 
 ```bash
 npm run build
-rm -rf site/app && cp -r dist site/app          # 同步网页版
-rm -f site/download/*.exe
-cp release/XiaoShanQing-*-Setup-x64.exe site/download/     # 同步安装包
-cp release/XiaoShanQing-*-Portable-x64.exe site/download/
+rm -rf site/app && cp -r dist site/app     # 想在本地看最新网页版时手动同步一次
+python -m http.server -d site              # 或 npx serve site
 ```
 
-本地预览用任意静态服务器即可（`python -m http.server` 或 `npx serve site`），直接双击 `site/index.html` 也能看——它没有用 ES module，`file://` 下同样正常。
+直接双击 `site/index.html` 也能看——落地页没有用 ES module，`file://` 下正常。Windows 安装包仍走 Release（`release.yml`），不放进 Pages。
 
 ---
 
@@ -241,11 +309,21 @@ IndexedDB `mossy-dawn`（v2）：
 | `trails` | 轨迹点、统计、剖面 |
 | `feedback` | 追光反馈样本（校准用） |
 | `cache` | 天气缓存，带 TTL |
-| `roadbooks` / `gear` / `contacts` / `pressure` | 下架模块遗留，保留结构但不再写入 |
+| ~~`roadbooks` / `gear` / `contacts` / `pressure`~~ | 下架模块遗留，v2.4.2 起数据库升级到 v3 时已删除 |
 
 偏好存在 `localStorage['mossy.prefs']`，API 配置存在 `localStorage['mossy.config']`。
 
 「设置 → 导出全部数据」可以把轨迹、反馈样本和偏好导成 JSON。
+
+### 反馈样本：导出与汇总（basis: user）
+
+App 里的反馈只在本机，样本很少。为了能让真实样本汇总成规模，加了一条**离线、无账号**的通道：
+
+1. 用户在「设置 → 导出反馈样本（匿名）」导出 JSON——只含山峰 id、模式、日期、预测概率、结果、时间戳，**不含轨迹坐标、设备或账号**；
+2. 把 JSON 放进 `data/inbox/feedback/`，运行 `npm run ledger:feedback` → 校验、按 `sampleKey` 去重、合并进 `data/feedback/merged.json`；
+3. `npm run ledger:report` / `ledger:scorecard` 会把「用户打卡」单列成 **basis: user**，与 ERA5 再分析的 **basis: reanalysis** 分开统计，绝不合并成一个数字。
+
+匿名化的字段白名单写死在 `src/services/feedback.js` 的 `toAnonymousSample()` 里，多余字段一律丢弃；同一个文件导入两次也不会重复计数。
 
 ### 预测台账（仓库里的 `data/`）
 
@@ -257,7 +335,7 @@ App 里的反馈校准只对**你自己**有效，样本永远很少。所以另
 - `data/ledger.json` / `data/ledger.md`：校准曲线、Brier、按提前量和按山的拆分，外加一份「模型体检」。
 
 关键约定：真值只取再分析，**不用预报的 `past_days`**（那是同一套模式自己验自己）；
-判的是「气象条件成立」，不是「有人看到」，用户打卡今后单列 `basis: user` 分开统计。
+判的是「气象条件成立」，不是「有人看到」；用户打卡单列 `basis: user`，与再分析分开统计（见上一节）。
 
 跑了才知道的事：`data/ledger.md` 的「模型体检」当场就暴露了一个结构性偏差——梧桐山的
 天气格点海拔 798 m，而山顶只有 943 m，扣掉最小云厚 160 m 后余量是 **-15 m**，
@@ -279,13 +357,33 @@ CI 在 `.github/workflows/ledger.yml`：21:30 记预测，08:30 对账，自动�
 - **山谷地形未建模**。云底以"谷底海拔与天气格点海拔取低"为参考面起算（v2.4.1 修正了旧版误用格点海拔、导致梧桐山云海永不成立的 bug），但仍未考虑山体具体起伏，"山顶以下 130 米"这类数字仍有几百米量级的误差。
 - **月度基准率是经验值**，不是本地气候统计年鉴。必须靠用户反馈校准。
 - **决策层只认 10 类标签**（日出/日落/云海/星空/海景/溪谷/城市/夜爬/越野跑/重装）。山峰数据集里没有停车场、门票、水源字段，所以不会假装能按这些条件筛选——问到了会直说"暂未收录"。
+- **出行方案不含实时交通**：距离与耗时是从坐标估算的参考值，公交 / 地铁只给站点与换乘方式，不提供班次、票价与实时路况；出行前请以导航与官方信息为准。
 - **叙事层是模板**，不是生成式。想更好看需要接大模型，但那样会引入"编造细节"的风险，暂不做。
 - **Windows 安装包没有代码签名**，首次运行会被 SmartScreen 提示"未知发布者"。要消除需要购买代码签名证书。
-- **模型未经真实样本验证**。目前概率只做过物理自洽性检查，没有用历史实况回测过；校准机制要等真实用户积累样本才生效。
+- **模型未经真实样本验证**。目前概率只做过物理自洽性检查，还没有攒够历史实况回测样本；校准机制要等真实用户积累样本才生效（回测记分牌会如实显示「样本积累中」）。
+- **用户打卡靠手动收件箱汇总**，没有自动上报。愿意贡献的用户导出 JSON、再手动 `npm run ledger:feedback` 合并；样本量取决于有多少人愿意发来，这一点没有捷径。
 
 ---
 
 ## 九、更新日志
+
+### v2.6.3
+
+- **桌面应用内更新**：内置 `electron-updater`，从 GitHub Releases 检查并后台下载、重启安装（NSIS 安装版；便携版需手动更新）
+- **手机端**：应用内检查更新 + 一键下载；可选 Capgo 静默热更新网页层（Android / iOS）
+- **追光分级改为「按模式可行区间」**：云海 / 星空的高位也能显示「值得去」，概率数值本身不变
+- **台账新增先验重估机制**：`npm run ledger:prior`（样本达标才生效），先验由 `src/data/priors.js` 单一数据源提供
+- 新增 版本比较 / 更新 / 先验 相关单元测试（测试总数 73）
+
+### v2.5.0
+
+- **Android APK 构建上线**：新增 `.github/workflows/android-apk.yml`，在 CI 用 Capacitor 构建可侧载的 debug APK 并发布到 Release（`v2.5.0-android`）；官网手机端新增 APK 下载入口
+- **官网文案修正**：逆温说明改为「925 / 850 hPa 模式层结」口径（此前误写为「估算 / 拿不到 850 hPa」）；补 `canonical` / `og:url`；版本号升到 2.5.0
+- **清理下架模块死代码**：删除 `src/pages/experimental/`、`src/services/experimental/`、`src/data/experimental/`（11 个文件、约 2,000 行）与 `core/store.js` 里对应的路书 / 装备 / 联系人 / 气压仓库；IndexedDB 升到 v3，升级时删除这些遗留 object store
+- **回测记分牌**：README 顶部新增「回测记分牌」自动区块（`scripts/forecast/scorecard.mjs`），从 `data/ledger.json` 渲染 Brier / 命中率 / 按提前量拆分；无对账数据时只写「样本积累中」，台账 CI 对账后自动刷新
+- **单元测试与 CI**：新增 `test/`（atmos / chase / forecast / feedback 共 4 组 `node:test`），新增 `.github/workflows/ci.yml` 在 push / PR 跑 `npm test`
+- **反馈样本匿名导出**：设置页新增「导出反馈样本（匿名）」；新增 `src/services/feedback.js`（白名单匿名化 / 校验 / 汇总 / 幂等合并）与 `scripts/forecast/ingest-feedback.mjs`（把导出文件并入 `data/feedback/merged.json`，`npm run ledger:feedback`）；用户打卡以 `basis: user` 在台账与记分牌中单列，与 ERA5 再分析分开
+- **官网**：`site/` 通过 GitHub Pages 发布（`.github/workflows/pages.yml`），仓库补齐 LICENSE、description、topics 与界面截图
 
 ### v2.4.1
 
@@ -345,7 +443,7 @@ CI 在 `.github/workflows/ledger.yml`：21:30 记预测，08:30 对账，自动�
 - 新增叙事层与 Canvas 光之卡片（可保存 / 系统分享）
 - 新增"没看到"的补偿提示：直接给下一个窗口，而不是道歉
 - 首页重做为"今天值不值得上山"，只保留一个核心数字
-- 移除 SOS / 队友 / 气压 / 装备 / 路书 / AI 聊天页，归档到 `experimental/`
+- 移除 SOS / 队友 / 气压 / 装备 / 路书 / AI 聊天页，归档到 `experimental/`（该目录已于 v2.4.2 彻底删除）
 - 气象预警并入天气页横幅
 - 修复和风 7 日预报 `pop` 字段恒为 0 的 bug
 - 演示数据在顶栏与设置页明确标注
@@ -362,6 +460,6 @@ CI 在 `.github/workflows/ledger.yml`：21:30 记预测，08:30 对账，自动�
 
 ## 许可
 
-MIT。山峰坐标与路线数据仅供参考，出行前请以官方信息为准。
+MIT（见 [LICENSE](LICENSE)）。山峰坐标与路线数据仅供参考，出行前请以官方信息为准。
 
 无痕山林：只带走照片，只留下脚印。

@@ -1,13 +1,18 @@
 {
   "name": "mossy-dawn",
   "productName": "晓山青",
-  "version": "2.4.1",
+  "version": "2.6.9",
   "description": "晓山青 Viridiore — 户外智能出行伴侣",
   "author": "Mossy Dawn",
   "license": "MIT",
   "private": true,
   "type": "module",
   "main": "desktop/main.cjs",
+  "repository": { "type": "git", "url": "https://github.com/xxx1-sg/Viridiore.git" },
+  "homepage": "https://xxx1-sg.github.io/Viridiore/",
+  "bugs": { "url": "https://github.com/xxx1-sg/Viridiore/issues" },
+  "engines": { "node": ">=18" },
+  "keywords": ["cloud-sea", "hiking", "shenzhen", "weather", "pwa", "electron", "forecast"],
   "scripts": {
     "dev": "vite",
     "build": "node scripts/generate-icons.mjs && vite build && node scripts/generate-sw.mjs",
@@ -20,21 +25,28 @@
     "mobile:sync": "npm run build && npx cap sync",
     "mobile:android": "npm run build && npx cap sync android && npx cap open android",
     "mobile:ios": "npm run build && npx cap sync ios && npx cap open ios",
+    "test": "node --test",
     "ledger:collect": "node scripts/forecast/collect.mjs",
     "ledger:verify": "node scripts/forecast/verify.mjs",
     "ledger:report": "node scripts/forecast/report.mjs",
-    "ledger": "node scripts/forecast/collect.mjs && node scripts/forecast/verify.mjs && node scripts/forecast/report.mjs"
+    "ledger:scorecard": "node scripts/forecast/scorecard.mjs --write",
+    "ledger:feedback": "node scripts/forecast/ingest-feedback.mjs",
+    "ledger:calibrate": "node scripts/forecast/calibrate.mjs --write",
+    "ledger:prior": "node scripts/forecast/prior.mjs",
+    "ledger": "node scripts/forecast/collect.mjs && node scripts/forecast/verify.mjs && node scripts/forecast/report.mjs && node scripts/forecast/scorecard.mjs --write"
   },
   "devDependencies": {
+    "@capacitor/android": "^6.2.0",
     "@capacitor/cli": "^6.2.0",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/ios": "^6.2.0",
+    "@capgo/capacitor-updater": "^6.0.0",
     "electron": "^33.2.0",
     "electron-builder": "^25.1.8",
     "vite": "^6.0.7"
   },
   "dependencies": {
-    "@capacitor/android": "^6.2.0",
-    "@capacitor/core": "^6.2.0",
-    "@capacitor/ios": "^6.2.0"
+    "electron-updater": "^6.3.9"
   },
   "build": {
     "appId": "com.mossydawn.viridiore",
@@ -44,6 +56,13 @@
       "output": "release",
       "buildResources": "build"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "xxx1-sg",
+        "repo": "Viridiore"
+      }
+    ],
     "files": [
       "dist/**/*",
       "desktop/**/*",

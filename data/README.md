@@ -61,4 +61,16 @@ npm run ledger:verify    # 对账（ERA5 延迟约 5 天，前几天会一直是
 npm run ledger:report    # 重建 ledger.json / ledger.md
 ```
 
+### 先验重估（月度基准率）
+
+对账（`data/verified/`）攒够后，可用实测成立率替换经验先验（方案 B）：
+
+```bash
+npm run ledger:prior              # 只报告，不写盘
+npm run ledger:prior -- --write   # 达标才重写 src/data/priors.js
+```
+
+门槛：总量 ≥200 条、覆盖 ≥3 个月、每月每模式 ≥30 条；不足则**保持经验先验不动**。
+改完先验务必再跑一次 `npm run ledger:calibrate` 重新拟合校准，否则旧的 b 偏移会重复修正。
+
 CI 在 `.github/workflows/ledger.yml`：每天 21:30 记预测，08:30 对账，自动提交。

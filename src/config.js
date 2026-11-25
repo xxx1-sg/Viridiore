@@ -15,6 +15,13 @@ const DEFAULTS = {
     version: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.1.0',
     city: '深圳',
     location: { lat: 22.5431, lon: 114.0579, name: '深圳' }
+  },
+  /**
+   * 轨迹地图底图。默认高德（国内加载快、中文标注）。
+   * 可选 'amap' | 'satellite' | 'osm' | 'none'（无底图，纯地形色）。
+   */
+  map: {
+    provider: 'amap'
   }
 };
 

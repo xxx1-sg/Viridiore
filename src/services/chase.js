@@ -32,15 +32,17 @@ import {
   logit
 } from './atmos.js';
 import { sunTimes, sunriseAzimuth, facingSlopeLabel } from './sun.js';
+import { PRIORS } from '../data/priors.js';
 
 /**
  * 月度基准率（先验）
  * 云海需要"前期降水供湿 + 晴夜辐射降温 + 静风"，华南只在干季成立；
  * 夏季湿热但对流旺盛、逆温弱，云海反而少。
  */
-const PRIOR_CLOUDSEA = [0.18, 0.2, 0.16, 0.1, 0.06, 0.03, 0.02, 0.02, 0.04, 0.09, 0.16, 0.19];
-const PRIOR_SUNRISE = [0.52, 0.46, 0.4, 0.32, 0.26, 0.2, 0.22, 0.22, 0.28, 0.4, 0.48, 0.52];
-const PRIOR_STARS = [0.42, 0.36, 0.28, 0.2, 0.14, 0.1, 0.12, 0.12, 0.18, 0.3, 0.38, 0.42];
+// 先验来自可重估的数据模块：默认=内置经验值；回测样本足够后由 scripts/forecast/prior.mjs 覆盖
+const PRIOR_CLOUDSEA = PRIORS.cloudsea;
+const PRIOR_SUNRISE = PRIORS.sunrise;
+const PRIOR_STARS = PRIORS.stars;
 
 export const MODES = {
   cloudsea: {
@@ -68,6 +70,32 @@ export const MODES = {
     windowLabel: '天黑后 — 月出前'
   }
 };
+
+/* ---------------- 回测校准层（v2.6.2） ---------------- */
+
+/**
+ * 概率校准：p_calibrated = sigmoid(a * logit(p) + b)，a ≥ 0 保持排序（不破坏区分度）。
+ * 拟合来源：data/verified 2026-11-02 ~ 11-15，共 2,166 条 ERA5 再分析对账（星空为夜间口径 RULE_VERSION 2）；
+ * 由 scripts/forecast/calibrate.mjs 拟合，结果见 data/calibration.json。
+ *
+ *   · cloudsea: a=0.35, b=-2.30 —— AUC 0.778；Brier 0.061→0.040（= 恒定基准 0.040，保住排序）
+ *   · sunrise : a=1.00, b=-0.35 —— AUC 0.609；Brier 0.192→0.188（优于恒定基准 0.193）
+ *   · stars   : a=0.25, b=-1.50 —— 夜间口径后 AUC 0.599（从 0.35 回升）；Brier 0.143→0.116（优于恒定基准 0.117）
+ *
+ * 局限：样本仍有限；样本继续增多后应重跑 calibrate.mjs 并更新此表。
+ */
+export const MODE_CALIBRATION = {
+  cloudsea: { a: 0.35, b: -2.3 },
+  sunrise: { a: 1, b: -0.35 },
+  stars: { a: 0.25, b: -1.5 }
+};
+
+function calibrateProbability(mode, p) {
+  const c = MODE_CALIBRATION[mode];
+  if (!c) return p;
+  const cal = c.a === 0 ? sigmoid(c.b) : sigmoid(c.a * logit(p) + c.b);
+  return clamp(cal, 0.02, 0.96);
+}
 
 /* ---------------- 云层几何 ---------------- */
 
@@ -307,22 +335,31 @@ export function assessDay(day, mode = 'cloudsea', ctx = {}) {
     }
 
     // 云海之上的日出是加分项：光线在云面上扩散，观感完全不同
-    if (Number.isFinite(cloudseaProb) && cloudseaProb >= 55) {
+    if (Number.isFinite(cloudseaProb) && cloudseaProb >= GRADE_THRESHOLDS.cloudsea.good) {
       add('seabonus', '云海叠加', `${cloudseaProb}%`, 0.7, '云海概率较高，日出会打在云面上');
     }
   }
 
   if (mode === 'stars') {
+    /*
+     * 星空必须用**夜间窗口**（20:00–次日 06:00），不能拿日出时的云量冒充。
+     * v2.6.1 起模型输入与 ERA5 对账都改用同一夜间窗口（RULE_VERSION 2）。
+     */
+    const nightCloud = num(s.nightCloud, cloud);
+    const nightLow = num(s.nightCloudLow, cloudLow);
+    const nightHigh = num(s.nightCloudHigh, s.cloudHigh, cloud);
+    const nightRh = num(s.nightRh, s.rh850, geo.rh850);
+    const nightVis = num(s.nightVis, vis);
     // 高云薄但会糊掉银河，低云则直接挡死，权重分开
-    const highBlock = clamp01((num(s.cloudHigh, cloud) - 25) / 50);
-    add('cloud', '总云量', `${cloud}%`, -1.7 * clamp01((cloud - 10) / 55) - 0.5 * highBlock, cloud > 60 ? '云量偏多，银河基本看不到' : '天空较为通透');
-    add('cloudlow', '低云雾', `${Math.round(cloudLow)}%`, -0.9 * clamp01((cloudLow - 20) / 40), cloudLow > 60 ? '低云或雾压顶，星点被完全遮挡' : '低层无遮挡');
+    const highBlock = clamp01((nightHigh - 25) / 50);
+    add('cloud', '夜间总云量', `${nightCloud}%`, -1.7 * clamp01((nightCloud - 10) / 55) - 0.5 * highBlock, nightCloud > 60 ? '夜间云量偏多，银河基本看不到' : '夜间天空较为通透');
+    add('cloudlow', '夜间低云雾', `${Math.round(nightLow)}%`, -0.9 * clamp01((nightLow - 20) / 40), nightLow > 60 ? '低云或雾压顶，星点被完全遮挡' : '低层无遮挡');
     add('precip', '降水', `${precip} mm`, -1.6 * clamp01(precip / 5) - 0.5 * clamp01((pop - 30) / 70), precip > 0 ? '有降水，不适合观星' : '无降水');
-    add('humidity', '水汽', `${Math.round(num(s.rh850, geo.rh850))}%`, -0.9 * clamp01((num(s.rh850, geo.rh850) - 65) / 30), num(s.rh850, geo.rh850) > 85 ? '中低层水汽重，星光被散射变暗' : '空气干爽，星点清晰');
+    add('humidity', '夜间水汽', `${Math.round(nightRh)}%`, -0.9 * clamp01((nightRh - 65) / 30), nightRh > 85 ? '夜间水汽重，星光被散射变暗' : '空气干爽，星点清晰');
     const moon = clamp01(ctx.moonIllum ?? 0);
     add('moon', '月光干扰', `${Math.round(moon * 100)}%`, -0.6 * moon, moon > 0.6 ? '接近满月，暗弱天体被压制' : '月光干扰小');
-    add('vis', '能见度', `${vis} km`, 0.5 * clamp01((vis - 12) / 16), vis < 10 ? '能见度一般，地平附近星点稀少' : '通透度好');
-    add('wind', '风力', `${Math.round(wind)} 级`, -0.3 * clamp01((wind - 3) / 4), wind >= 5 ? '风大，长曝光会抖' : '风力平稳');
+    add('vis', '能见度', `${nightVis} km`, 0.5 * clamp01((nightVis - 12) / 16), nightVis < 10 ? '能见度一般，地平附近星点稀少' : '通透度好');
+    add('wind', '夜间风力', `${Math.round(wind)} 级`, -0.3 * clamp01((wind - 3) / 4), wind >= 5 ? '风大，长曝光会抖' : '风力平稳');
   }
 
   const delta = factors.reduce((sum, f) => sum + f.delta, 0);
@@ -331,6 +368,8 @@ export function assessDay(day, mode = 'cloudsea', ctx = {}) {
   const calibOffset = Number(ctx.calibration?.offset) || 0;
 
   let probability = sigmoid(logit(prior) + delta + calibOffset);
+  // 用回测拟合的保序校准把原始概率映射到更可信的刻度（见 MODE_CALIBRATION）
+  probability = calibrateProbability(mode, probability);
   probability = clamp(probability, 0.02, 0.96);
   const prob = Math.round(probability * 100);
 
@@ -339,7 +378,7 @@ export function assessDay(day, mode = 'cloudsea', ctx = {}) {
   return {
     probability: prob,
     baseRate: Math.round(prior * 100),
-    grade: gradeOf(prob),
+    grade: gradeForMode(mode, prob),
     factors: sorted,
     pros: sorted.filter((f) => f.tone === 'pro').slice(0, 3),
     cons: sorted.filter((f) => f.tone === 'con').slice(0, 3),
@@ -348,7 +387,7 @@ export function assessDay(day, mode = 'cloudsea', ctx = {}) {
     geometry: geo,
     inversion: inv,
     sounding: s,
-    verdict: verdictOf(prob),
+    verdict: verdictForMode(mode, prob),
     mode
   };
 }
@@ -369,6 +408,42 @@ export function verdictOf(prob) {
   if (prob >= 38) return '要看运气';
   if (prob >= 22) return '机会不大';
   return '不值得专程跑一趟';
+}
+
+/* ---------------- 方案 A：按模式各自的可行区间分级 ---------------- */
+
+/**
+ * 为什么不能再用一套绝对阈值：
+ * 校准后各模式能达到的概率区间差别很大——云海/星空被压到约 40% 上限，日出仍能到约 98%。
+ * 沿用 72/55/38/22 一把尺子，会让云海/星空几乎永远停在「别抱期待」，与「值得去」的产品承诺冲突。
+ * 这里**按每个模式实际能达到的上限缩放阈值**（概率数值本身不改，只改分级口径）。
+ * 阈值集中在此，便于以后调参。
+ */
+export const GRADE_THRESHOLDS = {
+  cloudsea: { great: 30, good: 22, fair: 14, poor: 7 },
+  sunrise: { great: 72, good: 55, fair: 38, poor: 22 },
+  stars: { great: 32, good: 24, fair: 16, poor: 8 }
+};
+
+export function gradeForMode(mode, prob) {
+  const t = GRADE_THRESHOLDS[mode] || GRADE_THRESHOLDS.sunrise;
+  if (prob >= t.great) return { label: '值得去', tone: 'great' };
+  if (prob >= t.good) return { label: '可以赌', tone: 'good' };
+  if (prob >= t.fair) return { label: '看运气', tone: 'fair' };
+  if (prob >= t.poor) return { label: '别抱期待', tone: 'poor' };
+  return { label: '建议改期', tone: 'bad' };
+}
+
+const VERDICT_BY_TONE = {
+  great: '大概率能看到',
+  good: '有一半以上把握',
+  fair: '要看运气',
+  poor: '机会不大',
+  bad: '不值得专程跑一趟'
+};
+
+export function verdictForMode(mode, prob) {
+  return VERDICT_BY_TONE[gradeForMode(mode, prob).tone];
 }
 
 /**
@@ -432,6 +507,22 @@ export function relativeDay(index, day) {
   return ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][d.getDay()] || dateLabel(day || {});
 }
 
+/**
+ * 某一天的"追光窗口"是否已经过去。
+ * · 未来日（index > 0）永不过期；
+ * · 云海 / 日出：以当日日出 + 30 分钟为界；
+ * · 星空：按"今晚"算，白天也不算过期（当晚还来得及）。
+ * 用于：选"最佳窗口"时跳过已过去的今天，避免把抓不到的机会当成希望。
+ */
+export function isWindowPast(day, index, mode = 'cloudsea', mountain = {}, now = Date.now()) {
+  if (index > 0) return false;
+  if (mode === 'stars') return false;
+  const d = day?.dateObj instanceof Date ? day.dateObj : new Date(day?.date || now);
+  const sun = sunTimes(d, mountain.lat ?? 22.58, mountain.lon ?? 114.2);
+  if (!sun.sunrise) return false;
+  return now > sun.sunrise.getTime() + 30 * 60000;
+}
+
 /** 山顶温度估算：干绝热递减率取 0.6 ℃/100 m */
 export function summitTemp(day, elevation) {
   const base = (Number(day.max) + Number(day.min)) / 2;
@@ -463,10 +554,11 @@ export function advice(best, mode = 'cloudsea', mountain = {}) {
   }
 
   const time = fmtHM(sun.sunrise);
+  const tone = best.grade?.tone;
   const action =
-    best.probability >= 72
+    tone === 'great' || (!tone && best.probability >= 72)
       ? `值得为它早起。建议 ${fmtHM(new Date(sun.sunrise.getTime() - 90 * 60000))} 前从山脚出发`
-      : best.probability >= 55
+      : tone === 'good' || (!tone && best.probability >= 55)
         ? `可以去，但留个 B 计划。${fmtHM(new Date(sun.sunrise.getTime() - 90 * 60000))} 前上山`
         : `如果本来就要上山，可以顺手看一眼；不建议专程跑`;
 
@@ -492,7 +584,9 @@ export function lightWindow(sun, mode = 'sunrise') {
 export function compensation({ all = [], mode = 'cloudsea', todayProb }) {
   if (!all.length) return null;
   const today = Number.isFinite(todayProb) ? todayProb : all[0].probability;
-  const next = all.find((r, i) => i > 0 && r.probability >= Math.max(55, today + 15));
+  // "更好的窗口"用该模式的"可以赌"线，而不是固定的 55（云海上限本就到不了 55）
+  const goodLine = GRADE_THRESHOLDS[mode]?.good ?? 55;
+  const next = all.find((r, i) => i > 0 && r.probability >= Math.max(goodLine, today + 15));
 
   if (!next) {
     return {

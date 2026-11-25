@@ -44,8 +44,15 @@ const PRECACHE = ${JSON.stringify(urls, null, 2)};
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE)
-      .then((cache) => cache.addAll(PRECACHE))
-      .then(() => self.skipWaiting())
+      .then(async (cache) => {
+        // 逐条预缓存：单个资源失败（例如某张图 404）不应让整个离线缓存作废
+        await Promise.all(
+          PRECACHE.map((url) =>
+            cache.add(url).catch((err) => console.warn('[sw] 预缓存跳过', url, err))
+          )
+        );
+        await self.skipWaiting();
+      })
       .catch((err) => console.warn('[sw] 预缓存失败', err))
   );
 });

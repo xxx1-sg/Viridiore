@@ -28,6 +28,10 @@
 	<string>后台持续定位用于长距离徒步的轨迹记录，仅在开始记录后启用。</string>
 	<key>NSMotionUsageDescription</key>
 	<string>用于识别行进状态以提高轨迹与计步精度。</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

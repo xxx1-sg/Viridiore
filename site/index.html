@@ -12,6 +12,9 @@
 <meta property="og:title" content="晓山青 Viridiore" />
 <meta property="og:description" content="不问天气好不好，只回答值不值得去。" />
 <meta property="og:image" content="assets/desktop-home.png" />
+<meta property="og:url" content="https://xxx1-sg.github.io/Viridiore/" />
+<meta property="og:site_name" content="晓山青 Viridiore" />
+<link rel="canonical" href="https://xxx1-sg.github.io/Viridiore/" />
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -81,7 +84,7 @@
       明早哪座山、几点出发、多大几率看到云海——算成一个百分比。算不出来，就直说。
     </p>
     <div class="hero__actions">
-      <a class="btn btn--primary" href="https://github.com/xxx1-sg/Viridiore/releases/download/v2.4.1/XiaoShanQing-2.4.1-Setup-x64.exe" rel="noopener">
+      <a class="btn btn--primary" href="https://github.com/xxx1-sg/Viridiore/releases/download/v2.6.2/XiaoShanQing-2.6.2-Setup-x64.exe" rel="noopener">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16" /></svg>
         下载 Windows 版
       </a>
@@ -90,10 +93,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" /></svg>
       </a>
     </div>
-    <p class="hero__meta">v2.4.1 &nbsp;·&nbsp; Windows 10 / 11 64 位 &nbsp;·&nbsp; 82 MB &nbsp;·&nbsp; 无需注册账号</p>
+    <p class="hero__meta">v2.6.2 &nbsp;·&nbsp; Windows 10 / 11 64 位 &nbsp;·&nbsp; 78 MB &nbsp;·&nbsp; 无需注册账号</p>
     <p class="hero__alt">
       安装包托管在 GitHub Release：<strong>支持断点续传</strong>，下到一半断了能接着下。国内网络可能偏慢，
-      也可<a href="https://github.com/xxx1-sg/Viridiore/releases/tag/v2.4.1" rel="noopener">打开 release 页面</a>手动选包。
+      也可<a href="https://github.com/xxx1-sg/Viridiore/releases/tag/v2.6.2" rel="noopener">打开 release 页面</a>手动选包。
     </p>
   </div>
 
@@ -181,9 +184,9 @@
     </div>
 
     <p class="factor-note">
-      逆温这一项是<strong>估算</strong>：真正的判据是 850 hPa 的温湿探空资料，免费天气接口拿不到。
-      我们用昼夜温差、夜间云量、风力做代理指标，并在界面上标明「置信度」——
-      数据不够好时，它会主动告诉你这个概率别太当真。
+      逆温这一项不是拍脑袋的代理分，而是用 925 hPa 与 850 hPa 的实际温度直减率算出来的：
+      低于 6.5 ℃/km 判为偏稳定，为负就是逆温。它来自<strong>数值模式同化场</strong>而不是本地探空实测，
+      所以界面同时给出「置信度」——数据不够好时，它会主动告诉你这个概率别太当真。
     </p>
   </div>
 </section>
@@ -272,7 +275,7 @@
     <p class="sec-label center light">下载</p>
     <h2 class="sec-title center light">选一个装到你机器上</h2>
     <p class="sec-sub center light">
-      装完就能看真实预报：不用注册、不用填 Key、不用登录。追光的概率由 925 / 850 hPa 的实测层结算出来，
+      装完就能看真实预报：不用注册、不用填 Key、不用登录。追光的概率由 925 / 850 hPa 的模式层结（温度直减率）算出来，
       每一项加减都能展开看到原始数值——算不出来的时候，它会直说算不出来。
     </p>
 
@@ -289,15 +292,15 @@
         <p>标准安装向导，可选安装目录，自动创建桌面与开始菜单快捷方式。适合长期使用。</p>
         <ul class="dl-card__list">
           <li>Windows 10 / 11 · 64 位</li>
-          <li>82 MB · 安装后约 250 MB</li>
+          <li>78 MB · 安装后约 250 MB</li>
           <li>卸载走系统「应用和功能」</li>
         </ul>
-        <a class="btn btn--primary btn--block" href="https://github.com/xxx1-sg/Viridiore/releases/download/v2.4.1/XiaoShanQing-2.4.1-Setup-x64.exe" rel="noopener">
+        <a class="btn btn--primary btn--block" href="https://github.com/xxx1-sg/Viridiore/releases/download/v2.6.2/XiaoShanQing-2.6.2-Setup-x64.exe" rel="noopener">
           下载安装包
           <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16" /></svg>
         </a>
-        <p class="dl-card__hash">XiaoShanQing-2.4.1-Setup-x64.exe</p>
-        <a class="dl-card__alt" href="https://github.com/xxx1-sg/Viridiore/releases/tag/v2.4.1" rel="noopener">
+        <p class="dl-card__hash">XiaoShanQing-2.6.2-Setup-x64.exe</p>
+        <a class="dl-card__alt" href="https://github.com/xxx1-sg/Viridiore/releases/tag/v2.6.2" rel="noopener">
           打开 Release 页面 · 支持断点续传
         </a>
       </article>
@@ -314,15 +317,15 @@
         <p>单文件，双击即用，不写注册表。丢进 U 盘换台电脑也能跑。</p>
         <ul class="dl-card__list">
           <li>Windows 10 / 11 · 64 位</li>
-          <li>82 MB · 首次启动解压约 3 秒</li>
+          <li>78 MB · 首次启动解压约 3 秒</li>
           <li>删掉文件即卸载干净</li>
         </ul>
-        <a class="btn btn--ghost btn--block" href="https://github.com/xxx1-sg/Viridiore/releases/download/v2.4.1/XiaoShanQing-2.4.1-Portable-x64.exe" rel="noopener">
+        <a class="btn btn--ghost btn--block" href="https://github.com/xxx1-sg/Viridiore/releases/download/v2.6.2/XiaoShanQing-2.6.2-Portable-x64.exe" rel="noopener">
           下载绿色版
           <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16" /></svg>
         </a>
-        <p class="dl-card__hash">XiaoShanQing-2.4.1-Portable-x64.exe</p>
-        <a class="dl-card__alt" href="https://github.com/xxx1-sg/Viridiore/releases/tag/v2.4.1" rel="noopener">
+        <p class="dl-card__hash">XiaoShanQing-2.6.2-Portable-x64.exe</p>
+        <a class="dl-card__alt" href="https://github.com/xxx1-sg/Viridiore/releases/tag/v2.6.2" rel="noopener">
           打开 Release 页面 · 支持断点续传
         </a>
       </article>
@@ -353,17 +356,19 @@
     <div class="dl-mobile">
       <h3>手机端</h3>
       <p>
-        安卓与 iOS 的原生工程已经建好并同步完毕，但<strong>没有预编译的安装包</strong>——
-        编译需要 Android Studio 与 Xcode（macOS）。如果你要自己出包，仓库里有完整步骤。
+        <strong>安卓</strong>：可直接下载 APK 安装（debug 签名，安装前需在设置里允许「安装未知来源应用」）；也可以直接用浏览器打开网页版、添加到主屏幕。
       </p>
-      <p>
-        不想折腾的话，直接用手机浏览器打开网页版，添加到主屏幕，功能是一致的。
+      <a class="btn btn--primary btn--sm" href="https://github.com/xxx1-sg/Viridiore/releases/download/v2.6.2-android/XiaoShanQing-2.6.2-android-debug.apk" rel="noopener">
+        下载 Android APK
+      </a>
+      <p style="margin-top:14px">
+        <strong>iPhone / iPad</strong>：用 Safari 打开网页版，点底部「分享 → 添加到主屏幕」即可当 App 用。iOS 暂不提供 ipa（需要 Apple 开发者账号 + macOS）。
       </p>
       <a class="btn btn--ghost btn--sm" href="app/index.html" target="_blank" rel="noopener">手机浏览器打开</a>
     </div>
 
     <p class="dl-warn">
-      <strong>关于下载速度</strong>：安装包 82 MB，走 GitHub Release，<strong>支持断点续传</strong>——
+      <strong>关于下载速度</strong>：安装包 78 MB，走 GitHub Release，<strong>支持断点续传</strong>——
       断了重来会接着上次的进度，不会白下。GitHub 在国内时快时慢，慢的时候挂一会儿再回来看，
       进度是保住的。
     </p>
@@ -389,15 +394,15 @@
       <li>
         <span class="honest__mark">01</span>
         <div>
-          <b>逆温是估算，不是实测</b>
-          <p>850 hPa 温湿需要探空资料，免费接口没有。用代理指标替代，界面会标出置信度。</p>
+          <b>逆温用模式层结，不是探空实测</b>
+          <p>925 / 850 hPa 温度取自数值模式同化场，山区实际层结会偏差几度：逆温有无判得住，精确到米判不住。</p>
         </div>
       </li>
       <li>
         <span class="honest__mark">02</span>
         <div>
-          <b>没有做过历史回测</b>
-          <p>基准率来自华南云海的季节经验，不是标定过的统计模型。样本量还不够。</p>
+          <b>回测样本还不够</b>
+          <p>预测台账每天记一份、用 ERA5 再分析对账；首批真实样本到位前，校准曲线只显示「样本积累中」。</p>
         </div>
       </li>
       <li>
@@ -439,7 +444,7 @@
   <div class="wrap foot__inner">
     <div class="foot__brand">
       <span class="foot__name">晓山青</span>
-      <span class="foot__sub">VIRIDIORE · v2.4.1</span>
+      <span class="foot__sub">VIRIDIORE · v2.6.2</span>
     </div>
     <nav class="foot__links">
       <a href="#how">模型</a>

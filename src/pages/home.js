@@ -252,7 +252,7 @@ export default {
 
       const facts = [];
       target.factors.slice(0, 2).forEach((f) => facts.push({ tone: f.tone, text: f.detail || `${f.label} ${f.value}` }));
-      if (target.probability >= 22) {
+      if (target.grade && target.grade.tone !== 'bad') {
         const temp = summitTemp(target.day, mountain.elevation);
         if (temp != null) facts.push({ tone: 'neutral', text: `山顶约 ${temp} ℃` });
       }
@@ -290,7 +290,7 @@ export default {
 
       /* 补偿：今天不值得去，就给下一个窗口 */
       const comp = compensation({ all: ranked.all, mode: 'cloudsea', todayProb: target.probability });
-      const show = target.probability < 55 && comp;
+      const show = target.grade && !['great', 'good'].includes(target.grade.tone) && comp;
       $('#compensateSection').hidden = !show;
       if (show) {
         $('#compensateCard').innerHTML = `
@@ -359,6 +359,8 @@ export default {
       const sun = sunTimes(dateObj, mountain.lat, mountain.lon);
       return {
         probability: target.probability,
+        grade: target.grade,
+        verdict: target.verdict,
         index: target.index,
         mode: 'cloudsea',
         day: { dateObj, sunrise: sun.sunrise },

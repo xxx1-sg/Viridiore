@@ -93,115 +93,6 @@ export const trailRepo = {
   }
 };
 
-/* ---------------- 路书 ---------------- */
-export const roadbookRepo = {
-  async list() {
-    const items = await safeAll('roadbooks');
-    return items.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-  },
-  async save(rb) {
-    const record = {
-      id: rb.id || uid('rb'),
-      name: rb.name || '未命名路书',
-      mountain: rb.mountain || '',
-      desc: rb.desc || '',
-      distance: Number(rb.distance) || 0,
-      ascent: Number(rb.ascent) || 0,
-      hours: Number(rb.hours) || 0,
-      difficulty: Number(rb.difficulty) || 2,
-      season: rb.season || '四季',
-      tone: rb.tone || 'moss',
-      createdAt: rb.createdAt || Date.now()
-    };
-    await safePut('roadbooks', record);
-    bus.emit('roadbook:change', record);
-    return record;
-  },
-  async remove(id) {
-    await idb.remove('roadbooks', id).catch(() => {});
-    bus.emit('roadbook:change', null);
-  }
-};
-
-/* ---------------- 装备 ---------------- */
-export const GEAR_GROUPS = {
-  survival: { name: '生存保障', icon: 'shield' },
-  clothing: { name: '穿着', icon: 'thermometer' },
-  gear: { name: '装备', icon: 'backpack' },
-  food: { name: '饮食', icon: 'droplet' }
-};
-
-export const gearRepo = {
-  async list() {
-    const items = await safeAll('gear');
-    return items;
-  },
-  async save(item) {
-    const record = {
-      id: item.id || uid('gear'),
-      name: item.name,
-      qty: item.qty || 1,
-      group: item.group || 'gear',
-      checked: !!item.checked,
-      order: item.order ?? Date.now()
-    };
-    await safePut('gear', record);
-    bus.emit('gear:change', record);
-    return record;
-  },
-  async bulkSave(items) {
-    await idb.bulkPut('gear', items).catch(() => {});
-    bus.emit('gear:change', items);
-  },
-  async remove(id) {
-    await idb.remove('gear', id).catch(() => {});
-    bus.emit('gear:change', null);
-  },
-  async clear() {
-    await idb.clear('gear').catch(() => {});
-    bus.emit('gear:change', []);
-  }
-};
-
-/* ---------------- 紧急联系人 ---------------- */
-export const contactRepo = {
-  async list() {
-    return safeAll('contacts');
-  },
-  async save(contact) {
-    const record = {
-      id: contact.id || uid('contact'),
-      name: contact.name,
-      phone: contact.phone,
-      relation: contact.relation || '亲友',
-      primary: !!contact.primary
-    };
-    await safePut('contacts', record);
-    bus.emit('contact:change', record);
-    return record;
-  },
-  async remove(id) {
-    await idb.remove('contacts', id).catch(() => {});
-    bus.emit('contact:change', null);
-  }
-};
-
-/* ---------------- 气压历史 ---------------- */
-export const pressureRepo = {
-  async list(limit = 120) {
-    const items = await safeAll('pressure');
-    return items.sort((a, b) => a.ts - b.ts).slice(-limit);
-  },
-  async push(value, ts = Date.now()) {
-    const record = { id: `p_${ts}`, ts, value };
-    await safePut('pressure', record);
-    return record;
-  },
-  async clear() {
-    await idb.clear('pressure').catch(() => {});
-  }
-};
-
 /* ---------------- 通用缓存（带 TTL） ---------------- */
 export const cacheRepo = {
   async get(key) {
@@ -225,7 +116,7 @@ export const cacheRepo = {
 
 /** 一键清除 */
 export async function clearAllData() {
-  for (const store of ['trails', 'roadbooks', 'gear', 'contacts', 'pressure', 'feedback', 'cache']) {
+  for (const store of ['trails', 'feedback', 'cache']) {
     await idb.clear(store).catch(() => {});
   }
   prefsStore.set({ onboarded: true });

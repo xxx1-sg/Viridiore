@@ -4,14 +4,14 @@
  */
 
 const DB_NAME = 'mossy-dawn';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
+/**
+ * v3 起只保留仍在写入的 store；roadbooks / gear / contacts / pressure 是
+ * 已下架模块（SOS / 队友 / 气压 / 装备 / 路书）的遗留结构，升级时删除。
+ */
 const SCHEMA = {
   trails: { keyPath: 'id', indexes: [['startedAt', 'startedAt']] },
-  roadbooks: { keyPath: 'id', indexes: [['createdAt', 'createdAt']] },
-  gear: { keyPath: 'id', indexes: [['group', 'group']] },
-  contacts: { keyPath: 'id', indexes: [] },
-  pressure: { keyPath: 'id', indexes: [['ts', 'ts']] },
   cache: { keyPath: 'key', indexes: [['expireAt', 'expireAt']] },
   /* 追光结果反馈：用户"看到了 / 白跑一趟"是校准概率的唯一真实标签 */
   feedback: { keyPath: 'id', indexes: [['mountainId', 'mountainId'], ['ts', 'ts']] }
@@ -29,6 +29,10 @@ function openDB() {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
       const db = req.result;
+      // v3：清理已下架模块遗留的 object store
+      for (const legacy of ['roadbooks', 'gear', 'contacts', 'pressure']) {
+        if (db.objectStoreNames.contains(legacy)) db.deleteObjectStore(legacy);
+      }
       for (const [name, def] of Object.entries(SCHEMA)) {
         if (!db.objectStoreNames.contains(name)) {
           const store = db.createObjectStore(name, { keyPath: def.keyPath });

@@ -18,14 +18,7 @@ export default defineConfig({
     assetsDir: 'assets',
     sourcemap: false,
     cssCodeSplit: false,
-    chunkSizeWarningLimit: 900,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: []
-        }
-      }
-    }
+    chunkSizeWarningLimit: 900
   },
   worker: {
     format: 'es'

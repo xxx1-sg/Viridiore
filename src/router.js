@@ -1,5 +1,6 @@
 /** 基于 hash 的路由（Electron file:// 与 Capacitor 下同样可靠） */
 import { prefsStore, bus } from './core/store.js';
+import { escapeHtml } from './core/dom.js';
 
 const routes = new Map();
 let container = null;
@@ -62,7 +63,7 @@ async function activate(id, { replace = false } = {}) {
       currentCleanup = (await page.mount?.(section)) || null;
     } catch (err) {
       console.error('[router] 页面挂载失败', id, err);
-      section.innerHTML = `<div class="empty"><div class="empty__title">页面加载失败</div><div class="empty__desc">${err.message}</div></div>`;
+      section.innerHTML = `<div class="empty"><div class="empty__title">页面加载失败</div><div class="empty__desc">${escapeHtml(err.message || '')}</div></div>`;
     }
     page.mounted = true;
   } else {
