@@ -53,6 +53,12 @@ jobs:
       - name: Build web assets
         run: npm run build
 
+      # @capgo/capacitor-updater 的 Android 插件依赖 androidx.work 2.10.x，要求 compileSdk>=35，
+      # 而本项目为 compileSdk 34 / AGP 8.2.1。debug 侧载包不需要静默热更新，
+      # 因此在网页构建完成后、cap sync 之前移除该依赖，避免 Android 工程接入它。
+      - name: Drop Capgo OTA plugin for APK build
+        run: npm remove @capgo/capacitor-updater --no-audit --no-fund || true
+
       - name: Sync Capacitor android
         run: npx cap sync android
 
