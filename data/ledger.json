@@ -1,26 +1,26 @@
 {
   "schema": 1,
   "kind": "ledger",
-  "updatedAt": "2026-11-25T09:00:22.272Z",
-  "asOf": "2026-11-24",
+  "updatedAt": "2026-11-26T08:46:29.728Z",
+  "asOf": "2026-11-25",
   "basisNote": "再分析判「气象条件是否成立」，不代表有人亲眼看到；用户打卡另计。",
   "totals": {
-    "days": 23,
-    "forecastEntries": 5691,
-    "verifiedEntries": 2861,
-    "primaryEntries": 504,
+    "days": 24,
+    "forecastEntries": 5943,
+    "verifiedEntries": 2945,
+    "primaryEntries": 516,
     "pendingDays": 0
   },
-  "brier": 0.13399856693464024,
-  "hitRate": 0.1576371897937784,
+  "brier": 0.13047847198641965,
+  "hitRate": 0.1531409168081494,
   "calibration": [
     {
       "bin": "0–19%",
       "lo": 0,
       "hi": 19,
-      "n": 1600,
-      "predicted": 0.08298124999999905,
-      "observed": 0.083125
+      "n": 1684,
+      "predicted": 0.083913301662707,
+      "observed": 0.07897862232779097
     },
     {
       "bin": "20–39%",
@@ -58,24 +58,24 @@
   "byLead": [
     {
       "label": "当天/次日",
-      "n": 894,
-      "predicted": 0.21026845637583957,
-      "observed": 0.17785234899328858,
-      "brier": 0.13268859060402727
+      "n": 918,
+      "predicted": 0.20774509803921637,
+      "observed": 0.17320261437908496,
+      "brier": 0.12956546840958655
     },
     {
       "label": "提前 2–3 天",
-      "n": 830,
-      "predicted": 0.21472289156626473,
-      "observed": 0.15542168674698795,
-      "brier": 0.11582650602409648
+      "n": 854,
+      "predicted": 0.21160421545667424,
+      "observed": 0.15105386416861827,
+      "brier": 0.11287716627634675
     },
     {
       "label": "提前 4–6 天",
-      "n": 1137,
-      "predicted": 0.22361477572559432,
-      "observed": 0.14335971855760773,
-      "brier": 0.14829401934916456
+      "n": 1173,
+      "predicted": 0.21958226768968495,
+      "observed": 0.13895993179880647,
+      "brier": 0.14400758738277933
     }
   ],
   "byMode": [
@@ -95,120 +95,120 @@
     },
     {
       "mode": "stars",
-      "n": 1153,
-      "predicted": 0.2211361665221158,
-      "observed": 0.16565481352992195,
-      "brier": 0.14470780572419745
+      "n": 1237,
+      "predicted": 0.2130234438156827,
+      "observed": 0.1544058205335489,
+      "brier": 0.13560008084074343
     }
   ],
   "byMountain": [
     {
       "mountainId": "wutong",
       "mountain": "梧桐山",
-      "n": 232,
-      "predicted": 0.2613793103448275,
-      "observed": 0.3103448275862069,
-      "brier": 0.21502241379310347
+      "n": 239,
+      "predicted": 0.25677824267782423,
+      "observed": 0.301255230125523,
+      "brier": 0.20904979079497907
     },
     {
       "mountainId": "qiniang",
       "mountain": "七娘山",
-      "n": 232,
-      "predicted": 0.21775862068965532,
-      "observed": 0.17672413793103448,
-      "brier": 0.1439396551724136
+      "n": 239,
+      "predicted": 0.2144769874476989,
+      "observed": 0.17154811715481172,
+      "brier": 0.14005523012552276
     },
     {
       "mountainId": "maluan",
       "mountain": "马峦山",
-      "n": 232,
-      "predicted": 0.20060344827586202,
-      "observed": 0.11637931034482758,
-      "brier": 0.11859051724137931
+      "n": 239,
+      "predicted": 0.19786610878661084,
+      "observed": 0.11297071129707113,
+      "brier": 0.11545815899581592
     },
     {
       "mountainId": "paiya",
       "mountain": "排牙山",
-      "n": 232,
-      "predicted": 0.20249999999999996,
-      "observed": 0.09482758620689655,
-      "brier": 0.10774310344827581
+      "n": 239,
+      "predicted": 0.19974895397489537,
+      "observed": 0.09205020920502092,
+      "brier": 0.10493640167364013
     },
     {
       "mountainId": "meishajian",
       "mountain": "梅沙尖",
-      "n": 232,
-      "predicted": 0.21637931034482755,
-      "observed": 0.25862068965517243,
-      "brier": 0.18792931034482743
+      "n": 239,
+      "predicted": 0.2131799163179916,
+      "observed": 0.2510460251046025,
+      "brier": 0.1827661087866107
     },
     {
       "mountainId": "tanglang",
       "mountain": "塘朗山",
-      "n": 243,
-      "predicted": 0.1867901234567901,
-      "observed": 0.09876543209876543,
-      "brier": 0.09421851851851851
+      "n": 250,
+      "predicted": 0.1844,
+      "observed": 0.096,
+      "brier": 0.09187119999999999
     },
     {
       "mountainId": "fenghuang",
       "mountain": "凤凰山",
-      "n": 243,
-      "predicted": 0.18304526748971175,
-      "observed": 0.07407407407407407,
-      "brier": 0.0857267489711934
+      "n": 250,
+      "predicted": 0.18071999999999988,
+      "observed": 0.072,
+      "brier": 0.08361199999999996
     },
     {
       "mountainId": "yangtaishan",
       "mountain": "阳台山",
-      "n": 243,
-      "predicted": 0.19543209876543208,
-      "observed": 0.1440329218106996,
-      "brier": 0.12099135802469141
+      "n": 250,
+      "predicted": 0.1928,
+      "observed": 0.14,
+      "brier": 0.11789440000000005
     },
     {
       "mountainId": "dananshan",
       "mountain": "大南山",
-      "n": 243,
-      "predicted": 0.1821810699588476,
-      "observed": 0.09876543209876543,
-      "brier": 0.09350823045267485
+      "n": 250,
+      "predicted": 0.17999999999999988,
+      "observed": 0.096,
+      "brier": 0.09119919999999994
     },
     {
       "mountainId": "luofu",
       "mountain": "罗浮山",
-      "n": 243,
-      "predicted": 0.29893004115226307,
-      "observed": 0.2962962962962963,
-      "brier": 0.1863004115226337
+      "n": 250,
+      "predicted": 0.29311999999999966,
+      "observed": 0.288,
+      "brier": 0.18132959999999995
     },
     {
       "mountainId": "nankun",
       "mountain": "南昆山",
-      "n": 243,
-      "predicted": 0.2710288065843618,
-      "observed": 0.18106995884773663,
-      "brier": 0.18223539094650204
+      "n": 250,
+      "predicted": 0.26587999999999956,
+      "observed": 0.176,
+      "brier": 0.17736119999999994
     },
     {
       "mountainId": "yinhu",
       "mountain": "银湖山",
-      "n": 243,
-      "predicted": 0.1869958847736624,
-      "observed": 0.04938271604938271,
-      "brier": 0.0764502057613168
+      "n": 250,
+      "predicted": 0.18459999999999993,
+      "observed": 0.048,
+      "brier": 0.07460279999999991
     }
   ],
   "userFeedback": null,
   "health": {
-    "sourceFile": "2026-11-25.json",
+    "sourceFile": "2026-11-26.json",
     "entries": 84,
-    "withLayer": 5,
-    "marginPositive": 23,
-    "marginAbove50": 18,
-    "marginMedian": -226,
-    "marginMin": -1098,
-    "marginMax": 875,
+    "withLayer": 6,
+    "marginPositive": 24,
+    "marginAbove50": 19,
+    "marginMedian": -219,
+    "marginMin": -1165,
+    "marginMax": 775,
     "structurallyImpossible": 0,
     "impossibleMountains": [],
     "headroom": [
@@ -415,278 +415,283 @@
       "date": "2026-11-24",
       "entries": 84,
       "observed": 0
+    },
+    {
+      "date": "2026-11-25",
+      "entries": 84,
+      "observed": 0
     }
   ],
   "recent": [
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "梧桐山",
       "mode": "stars",
-      "probability": 7,
+      "probability": 9,
       "observed": 0,
-      "predictedOn": "2026-11-18",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "predictedOn": "2026-11-19",
+      "verdict": "未成立（云量通透）"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "七娘山",
       "mode": "stars",
-      "probability": 7,
+      "probability": 10,
       "observed": 0,
-      "predictedOn": "2026-11-18",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "predictedOn": "2026-11-19",
+      "verdict": "未成立（云量通透）"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "马峦山",
       "mode": "stars",
-      "probability": 7,
+      "probability": 10,
       "observed": 0,
-      "predictedOn": "2026-11-18",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "predictedOn": "2026-11-19",
+      "verdict": "未成立（云量通透）"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "排牙山",
       "mode": "stars",
-      "probability": 7,
+      "probability": 10,
       "observed": 0,
-      "predictedOn": "2026-11-18",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "predictedOn": "2026-11-19",
+      "verdict": "未成立（云量通透、低层无遮挡）"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "梅沙尖",
       "mode": "stars",
-      "probability": 7,
+      "probability": 10,
       "observed": 0,
-      "predictedOn": "2026-11-18",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "predictedOn": "2026-11-19",
+      "verdict": "未成立（云量通透）"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "塘朗山",
       "mode": "stars",
-      "probability": 7,
+      "probability": 10,
       "observed": 0,
-      "predictedOn": "2026-11-18",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "predictedOn": "2026-11-19",
+      "verdict": "未成立（云量通透、无降水）"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "凤凰山",
       "mode": "stars",
-      "probability": 7,
+      "probability": 10,
       "observed": 0,
-      "predictedOn": "2026-11-18",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "predictedOn": "2026-11-19",
+      "verdict": "未成立（云量通透、无降水）"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "阳台山",
       "mode": "stars",
-      "probability": 7,
+      "probability": 10,
       "observed": 0,
-      "predictedOn": "2026-11-18",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "predictedOn": "2026-11-19",
+      "verdict": "未成立（云量通透、无降水）"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "大南山",
       "mode": "stars",
-      "probability": 7,
-      "observed": 0,
-      "predictedOn": "2026-11-18",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
-    },
-    {
-      "date": "2026-11-24",
-      "mountain": "罗浮山",
-      "mode": "stars",
-      "probability": 7,
-      "observed": 0,
-      "predictedOn": "2026-11-18",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
-    },
-    {
-      "date": "2026-11-24",
-      "mountain": "南昆山",
-      "mode": "stars",
-      "probability": 7,
-      "observed": 0,
-      "predictedOn": "2026-11-18",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
-    },
-    {
-      "date": "2026-11-24",
-      "mountain": "银湖山",
-      "mode": "stars",
-      "probability": 7,
-      "observed": 0,
-      "predictedOn": "2026-11-18",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
-    },
-    {
-      "date": "2026-11-24",
-      "mountain": "梧桐山",
-      "mode": "stars",
-      "probability": 7,
+      "probability": 12,
       "observed": 0,
       "predictedOn": "2026-11-19",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "verdict": "未成立（云量通透）"
     },
     {
-      "date": "2026-11-24",
-      "mountain": "七娘山",
-      "mode": "stars",
-      "probability": 7,
-      "observed": 0,
-      "predictedOn": "2026-11-19",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
-    },
-    {
-      "date": "2026-11-24",
-      "mountain": "马峦山",
-      "mode": "stars",
-      "probability": 7,
-      "observed": 0,
-      "predictedOn": "2026-11-19",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
-    },
-    {
-      "date": "2026-11-24",
-      "mountain": "排牙山",
-      "mode": "stars",
-      "probability": 7,
-      "observed": 0,
-      "predictedOn": "2026-11-19",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
-    },
-    {
-      "date": "2026-11-24",
-      "mountain": "梅沙尖",
-      "mode": "stars",
-      "probability": 7,
-      "observed": 0,
-      "predictedOn": "2026-11-19",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
-    },
-    {
-      "date": "2026-11-24",
-      "mountain": "塘朗山",
-      "mode": "stars",
-      "probability": 7,
-      "observed": 0,
-      "predictedOn": "2026-11-19",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
-    },
-    {
-      "date": "2026-11-24",
-      "mountain": "凤凰山",
-      "mode": "stars",
-      "probability": 7,
-      "observed": 0,
-      "predictedOn": "2026-11-19",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
-    },
-    {
-      "date": "2026-11-24",
-      "mountain": "阳台山",
-      "mode": "stars",
-      "probability": 7,
-      "observed": 0,
-      "predictedOn": "2026-11-19",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
-    },
-    {
-      "date": "2026-11-24",
-      "mountain": "大南山",
-      "mode": "stars",
-      "probability": 7,
-      "observed": 0,
-      "predictedOn": "2026-11-19",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
-    },
-    {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "罗浮山",
       "mode": "stars",
       "probability": 7,
       "observed": 0,
       "predictedOn": "2026-11-19",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "verdict": "未成立（云量通透、无降水）"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "南昆山",
       "mode": "stars",
       "probability": 7,
       "observed": 0,
       "predictedOn": "2026-11-19",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "verdict": "未成立（云量通透、无降水）"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "银湖山",
       "mode": "stars",
-      "probability": 7,
+      "probability": 10,
       "observed": 0,
       "predictedOn": "2026-11-19",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "verdict": "未成立（云量通透）"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "梧桐山",
       "mode": "stars",
-      "probability": 7,
+      "probability": 9,
       "observed": 0,
       "predictedOn": "2026-11-20",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "verdict": "未成立（云量通透）"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "七娘山",
       "mode": "stars",
-      "probability": 7,
+      "probability": 9,
       "observed": 0,
       "predictedOn": "2026-11-20",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "verdict": "未成立（云量通透）"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "马峦山",
       "mode": "stars",
-      "probability": 7,
+      "probability": 10,
       "observed": 0,
       "predictedOn": "2026-11-20",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "verdict": "未成立（云量通透）"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "排牙山",
       "mode": "stars",
-      "probability": 7,
+      "probability": 10,
       "observed": 0,
       "predictedOn": "2026-11-20",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "verdict": "未成立（云量通透、低层无遮挡）"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "梅沙尖",
       "mode": "stars",
-      "probability": 7,
+      "probability": 10,
       "observed": 0,
       "predictedOn": "2026-11-20",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "verdict": "未成立（云量通透）"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "mountain": "塘朗山",
+      "mode": "stars",
+      "probability": 9,
+      "observed": 0,
+      "predictedOn": "2026-11-20",
+      "verdict": "未成立（云量通透、无降水）"
+    },
+    {
+      "date": "2026-11-25",
+      "mountain": "凤凰山",
+      "mode": "stars",
+      "probability": 9,
+      "observed": 0,
+      "predictedOn": "2026-11-20",
+      "verdict": "未成立（云量通透、无降水）"
+    },
+    {
+      "date": "2026-11-25",
+      "mountain": "阳台山",
+      "mode": "stars",
+      "probability": 9,
+      "observed": 0,
+      "predictedOn": "2026-11-20",
+      "verdict": "未成立（云量通透、无降水）"
+    },
+    {
+      "date": "2026-11-25",
+      "mountain": "大南山",
+      "mode": "stars",
+      "probability": 9,
+      "observed": 0,
+      "predictedOn": "2026-11-20",
+      "verdict": "未成立（云量通透）"
+    },
+    {
+      "date": "2026-11-25",
+      "mountain": "罗浮山",
       "mode": "stars",
       "probability": 7,
       "observed": 0,
       "predictedOn": "2026-11-20",
-      "verdict": "未成立（云量通透、低层无遮挡、无降水）"
+      "verdict": "未成立（云量通透、无降水）"
+    },
+    {
+      "date": "2026-11-25",
+      "mountain": "南昆山",
+      "mode": "stars",
+      "probability": 7,
+      "observed": 0,
+      "predictedOn": "2026-11-20",
+      "verdict": "未成立（云量通透、无降水）"
+    },
+    {
+      "date": "2026-11-25",
+      "mountain": "银湖山",
+      "mode": "stars",
+      "probability": 9,
+      "observed": 0,
+      "predictedOn": "2026-11-20",
+      "verdict": "未成立（云量通透）"
+    },
+    {
+      "date": "2026-11-25",
+      "mountain": "梧桐山",
+      "mode": "stars",
+      "probability": 9,
+      "observed": 0,
+      "predictedOn": "2026-11-21",
+      "verdict": "未成立（云量通透）"
+    },
+    {
+      "date": "2026-11-25",
+      "mountain": "七娘山",
+      "mode": "stars",
+      "probability": 10,
+      "observed": 0,
+      "predictedOn": "2026-11-21",
+      "verdict": "未成立（云量通透）"
+    },
+    {
+      "date": "2026-11-25",
+      "mountain": "马峦山",
+      "mode": "stars",
+      "probability": 9,
+      "observed": 0,
+      "predictedOn": "2026-11-21",
+      "verdict": "未成立（云量通透）"
+    },
+    {
+      "date": "2026-11-25",
+      "mountain": "排牙山",
+      "mode": "stars",
+      "probability": 10,
+      "observed": 0,
+      "predictedOn": "2026-11-21",
+      "verdict": "未成立（云量通透、低层无遮挡）"
+    },
+    {
+      "date": "2026-11-25",
+      "mountain": "梅沙尖",
+      "mode": "stars",
+      "probability": 9,
+      "observed": 0,
+      "predictedOn": "2026-11-21",
+      "verdict": "未成立（云量通透）"
+    },
+    {
+      "date": "2026-11-25",
+      "mountain": "塘朗山",
+      "mode": "stars",
+      "probability": 9,
+      "observed": 0,
+      "predictedOn": "2026-11-21",
+      "verdict": "未成立（云量通透、无降水）"
     }
   ]
 }
